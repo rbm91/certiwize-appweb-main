@@ -12,8 +12,16 @@ import InputNumber from 'primevue/inputnumber';
 import Button from 'primevue/button';
 import Calendar from 'primevue/calendar';
 import Message from 'primevue/message';
+import Dropdown from 'primevue/dropdown';
 import ProgressBar from 'primevue/progressbar';
 import { useConfirm } from 'primevue/useconfirm';
+
+// Options pour le dropdown modalites
+const modalitesOptions = [
+    { label: 'Presentiel', value: 'presentiel' },
+    { label: 'Distanciel', value: 'distanciel' },
+    { label: 'Mixte', value: 'mixte' }
+];
 
 const confirm = useConfirm();
 const route = useRoute();
@@ -77,7 +85,16 @@ Workshop 1 :
 `,
 
     moyens_pedagq: '',
-    modalités_eval: ''
+    modalités_eval: '',
+
+    // CDC fields
+    public_cible: '',
+    objectifs_pedagogiques: '',
+    programme: '',
+    moyens_pedagogiques: '',
+    modalites_evaluation: '',
+    accessibilite: '',
+    modalites: null
 });
 
 // Watcher pour générer automatiquement le format horaires
@@ -445,6 +462,46 @@ const goBack = () => {
                     <div class="md:col-span-2">
                         <label class="font-semibold block mb-2">{{ t('training.fields.handicap_referent') }}</label>
                         <Textarea v-model="form.ref_handi" rows="2" class="w-full" />
+                    </div>
+                </div>
+
+                <!-- ================================================ -->
+                <!-- Section CDC — Cahier des charges (bordure bleue) -->
+                <!-- ================================================ -->
+                <div class="border-l-4 border-blue-500 pl-6 py-4 space-y-6 bg-blue-50/40 dark:bg-blue-900/10 rounded-r-lg">
+                    <h2 class="text-lg font-bold text-blue-700 dark:text-blue-300 mb-2">Cahier des charges (CDC)</h2>
+
+                    <div>
+                        <label class="font-semibold block mb-2">Public vise</label>
+                        <Textarea v-model="form.public_cible" rows="3" class="w-full" placeholder="Decrivez le public cible de la formation" />
+                    </div>
+                    <div>
+                        <label class="font-semibold block mb-2">Prerequis</label>
+                        <Textarea v-model="form.prerequis" rows="3" class="w-full" placeholder="Prerequis necessaires pour suivre la formation" />
+                    </div>
+                    <div>
+                        <label class="font-semibold block mb-2">Objectifs pedagogiques</label>
+                        <Textarea v-model="form.objectifs_pedagogiques" rows="4" class="w-full" placeholder="Listez les objectifs pedagogiques" />
+                    </div>
+                    <div>
+                        <label class="font-semibold block mb-2">Programme detaille</label>
+                        <Textarea v-model="form.programme" rows="6" class="w-full" placeholder="Decrivez le programme detaille de la formation" />
+                    </div>
+                    <div>
+                        <label class="font-semibold block mb-2">Moyens pedagogiques et techniques</label>
+                        <Textarea v-model="form.moyens_pedagogiques" rows="3" class="w-full" placeholder="Moyens pedagogiques et techniques mis en oeuvre" />
+                    </div>
+                    <div>
+                        <label class="font-semibold block mb-2">Modalites d'evaluation</label>
+                        <Textarea v-model="form.modalites_evaluation" rows="3" class="w-full" placeholder="Decrivez les modalites d'evaluation" />
+                    </div>
+                    <div>
+                        <label class="font-semibold block mb-2">Accessibilite aux personnes en situation de handicap</label>
+                        <Textarea v-model="form.accessibilite" rows="3" class="w-full" placeholder="Indiquez les dispositions d'accessibilite" />
+                    </div>
+                    <div class="max-w-sm">
+                        <label class="font-semibold block mb-2">Modalites</label>
+                        <Dropdown v-model="form.modalites" :options="modalitesOptions" optionLabel="label" optionValue="value" placeholder="Choisir une modalite" class="w-full" />
                     </div>
                 </div>
 

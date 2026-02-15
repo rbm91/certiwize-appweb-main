@@ -3,22 +3,27 @@ import { ref } from 'vue';
 import { supabase } from '../supabase';
 import { useAuthStore } from './auth';
 
-const generateCode = (prefix) => {
+/**
+ * Génère un code référence avec préfixe + date + séquence aléatoire
+ * @param {string} prefix - Préfixe (ex: 'CU', 'SU', 'FOR')
+ * @returns {string}
+ */
+export const generateCode = (prefix) => {
     const date = new Date();
     const year = date.getFullYear().toString().slice(-2);
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    // Simulation d'une séquence unique (idéalement gérée par la DB)
     const sequence = Math.floor(Math.random() * 10000).toString().padStart(5, '0');
     return `${prefix}${year}${month}-${sequence}`;
 };
 
 /**
  * Nettoie un payload avant envoi à Supabase :
- * supprime les champs undefined, null et chaînes vides
- * pour ne pas stocker de valeurs inutiles (ex: diplomas: '' pour un Financeur).
+ * supprime les champs undefined, null et chaînes vides.
  * Conserve les booléens (false), les nombres (0) et les tableaux vides [].
+ * @param {Object} data
+ * @returns {Object}
  */
-const cleanPayload = (data) => {
+export const cleanPayload = (data) => {
     const cleaned = {};
     for (const [key, value] of Object.entries(data)) {
         if (value === undefined || value === null || value === '') continue;
@@ -27,12 +32,20 @@ const cleanPayload = (data) => {
     return cleaned;
 };
 
+/**
+ * Store utilitaire — conserve les données mock pour rétro-compatibilité
+ * et les fonctions de base CRUD tiers (redirigent vers useTiersStore en V2).
+ *
+ * Les fonctions CRUD tiers restent ici temporairement pour que les composants
+ * existants (TiersCreate.vue, Tiers.vue) continuent à fonctionner pendant
+ * la migration vers useTiersStore.
+ */
 export const useDataStore = defineStore('data', () => {
     const tiers = ref([]);
     const loading = ref(false);
     const error = ref(null);
 
-    // Mock Data pour Formations et Projets
+    // Mock Data pour rétro-compatibilité (dashboard, etc.)
     const formations = ref([
         { id: 1, name: 'Formation Qualiopi - Niveau 1', client: 'Interne', date: '12/01/2025' },
         { id: 2, name: 'Audit Blanc ISO 9001', client: 'TechSolution', date: '05/02/2025' },
@@ -47,7 +60,6 @@ export const useDataStore = defineStore('data', () => {
         { id: 4, name: 'Digitalisation RH', status: 'En cours', client: 'Epsilon Tech' }
     ]);
 
-    // Stats calculées
     const stats = ref({
         totalTiers: 0,
         activeFormations: formations.value.length,
@@ -56,7 +68,10 @@ export const useDataStore = defineStore('data', () => {
 
     const auth = useAuthStore();
 
-    // 1. Récupérer les tiers (filtrés par user_id sauf si admin)
+    // ─── CRUD Tiers (rétro-compatibilité) ───
+    // Ces fonctions sont conservées pour que les composants existants fonctionnent.
+    // Les nouveaux composants doivent utiliser useTiersStore.
+
     const fetchTiers = async () => {
         if (!auth.user?.id) {
             loading.value = false;
@@ -78,13 +93,10 @@ export const useDataStore = defineStore('data', () => {
             }
 
             const { data, error: err } = await query;
-
             if (err) throw err;
 
             tiers.value = data || [];
-
             if (stats.value) stats.value.totalTiers = tiers.value.length;
-
         } catch (err) {
             error.value = err.message;
         } finally {
@@ -92,11 +104,9 @@ export const useDataStore = defineStore('data', () => {
         }
     };
 
-    // 2. Créer un nouveau tiers
     const createTier = async (tierData) => {
         loading.value = true;
         try {
-            // Auto-génération si les champs sont vides
             const finalData = cleanPayload({
                 ...tierData,
                 code_client: tierData.code_client || generateCode('CU'),
@@ -122,7 +132,6 @@ export const useDataStore = defineStore('data', () => {
         }
     };
 
-    // 3. Supprimer un tiers
     const deleteTier = async (id) => {
         try {
             const { error: err } = await supabase
@@ -139,13 +148,10 @@ export const useDataStore = defineStore('data', () => {
         }
     };
 
-    // 4. Récupérer un tiers par ID
     const getTierById = async (id) => {
-        // D'abord chercher dans le cache local
         const local = tiers.value.find(t => t.id === id);
         if (local) return local;
 
-        // Sinon chercher en base
         try {
             const { data, error: err } = await supabase
                 .from('tiers')
@@ -160,7 +166,6 @@ export const useDataStore = defineStore('data', () => {
         }
     };
 
-    // 5. Mettre à jour un tiers
     const updateTier = async (id, updates) => {
         loading.value = true;
         try {
@@ -173,7 +178,6 @@ export const useDataStore = defineStore('data', () => {
 
             if (err) throw err;
 
-            // Mise à jour locale
             const index = tiers.value.findIndex(t => t.id === id);
             if (index !== -1) {
                 tiers.value[index] = data;
@@ -188,8 +192,8 @@ export const useDataStore = defineStore('data', () => {
 
     return {
         tiers,
-        formations, // Added
-        projects,   // Added
+        formations,
+        projects,
         stats,
         loading,
         error,

@@ -4,48 +4,67 @@ import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '../stores/auth';
 import { useNavConfigStore } from '../stores/navConfig';
 
+// =============================================
+// CDC CertiGestion V1 — 6 items menu principal
+// =============================================
+
 // Items affichés dans la barre horizontale du haut (mode topnav)
 const topNavItems = [
   { name: 'accueil', href: '/dashboard', icon: 'pi-home' },
   { name: 'tiers', href: '/dashboard/tiers', icon: 'pi-users' },
-  { name: 'catalogue', href: '/dashboard/catalogue', icon: 'pi-book' },
-  { name: 'prestations', href: '/dashboard/projets', icon: 'pi-briefcase' },
-  { name: 'analysis', href: '/dashboard/analyse-doc', icon: 'pi-search' },
-  { name: 'quiz_builder', href: '/dashboard/quiz', icon: 'pi-question-circle' },
-  { name: 'manual', href: '/dashboard/manuel-qualiopi', icon: 'pi-book' },
-  { name: 'genedoc', href: 'https://qualiopi-modelisation.genedoc.fr/', icon: 'pi-link', external: true },
+  { name: 'prestations', href: '/dashboard/sessions', icon: 'pi-briefcase' },
+  { name: 'facturation', href: '/dashboard/factures', icon: 'pi-wallet' },
+  { name: 'qualite', href: '/dashboard/qualite', icon: 'pi-shield' },
+  { name: 'assistant_ia', href: '/dashboard/assistant-ia', icon: 'pi-microphone' },
 ];
 
 // Sous-éléments de la sidebar contextuelle par section
 const sidebarItemsBySection = {
   accueil: [],
+
   tiers: [
-    { name: 'sidebar_tiers_all', href: '/dashboard/tiers', icon: 'pi-list' },
-    { type: 'separator', label: 'Formateurs' },
-    { name: 'sidebar_tiers_formateurs', href: '/dashboard/tiers?type=Formateur', icon: 'pi-list' },
-    { name: 'sidebar_tiers_create_formateur', href: '/dashboard/tiers/create?type=Formateur', icon: 'pi-plus' },
-    { type: 'separator', label: 'Financeurs' },
-    { name: 'sidebar_tiers_financeurs', href: '/dashboard/tiers?type=Financeur', icon: 'pi-list' },
-    { name: 'sidebar_tiers_create_financeur', href: '/dashboard/tiers/create?type=Financeur', icon: 'pi-plus' },
-    { type: 'separator', label: 'Entreprises' },
-    { name: 'sidebar_tiers_entreprises', href: '/dashboard/tiers?type=Entreprise', icon: 'pi-list' },
-    { name: 'sidebar_tiers_create_entreprise', href: '/dashboard/tiers/create?type=Entreprise', icon: 'pi-plus' },
-    { type: 'separator', label: 'Apprenants' },
-    { name: 'sidebar_learners', href: '/dashboard/learners', icon: 'pi-list' },
-    { name: 'sidebar_learners_create', href: '/dashboard/learners/create', icon: 'pi-plus' },
+    { name: 'sidebar_tiers_list', href: '/dashboard/tiers', icon: 'pi-list' },
+    { name: 'sidebar_tiers_create', href: '/dashboard/tiers/create', icon: 'pi-plus' },
   ],
-  catalogue: [
-    { name: 'sidebar_catalogue_list', href: '/dashboard/catalogue', icon: 'pi-list' },
+
+  prestations: [
+    { type: 'separator', label: 'Formations' },
+    { name: 'sidebar_sessions_create', href: '/dashboard/sessions/create', icon: 'pi-plus', badge: 'blue' },
+    { name: 'sidebar_sessions_list', href: '/dashboard/sessions', icon: 'pi-list' },
+    { type: 'separator', label: 'Coaching' },
+    { name: 'sidebar_coaching_create', href: '/dashboard/coaching/create', icon: 'pi-plus', badge: 'orange' },
+    { name: 'sidebar_coaching_list', href: '/dashboard/coaching', icon: 'pi-list' },
+    { type: 'separator', label: 'Conseil' },
+    { name: 'sidebar_conseil_create', href: '/dashboard/conseil/create', icon: 'pi-plus', badge: 'green' },
+    { name: 'sidebar_conseil_list', href: '/dashboard/conseil', icon: 'pi-list' },
+    { type: 'separator', label: 'Catalogue' },
+    { name: 'sidebar_catalogue_formations', href: '/dashboard/catalogue', icon: 'pi-book' },
+    { name: 'sidebar_catalogue_missions', href: '/dashboard/catalogue/missions', icon: 'pi-briefcase' },
     { name: 'sidebar_catalogue_create', href: '/dashboard/catalogue/create', icon: 'pi-plus' },
   ],
-  prestations: [
-    { name: 'sidebar_prestations_list', href: '/dashboard/projets', icon: 'pi-list' },
-    { name: 'sidebar_prestations_create', href: '/dashboard/projets/create', icon: 'pi-plus' },
+
+  facturation: [
+    { name: 'sidebar_factures_create', href: '/dashboard/factures/create', icon: 'pi-plus' },
+    { name: 'sidebar_factures_list', href: '/dashboard/factures', icon: 'pi-list' },
+    { name: 'sidebar_avoirs', href: '/dashboard/avoirs', icon: 'pi-replay' },
+    { name: 'sidebar_tresorerie', href: '/dashboard/tresorerie', icon: 'pi-chart-line' },
+    { name: 'sidebar_facturation_params', href: '/dashboard/facturation-params', icon: 'pi-cog' },
   ],
-  analysis: [],
-  quiz_builder: [],
-  manual: [],
-  genedoc: [],
+
+  qualite: [
+    { name: 'sidebar_qualite_manuel', href: '/dashboard/qualite/manuel', icon: 'pi-book' },
+    { name: 'sidebar_qualite_boite_outils', href: '/dashboard/qualite/boite-outils', icon: 'pi-box' },
+    { name: 'sidebar_qualite_evaluations', href: '/dashboard/qualite/evaluations', icon: 'pi-question-circle' },
+    { name: 'sidebar_qualite_analyse_doc', href: '/dashboard/qualite/analyse-doc', icon: 'pi-search' },
+    { name: 'sidebar_qualite_reclamations', href: '/dashboard/qualite/reclamations', icon: 'pi-exclamation-triangle' },
+    { name: 'sidebar_qualite_indicateurs', href: '/dashboard/qualite/indicateurs', icon: 'pi-chart-bar' },
+    { name: 'sidebar_qualite_audit_blanc', href: 'https://qualiopi-modelisation.genedoc.fr/', icon: 'pi-link', external: true },
+  ],
+
+  assistant_ia: [
+    { name: 'sidebar_ia_historique', href: '/dashboard/assistant-ia/historique', icon: 'pi-history' },
+    { name: 'sidebar_ia_stats', href: '/dashboard/assistant-ia/stats', icon: 'pi-chart-bar' },
+  ],
 };
 
 // Items fixes en bas du sidebar (toujours visibles)
@@ -56,34 +75,33 @@ const fixedSideNavItems = [
     icon: 'pi-cog',
     submenu: [
       { name: 'company_settings', href: '/dashboard/company', icon: 'pi-building' },
+      { name: 'users_groups', href: '/dashboard/users', icon: 'pi-users' },
       { name: 'doc_types_settings', href: '/dashboard/doc-types-settings', icon: 'pi-file-edit' },
-      { name: 'workflow_settings', href: '/dashboard/workflow-settings', icon: 'pi-sliders-h', adminOnly: true }
-    ]
+      { name: 'workflow_settings', href: '/dashboard/workflow-settings', icon: 'pi-sliders-h', adminOnly: true },
+    ],
   },
 ];
 
 const adminNavItem = { name: 'admin', href: '/dashboard/admin', icon: 'pi-shield', adminOnly: true };
-const usersNavItem = { name: 'users_groups', href: '/dashboard/admin', icon: 'pi-users' };
 
 // Tous les items pour le mode sidebar classique
 const allNavItems = [
   { name: 'dashboard', href: '/dashboard', icon: 'pi-home' },
   { name: 'tiers', href: '/dashboard/tiers', icon: 'pi-users' },
-  { name: 'catalogue', href: '/dashboard/catalogue', icon: 'pi-book' },
-  { name: 'prestations', href: '/dashboard/projets', icon: 'pi-briefcase' },
-  { name: 'analysis', href: '/dashboard/analyse-doc', icon: 'pi-search' },
-  { name: 'quiz_builder', href: '/dashboard/quiz', icon: 'pi-question-circle' },
-  { name: 'manual', href: '/dashboard/manuel-qualiopi', icon: 'pi-book' },
-  { name: 'genedoc', href: 'https://qualiopi-modelisation.genedoc.fr/', icon: 'pi-link', external: true },
+  { name: 'prestations', href: '/dashboard/sessions', icon: 'pi-briefcase' },
+  { name: 'facturation', href: '/dashboard/factures', icon: 'pi-wallet' },
+  { name: 'qualite', href: '/dashboard/qualite', icon: 'pi-shield' },
+  { name: 'assistant_ia', href: '/dashboard/assistant-ia', icon: 'pi-microphone' },
   {
     name: 'settings',
     href: '/dashboard/company',
     icon: 'pi-cog',
     submenu: [
       { name: 'company_settings', href: '/dashboard/company', icon: 'pi-building' },
+      { name: 'users_groups', href: '/dashboard/users', icon: 'pi-users' },
       { name: 'doc_types_settings', href: '/dashboard/doc-types-settings', icon: 'pi-file-edit' },
-      { name: 'workflow_settings', href: '/dashboard/workflow-settings', icon: 'pi-sliders-h', adminOnly: true }
-    ]
+      { name: 'workflow_settings', href: '/dashboard/workflow-settings', icon: 'pi-sliders-h', adminOnly: true },
+    ],
   },
 ];
 
@@ -125,12 +143,24 @@ export const useNavigation = () => {
     const path = route.path;
     if (path === '/dashboard') return 'accueil';
     if (path.startsWith('/dashboard/tiers') || path.startsWith('/dashboard/learners')) return 'tiers';
-    if (path.startsWith('/dashboard/catalogue')) return 'catalogue';
-    if (path.startsWith('/dashboard/projets')) return 'prestations';
-    if (path.startsWith('/dashboard/analyse-doc')) return 'analysis';
-    if (path.startsWith('/dashboard/quiz')) return 'quiz_builder';
-    if (path.startsWith('/dashboard/manuel-qualiopi')) return 'manual';
-    if (path.startsWith('/dashboard/company') || path.startsWith('/dashboard/doc-types-settings') || path.startsWith('/dashboard/workflow-settings')) return 'settings';
+    if (path.startsWith('/dashboard/sessions') ||
+        path.startsWith('/dashboard/coaching') ||
+        path.startsWith('/dashboard/conseil') ||
+        path.startsWith('/dashboard/catalogue') ||
+        path.startsWith('/dashboard/projets')) return 'prestations';
+    if (path.startsWith('/dashboard/factures') ||
+        path.startsWith('/dashboard/avoirs') ||
+        path.startsWith('/dashboard/tresorerie') ||
+        path.startsWith('/dashboard/facturation-params')) return 'facturation';
+    if (path.startsWith('/dashboard/qualite') ||
+        path.startsWith('/dashboard/analyse-doc') ||
+        path.startsWith('/dashboard/manuel-qualiopi') ||
+        path.startsWith('/dashboard/quiz')) return 'qualite';
+    if (path.startsWith('/dashboard/assistant-ia')) return 'assistant_ia';
+    if (path.startsWith('/dashboard/company') ||
+        path.startsWith('/dashboard/users') ||
+        path.startsWith('/dashboard/doc-types-settings') ||
+        path.startsWith('/dashboard/workflow-settings')) return 'settings';
     if (path.startsWith('/dashboard/admin')) return 'admin';
     return 'accueil';
   });
@@ -151,7 +181,6 @@ export const useNavigation = () => {
     const fixed = [...fixedSideNavItems];
     if (authStore.isAdmin) {
       fixed.push(adminNavItem);
-      fixed.push(usersNavItem);
     }
 
     return { contextual, fixed };
@@ -166,7 +195,7 @@ export const useNavigation = () => {
 
       // Match exact pour /dashboard (accueil)
       if (url.pathname === '/dashboard') {
-        return route.path === '/dashboard' && !route.query.type;
+        return route.path === '/dashboard' && !route.query.type && !route.query.role;
       }
 
       // Le path doit matcher en préfixe
@@ -178,8 +207,7 @@ export const useNavigation = () => {
       }
 
       // Si pas de query params dans le href mais la route en a, ne pas matcher
-      // (ex: /dashboard/tiers ne doit pas matcher /dashboard/tiers?type=Formateur)
-      if (!url.search && route.query.type && url.pathname === route.path) {
+      if (!url.search && (route.query.type || route.query.role) && url.pathname === route.path) {
         return false;
       }
 

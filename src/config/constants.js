@@ -341,9 +341,17 @@ export const RECLAMATION_TYPES = [
   { label: 'Interne', value: 'interne' },
 ];
 
+// Qualité — Motifs ticket (aléas / dysfonctionnement / réclamation)
+export const RECLAMATION_MOTIFS = [
+  { label: 'Aléas', value: 'aleas', severity: 'info' },
+  { label: 'Dysfonctionnement', value: 'dysfonctionnement', severity: 'warn' },
+  { label: 'Réclamation', value: 'reclamation', severity: 'danger' },
+];
+
 // Qualité — Gravité réclamations
 export const RECLAMATION_GRAVITE = [
-  { label: 'Mineure', value: 'mineure', severity: 'warn' },
+  { label: 'Sans impact', value: 'sans_impact', severity: 'success' },
+  { label: 'Mineur', value: 'mineur', severity: 'warn' },
   { label: 'Majeure', value: 'majeure', severity: 'danger' },
 ];
 
@@ -541,6 +549,7 @@ export default {
   QUALITE_THEMES,
   PROCEDURE_STATUTS,
   RECLAMATION_TYPES,
+  RECLAMATION_MOTIFS,
   RECLAMATION_GRAVITE,
   RECLAMATION_STATUTS,
   SIGNAL_STATUTS,

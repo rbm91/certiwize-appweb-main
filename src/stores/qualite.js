@@ -283,10 +283,10 @@ export const useQualiteStore = defineStore('qualite', () => {
     }
   };
 
-  const closeReclamation = async (id) => {
+  const closeReclamation = async (id, dateCloture = null) => {
     const result = await updateReclamation(id, {
       statut: 'cloturee',
-      date_cloture: new Date().toISOString().split('T')[0],
+      date_cloture: dateCloture || new Date().toISOString().split('T')[0],
     });
 
     if (result.success) {

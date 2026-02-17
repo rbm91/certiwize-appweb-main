@@ -7,6 +7,7 @@ import InputText from 'primevue/inputtext';
 import Password from 'primevue/password';
 import Button from 'primevue/button';
 import Message from 'primevue/message';
+import { useFormValidation } from '../composables/useFormValidation';
 
 const { t } = useI18n();
 const auth = useAuthStore();
@@ -18,10 +19,15 @@ const password = ref('');
 const loading = ref(false);
 const msg = ref({ type: '', content: '' });
 
+const { errors, validate, clearError } = useFormValidation();
+
 const handleRegister = async () => {
+  const isValid = validate({ fullName: fullName.value, email: email.value, password: password.value });
+  if (!isValid) return;
+
   loading.value = true;
   msg.value = { type: '', content: '' };
-  
+
   try {
     await auth.signUp(email.value, password.value, fullName.value);
     msg.value = { type: 'success', content: t('register.success') };
@@ -42,15 +48,15 @@ const handleRegister = async () => {
       <form @submit.prevent="handleRegister" class="space-y-4">
         <div class="flex flex-col gap-2">
           <label class="text-gray-700 dark:text-gray-300">{{ t('register.full_name') }}</label>
-          <InputText v-model="fullName" required class="w-full" />
+          <InputText v-model="fullName" class="w-full" :invalid="!!errors.fullName" @input="clearError('fullName')" />
         </div>
         <div class="flex flex-col gap-2">
           <label class="text-gray-700 dark:text-gray-300">{{ t('register.email') }}</label>
-          <InputText v-model="email" type="email" required class="w-full" />
+          <InputText v-model="email" type="email" class="w-full" :invalid="!!errors.email" @input="clearError('email')" />
         </div>
         <div class="flex flex-col gap-2">
           <label class="text-gray-700 dark:text-gray-300">{{ t('register.password') }}</label>
-          <Password v-model="password" toggleMask class="w-full" inputClass="w-full" required />
+          <Password v-model="password" toggleMask class="w-full" inputClass="w-full" :invalid="!!errors.password" @input="clearError('password')" />
         </div>
 
         <Message v-if="msg.content" :severity="msg.type" :closable="false">{{ msg.content }}</Message>

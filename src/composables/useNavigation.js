@@ -5,13 +5,14 @@ import { useAuthStore } from '../stores/auth';
 import { useNavConfigStore } from '../stores/navConfig';
 
 // =============================================
-// CDC CertiGestion V1 — 6 items menu principal
+// CDC CertiGestion V1 — 7 items menu principal
 // =============================================
 
 // Items affichés dans la barre horizontale du haut (mode topnav)
 const topNavItems = [
   { name: 'accueil', href: '/dashboard', icon: 'pi-home' },
   { name: 'tiers', href: '/dashboard/tiers', icon: 'pi-users' },
+  { name: 'catalogue', href: '/dashboard/catalogue', icon: 'pi-book' },
   { name: 'prestations', href: '/dashboard/sessions', icon: 'pi-briefcase' },
   { name: 'facturation', href: '/dashboard/factures', icon: 'pi-wallet' },
   { name: 'qualite', href: '/dashboard/qualite', icon: 'pi-shield' },
@@ -27,6 +28,13 @@ const sidebarItemsBySection = {
     { name: 'sidebar_tiers_create', href: '/dashboard/tiers/create', icon: 'pi-plus' },
   ],
 
+  catalogue: [
+    { name: 'sidebar_catalogue_formations', href: '/dashboard/catalogue', icon: 'pi-book' },
+    { name: 'sidebar_catalogue_create', href: '/dashboard/catalogue/create', icon: 'pi-plus' },
+    { name: 'sidebar_catalogue_missions', href: '/dashboard/catalogue/missions', icon: 'pi-briefcase' },
+    { name: 'sidebar_catalogue_missions_create', href: '/dashboard/catalogue/missions/create', icon: 'pi-plus' },
+  ],
+
   prestations: [
     { type: 'separator', label: 'Formations' },
     { name: 'sidebar_sessions_create', href: '/dashboard/sessions/create', icon: 'pi-plus', badge: 'blue' },
@@ -37,10 +45,8 @@ const sidebarItemsBySection = {
     { type: 'separator', label: 'Conseil' },
     { name: 'sidebar_conseil_create', href: '/dashboard/conseil/create', icon: 'pi-plus', badge: 'green' },
     { name: 'sidebar_conseil_list', href: '/dashboard/conseil', icon: 'pi-list' },
-    { type: 'separator', label: 'Catalogue' },
-    { name: 'sidebar_catalogue_formations', href: '/dashboard/catalogue', icon: 'pi-book' },
-    { name: 'sidebar_catalogue_missions', href: '/dashboard/catalogue/missions', icon: 'pi-briefcase' },
-    { name: 'sidebar_catalogue_create', href: '/dashboard/catalogue/create', icon: 'pi-plus' },
+    { type: 'separator', label: 'Apprenant' },
+    { name: 'sidebar_apprenant_create', href: '/dashboard/tiers/create?role=apprenant', icon: 'pi-user-plus' },
   ],
 
   facturation: [
@@ -88,6 +94,7 @@ const adminNavItem = { name: 'admin', href: '/dashboard/admin', icon: 'pi-shield
 const allNavItems = [
   { name: 'dashboard', href: '/dashboard', icon: 'pi-home' },
   { name: 'tiers', href: '/dashboard/tiers', icon: 'pi-users' },
+  { name: 'catalogue', href: '/dashboard/catalogue', icon: 'pi-book' },
   { name: 'prestations', href: '/dashboard/sessions', icon: 'pi-briefcase' },
   { name: 'facturation', href: '/dashboard/factures', icon: 'pi-wallet' },
   { name: 'qualite', href: '/dashboard/qualite', icon: 'pi-shield' },
@@ -143,10 +150,10 @@ export const useNavigation = () => {
     const path = route.path;
     if (path === '/dashboard') return 'accueil';
     if (path.startsWith('/dashboard/tiers') || path.startsWith('/dashboard/learners')) return 'tiers';
+    if (path.startsWith('/dashboard/catalogue')) return 'catalogue';
     if (path.startsWith('/dashboard/sessions') ||
         path.startsWith('/dashboard/coaching') ||
         path.startsWith('/dashboard/conseil') ||
-        path.startsWith('/dashboard/catalogue') ||
         path.startsWith('/dashboard/projets')) return 'prestations';
     if (path.startsWith('/dashboard/factures') ||
         path.startsWith('/dashboard/avoirs') ||

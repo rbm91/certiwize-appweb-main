@@ -15,6 +15,7 @@ import Message from 'primevue/message';
 import Dropdown from 'primevue/dropdown';
 import ProgressBar from 'primevue/progressbar';
 import { useConfirm } from 'primevue/useconfirm';
+import { useFormValidation } from '../../composables/useFormValidation';
 
 // Options pour le dropdown modalites
 const modalitesOptions = [
@@ -26,6 +27,7 @@ const modalitesOptions = [
 const confirm = useConfirm();
 const route = useRoute();
 const trainingStore = useTrainingStore();
+const { errors, validate, clearError } = useFormValidation();
 const { t } = useI18n();
 
 // État
@@ -162,6 +164,9 @@ onMounted(async () => {
 
 // Actions - Génération avec polling optimisé et barre de progression
 const handleGenerate = async () => {
+    const isValid = validate({ titre: form.value.titre });
+    if (!isValid) return;
+
     submitting.value = true;
     progressValue.value = 0;
     progressTime.value = 0;
@@ -371,7 +376,7 @@ const goBack = () => {
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="md:col-span-2">
                         <label class="font-semibold block mb-2">{{ t('training.fields.title') }}</label>
-                        <InputText v-model="form.titre" class="w-full text-lg" :placeholder="t('training.placeholders.title')" required />
+                        <InputText v-model="form.titre" class="w-full text-lg" :placeholder="t('training.placeholders.title')" :invalid="!!errors.titre" @input="clearError('titre')" />
                     </div>
                     <div>
                         <label class="block mb-2">{{ t('training.fields.updated_at') }}</label>

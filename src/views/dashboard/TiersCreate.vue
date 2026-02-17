@@ -6,6 +6,7 @@ import { useSirenLookup } from '../../composables/useSirenLookup';
 import { useConformityScore } from '../../composables/useConformityScore';
 import { useFileUpload } from '../../composables/useFileUpload';
 import { useNotification } from '../../composables/useNotification';
+import { useFormValidation } from '../../composables/useFormValidation';
 import ScoreBadge from '../../components/dashboard/ScoreBadge.vue';
 import {
   TIER_ROLE_OPTIONS, TIER_NATURES, TIER_STATUTS,
@@ -37,9 +38,16 @@ const { computeScore } = useConformityScore();
 const { uploading: fileUploading, uploadFile } = useFileUpload('tier-files');
 const { showSuccess, showError } = useNotification();
 
+// --- Pré-sélection via query param (avant le premier rendu) ---
+const ROLES_PERSONNE = ['apprenant', 'formateur'];
+const preselectedRole = !route.params.id && route.query.role ? route.query.role : null;
+const initialNature = preselectedRole && ROLES_PERSONNE.includes(preselectedRole)
+  ? 'personne_physique'
+  : 'organisation';
+
 // --- Form state ---
 const form = ref({
-  nature: 'organisation',
+  nature: initialNature,
   nom_affiche: '',
   email: '',
   telephone: '',
@@ -88,19 +96,30 @@ const form = ref({
   accord_cadre_url: '',
 });
 
-const selectedRoles = ref([]);
+const selectedRoles = ref(preselectedRole ? [preselectedRole] : []);
 const submitting = ref(false);
 const errorMsg = ref('');
+const { errors, validate, clearError } = useFormValidation();
 
 // --- Computed ---
 const isEditMode = computed(() => !!route.params.id);
 
-const pageTitle = computed(() =>
-  isEditMode.value ? 'Modifier le tiers' : 'Nouveau tiers'
-);
+const ROLE_LABELS = {
+  apprenant: 'Nouvel apprenant',
+  formateur: 'Nouveau formateur',
+  client: 'Nouveau client',
+  fournisseur: 'Nouveau fournisseur',
+};
+
+const pageTitle = computed(() => {
+  if (isEditMode.value) return 'Modifier le tiers';
+  if (preselectedRole && ROLE_LABELS[preselectedRole]) return ROLE_LABELS[preselectedRole];
+  return 'Nouveau tiers';
+});
 
 const isOrganisation = computed(() => form.value.nature === 'organisation');
 const isPersonne = computed(() => form.value.nature === 'personne_physique');
+const forcePersonne = computed(() => selectedRoles.value.includes('apprenant') || selectedRoles.value.includes('formateur'));
 
 const hasRole = (role) => selectedRoles.value.includes(role);
 
@@ -118,6 +137,17 @@ watch(
       form.value.nom_affiche = form.value.raison_sociale;
     }
   }
+);
+
+// --- Force nature personne_physique pour apprenant/formateur ---
+watch(
+  () => selectedRoles.value,
+  (roles) => {
+    if (roles.includes('apprenant') || roles.includes('formateur')) {
+      form.value.nature = 'personne_physique';
+    }
+  },
+  { deep: true }
 );
 
 // --- Reset irrelevant fields on nature change ---
@@ -167,6 +197,16 @@ const onFileUpload = async (event, field) => {
 
 // --- Submit ---
 const handleSubmit = async () => {
+  const rules = {};
+  if (isPersonne.value) {
+    rules.prenom = form.value.prenom;
+    rules.nom_famille = form.value.nom_famille;
+  } else if (isOrganisation.value) {
+    rules.raison_sociale = form.value.raison_sociale;
+  }
+  const isValid = validate(rules);
+  if (!isValid) return;
+
   submitting.value = true;
   errorMsg.value = '';
 
@@ -237,6 +277,7 @@ onMounted(async () => {
       errorMsg.value = 'Impossible de charger les donnees du tiers.';
     }
   }
+  // Pré-sélection via query param déjà gérée à l'initialisation (preselectedRole)
 });
 </script>
 
@@ -299,19 +340,25 @@ onMounted(async () => {
 
           <button
             type="button"
-            @click="form.nature = 'organisation'"
-            class="flex items-center gap-4 p-5 rounded-xl border-2 transition-all duration-200 cursor-pointer"
-            :class="isOrganisation
-              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 shadow-md'
-              : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-gray-300'"
+            @click="!forcePersonne && (form.nature = 'organisation')"
+            :disabled="forcePersonne"
+            class="flex items-center gap-4 p-5 rounded-xl border-2 transition-all duration-200"
+            :class="[
+              forcePersonne
+                ? 'opacity-40 cursor-not-allowed border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800'
+                : isOrganisation
+                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 shadow-md cursor-pointer'
+                  : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-gray-300 cursor-pointer'
+            ]"
           >
             <div class="w-12 h-12 rounded-xl flex items-center justify-center"
-                 :class="isOrganisation ? 'bg-blue-100 dark:bg-blue-800' : 'bg-gray-100 dark:bg-gray-700'">
-              <i class="pi pi-building text-xl" :class="isOrganisation ? 'text-blue-600' : 'text-gray-500'"></i>
+                 :class="isOrganisation && !forcePersonne ? 'bg-blue-100 dark:bg-blue-800' : 'bg-gray-100 dark:bg-gray-700'">
+              <i class="pi pi-building text-xl" :class="isOrganisation && !forcePersonne ? 'text-blue-600' : 'text-gray-500'"></i>
             </div>
             <div class="text-left">
               <p class="font-semibold text-gray-900 dark:text-white">Organisation</p>
-              <p class="text-sm text-gray-500">Entreprise, association, organisme</p>
+              <p v-if="forcePersonne" class="text-xs text-orange-500">Non applicable pour apprenant / formateur</p>
+              <p v-else class="text-sm text-gray-500">Entreprise, association, organisme</p>
             </div>
           </button>
         </div>
@@ -354,11 +401,11 @@ onMounted(async () => {
             <template v-if="isPersonne">
               <div class="flex flex-col gap-2">
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Prenom *</label>
-                <InputText v-model="form.prenom" placeholder="Prenom" />
+                <InputText v-model="form.prenom" placeholder="Prenom" :invalid="!!errors.prenom" @input="clearError('prenom')" />
               </div>
               <div class="flex flex-col gap-2">
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Nom de famille *</label>
-                <InputText v-model="form.nom_famille" placeholder="Nom de famille" />
+                <InputText v-model="form.nom_famille" placeholder="Nom de famille" :invalid="!!errors.nom_famille" @input="clearError('nom_famille')" />
               </div>
             </template>
 
@@ -366,7 +413,7 @@ onMounted(async () => {
             <template v-if="isOrganisation">
               <div class="flex flex-col gap-2">
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Raison sociale *</label>
-                <InputText v-model="form.raison_sociale" placeholder="Raison sociale" />
+                <InputText v-model="form.raison_sociale" placeholder="Raison sociale" :invalid="!!errors.raison_sociale" @input="clearError('raison_sociale')" />
               </div>
               <div class="flex flex-col gap-2">
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">SIREN</label>

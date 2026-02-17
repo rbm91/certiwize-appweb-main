@@ -18,6 +18,7 @@ import Textarea from 'primevue/textarea';
 // Composables & config
 import AddressAutocomplete from '../../components/common/AddressAutocomplete.vue';
 import { useFileUpload } from '../../composables/useFileUpload';
+import { useFormValidation } from '../../composables/useFormValidation';
 import { PROFILE_OPTIONS } from '../../config/constants';
 
 const route = useRoute();
@@ -32,6 +33,7 @@ const error = ref('');
 const success = ref(false);
 
 // --- File upload ---
+const { errors, validate, clearError } = useFormValidation();
 const { uploadFile: doUploadPhoto } = useFileUpload('tier-files');
 const onPhotoUpload = async (e) => {
   const result = await doUploadPhoto(e, 'learner-photo');
@@ -162,8 +164,12 @@ const loadLearner = async () => {
 
 // Save learner
 const saveLearner = async () => {
-  // Validation
-  if (!form.value.first_name || !form.value.last_name || !form.value.email) {
+  const isValid = validate({
+    first_name: form.value.first_name,
+    last_name: form.value.last_name,
+    email: form.value.email,
+  });
+  if (!isValid) {
     error.value = t('learner.error_required');
     return;
   }
@@ -255,18 +261,18 @@ onMounted(async () => {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="flex flex-col gap-2">
             <label class="font-semibold text-sm">{{ t('learner.fields.first_name') }} *</label>
-            <InputText v-model="form.first_name" :placeholder="t('learner.fields.first_name_ph')" />
+            <InputText v-model="form.first_name" :placeholder="t('learner.fields.first_name_ph')" :invalid="!!errors.first_name" @input="clearError('first_name')" />
           </div>
           <div class="flex flex-col gap-2">
             <label class="font-semibold text-sm">{{ t('learner.fields.last_name') }} *</label>
-            <InputText v-model="form.last_name" :placeholder="t('learner.fields.last_name_ph')" />
+            <InputText v-model="form.last_name" :placeholder="t('learner.fields.last_name_ph')" :invalid="!!errors.last_name" @input="clearError('last_name')" />
           </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="flex flex-col gap-2">
             <label class="font-semibold text-sm">{{ t('learner.fields.email') }} *</label>
-            <InputText v-model="form.email" type="email" :placeholder="t('learner.fields.email_ph')" />
+            <InputText v-model="form.email" type="email" :placeholder="t('learner.fields.email_ph')" :invalid="!!errors.email" @input="clearError('email')" />
           </div>
           <div class="flex flex-col gap-2">
             <label class="font-semibold text-sm">{{ t('learner.fields.phone') }}</label>

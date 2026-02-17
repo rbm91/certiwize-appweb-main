@@ -325,8 +325,11 @@ const scoreSeverity = computed(() => {
                     </div>
 
                     <!-- Prompt personnalisé -->
-                    <div class="flex flex-col gap-2">
-                        <label class="font-medium text-gray-700 dark:text-gray-300">{{ t('analysis.custom_prompt') }}</label>
+                    <div class="flex flex-col gap-2 p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 rounded-lg">
+                        <label class="text-sm font-medium text-purple-700 dark:text-purple-300">
+                            <i class="pi pi-sparkles mr-1"></i>
+                            {{ t('analysis.custom_prompt') }}
+                        </label>
                         <Textarea v-model="customPrompt" rows="3" :placeholder="t('analysis.custom_prompt_placeholder')"
                             class="w-full" :disabled="loading" autoResize />
                     </div>

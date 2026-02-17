@@ -7,6 +7,7 @@ import InputText from 'primevue/inputtext';
 import Password from 'primevue/password';
 import Button from 'primevue/button';
 import Message from 'primevue/message';
+import { useFormValidation } from '../composables/useFormValidation';
 
 const { t } = useI18n();
 const router = useRouter();
@@ -17,7 +18,12 @@ const password = ref('');
 const loading = ref(false);
 const errorMsg = ref('');
 
+const { errors, validate, clearError } = useFormValidation();
+
 const handleLogin = async () => {
+  const isValid = validate({ email: email.value, password: password.value });
+  if (!isValid) return;
+
   loading.value = true;
   errorMsg.value = '';
 
@@ -43,12 +49,12 @@ const handleLogin = async () => {
       <form @submit.prevent="handleLogin" class="space-y-6">
         <div class="flex flex-col gap-2">
           <label class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('login.email') }}</label>
-          <InputText v-model="email" type="email" class="w-full" required />
+          <InputText v-model="email" type="email" class="w-full" :invalid="!!errors.email" @input="clearError('email')" />
         </div>
 
         <div class="flex flex-col gap-2">
           <label class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('login.password') }}</label>
-          <Password v-model="password" :feedback="false" toggleMask class="w-full" inputClass="w-full" required />
+          <Password v-model="password" :feedback="false" toggleMask class="w-full" inputClass="w-full" :invalid="!!errors.password" @input="clearError('password')" />
         </div>
 
         <div class="text-right">

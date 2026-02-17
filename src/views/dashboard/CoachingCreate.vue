@@ -15,6 +15,7 @@ import Dropdown from 'primevue/dropdown';
 import Calendar from 'primevue/calendar';
 import InputNumber from 'primevue/inputnumber';
 import Message from 'primevue/message';
+import { useFormValidation } from '../../composables/useFormValidation';
 
 const router = useRouter();
 const route = useRoute();
@@ -27,6 +28,7 @@ const editId = computed(() => route.params.id || null);
 const isEdit = computed(() => !!editId.value);
 const loading = ref(false);
 const saving = ref(false);
+const { errors, validate, clearError } = useFormValidation();
 
 // -- Workflow step --
 const currentStep = ref(1);
@@ -100,6 +102,9 @@ const nextStep = () => {
 
 // -- Save --
 const handleSave = async () => {
+  const isValid = validate({ intitule: form.value.intitule, client_id: form.value.client_id });
+  if (!isValid) return;
+
   saving.value = true;
   try {
     const payload = {
@@ -230,7 +235,7 @@ onMounted(async () => {
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="flex flex-col gap-2 md:col-span-2">
               <label class="text-sm font-medium">Intitule du coaching *</label>
-              <InputText v-model="form.intitule" placeholder="Ex: Coaching leadership manager" class="w-full" />
+              <InputText v-model="form.intitule" placeholder="Ex: Coaching leadership manager" class="w-full" :invalid="!!errors.intitule" @input="clearError('intitule')" />
             </div>
             <div class="flex flex-col gap-2">
               <label class="text-sm font-medium">Client *</label>
@@ -242,6 +247,8 @@ onMounted(async () => {
                 placeholder="Selectionner un client"
                 filter
                 class="w-full"
+                :invalid="!!errors.client_id"
+                @change="clearError('client_id')"
               />
             </div>
             <div class="flex flex-col gap-2">

@@ -9,6 +9,7 @@ import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';
 import Button from 'primevue/button';
 import Message from 'primevue/message';
+import { useFormValidation } from '../../composables/useFormValidation';
 
 const router = useRouter();
 
@@ -45,11 +46,15 @@ const form = ref({
 
 const submitting = ref(false);
 const saved = ref(false);
+const { errors, validate, clearError } = useFormValidation();
 
 // -----------------------------------------------------------
 // Actions
 // -----------------------------------------------------------
 const handleSave = async () => {
+    const isValid = validate({ titre: form.value.titre });
+    if (!isValid) return;
+
     submitting.value = true;
     saved.value = false;
 
@@ -90,7 +95,7 @@ const handleCancel = () => {
 
                     <div>
                         <label class="font-semibold block mb-2">Titre de la mission</label>
-                        <InputText v-model="form.titre" class="w-full text-lg" placeholder="Ex : Audit organisationnel" required />
+                        <InputText v-model="form.titre" class="w-full text-lg" placeholder="Ex : Audit organisationnel" :invalid="!!errors.titre" @input="clearError('titre')" />
                     </div>
 
                     <div class="max-w-sm">

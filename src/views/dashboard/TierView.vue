@@ -152,8 +152,8 @@ const getAuditLabel = (type) => {
     suppression_role: 'Suppression role',
     ajout_document: 'Ajout document',
     suppression_document: 'Suppression document',
-    ajout_relation: 'Ajout relation',
-    suppression_relation: 'Suppression relation',
+    ajout_relation: 'Ajout contact',
+    suppression_relation: 'Suppression contact',
     archivage: 'Archivage',
   };
   return map[type] || type;
@@ -235,7 +235,7 @@ const addRelation = async () => {
 };
 
 const deleteRelation = async (relation) => {
-  if (!confirm('Supprimer cette relation ?')) return;
+  if (!confirm('Supprimer ce contact ?')) return;
   const personneId = relation.personne_id || tierId.value;
   const result = await store.removeRelation(relation.id, personneId);
   if (result.success) {
@@ -690,12 +690,12 @@ onMounted(async () => {
           </div>
         </TabPanel>
 
-        <!-- ===== TAB 3 : Relations ===== -->
-        <TabPanel header="Relations">
+        <!-- ===== TAB 3 : Contacts ===== -->
+        <TabPanel header="Contacts">
           <div class="space-y-6 p-2">
             <div class="flex justify-end mb-2">
               <Button
-                label="Ajouter une relation"
+                label="Ajouter un contact"
                 icon="pi pi-plus"
                 @click="openRelationDialog"
               />
@@ -707,7 +707,7 @@ onMounted(async () => {
                 :paginator="relations.length > 10"
                 :rows="10"
                 dataKey="id"
-                :emptyMessage="'Aucune relation pour ce tiers.'"
+                :emptyMessage="'Aucun contact pour ce tiers.'"
               >
                 <Column header="Tiers lie" style="min-width: 14rem">
                   <template #body="{ data }">
@@ -717,7 +717,7 @@ onMounted(async () => {
                     </div>
                   </template>
                 </Column>
-                <Column field="type_relation" header="Type de relation" sortable style="min-width: 12rem">
+                <Column field="type_relation" header="Type de contact" sortable style="min-width: 12rem">
                   <template #body="{ data }">
                     <Tag :value="getRelationTypeLabel(data.type_relation)" severity="info" class="text-xs" />
                   </template>
@@ -738,10 +738,10 @@ onMounted(async () => {
               </DataTable>
             </div>
 
-            <!-- Add relation dialog -->
+            <!-- Add contact dialog -->
             <Dialog
               v-model:visible="showRelationDialog"
-              header="Ajouter une relation"
+              header="Ajouter un contact"
               :modal="true"
               :style="{ width: '500px' }"
             >
@@ -771,7 +771,7 @@ onMounted(async () => {
                   />
                 </div>
                 <div class="flex flex-col gap-2">
-                  <label class="text-sm font-medium">Type de relation</label>
+                  <label class="text-sm font-medium">Type de contact</label>
                   <Dropdown
                     v-model="newRelation.type_relation"
                     :options="RELATION_TYPES"

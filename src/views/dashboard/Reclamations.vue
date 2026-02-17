@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useQualiteStore } from '../../stores/qualite';
 import { usePrestationsStore } from '../../stores/prestations';
-import { RECLAMATION_TYPES, RECLAMATION_GRAVITE, RECLAMATION_STATUTS } from '../../config/constants';
+import { RECLAMATION_TYPES, RECLAMATION_GRAVITE, RECLAMATION_STATUTS, RECLAMATION_MOTIFS } from '../../config/constants';
 
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
@@ -12,6 +12,7 @@ import Dropdown from 'primevue/dropdown';
 import Dialog from 'primevue/dialog';
 import Textarea from 'primevue/textarea';
 import InputText from 'primevue/inputtext';
+import DatePicker from 'primevue/datepicker';
 import { useToast } from 'primevue/usetoast';
 
 const qualiteStore = useQualiteStore();
@@ -22,6 +23,7 @@ const toast = useToast();
 const createDialog = ref(false);
 const newReclamation = ref({
   type_reclamation: null,
+  motif: null,
   gravite: null,
   prestation_id: null,
   description: '',
@@ -36,6 +38,7 @@ const selectedReclamation = ref(null);
 const clotureDialog = ref(false);
 const clotureReclamation = ref(null);
 const actionCorrective = ref('');
+const dateCloture = ref(new Date());
 
 // KPI
 const totalCount = computed(() => qualiteStore.activeReclamations.length);
@@ -81,6 +84,16 @@ const getGraviteSeverity = (gravite) => {
   return found ? found.severity : 'secondary';
 };
 
+const getMotifLabel = (motif) => {
+  const found = RECLAMATION_MOTIFS.find(m => m.value === motif);
+  return found ? found.label : motif || '-';
+};
+
+const getMotifSeverity = (motif) => {
+  const found = RECLAMATION_MOTIFS.find(m => m.value === motif);
+  return found ? found.severity : 'secondary';
+};
+
 const getStatutLabel = (statut) => {
   const found = RECLAMATION_STATUTS.find(s => s.value === statut);
   return found ? found.label : statut || '-';
@@ -107,6 +120,7 @@ const truncateText = (text, maxLength = 60) => {
 const openCreateDialog = () => {
   newReclamation.value = {
     type_reclamation: null,
+    motif: null,
     gravite: null,
     prestation_id: null,
     description: '',
@@ -116,8 +130,8 @@ const openCreateDialog = () => {
 };
 
 const handleCreate = async () => {
-  if (!newReclamation.value.type_reclamation || !newReclamation.value.gravite || !newReclamation.value.description) {
-    toast.add({ severity: 'warn', summary: 'Attention', detail: 'Veuillez remplir le type, la gravite et la description.', life: 3000 });
+  if (!newReclamation.value.type_reclamation || !newReclamation.value.motif || !newReclamation.value.gravite || !newReclamation.value.description) {
+    toast.add({ severity: 'warn', summary: 'Attention', detail: 'Veuillez remplir le type, le motif, la gravite et la description.', life: 3000 });
     return;
   }
 
@@ -146,6 +160,7 @@ const handleTraiter = async (reclamation) => {
 const openClotureDialog = (reclamation) => {
   clotureReclamation.value = reclamation;
   actionCorrective.value = '';
+  dateCloture.value = new Date();
   clotureDialog.value = true;
 };
 
@@ -167,7 +182,10 @@ const handleCloturer = async () => {
     return;
   }
 
-  const res = await qualiteStore.closeReclamation(clotureReclamation.value.id);
+  const isoDate = dateCloture.value instanceof Date
+    ? dateCloture.value.toISOString().split('T')[0]
+    : dateCloture.value;
+  const res = await qualiteStore.closeReclamation(clotureReclamation.value.id, isoDate);
   if (res.success) {
     toast.add({ severity: 'success', summary: 'Reclamation cloturee', life: 3000 });
     clotureDialog.value = false;
@@ -198,7 +216,7 @@ onMounted(async () => {
         Reclamations
       </h1>
       <Button
-        label="Nouvelle reclamation"
+        label="Nouveau ticket"
         icon="pi pi-plus"
         @click="openCreateDialog"
       />
@@ -303,6 +321,13 @@ onMounted(async () => {
         </template>
       </Column>
 
+      <!-- Motif -->
+      <Column field="motif" header="Motif" sortable style="min-width: 10rem">
+        <template #body="{ data }">
+          <Tag :value="getMotifLabel(data.motif)" :severity="getMotifSeverity(data.motif)" />
+        </template>
+      </Column>
+
       <!-- Gravite -->
       <Column field="gravite" header="Gravite" sortable style="min-width: 9rem">
         <template #body="{ data }">
@@ -373,7 +398,7 @@ onMounted(async () => {
     <!-- Dialog creation -->
     <Dialog
       v-model:visible="createDialog"
-      header="Nouvelle reclamation"
+      header="Nouveau ticket"
       :modal="true"
       :style="{ width: '34rem' }"
     >
@@ -386,6 +411,18 @@ onMounted(async () => {
             optionLabel="label"
             optionValue="value"
             placeholder="Selectionner un type"
+            class="w-full"
+          />
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="font-semibold text-surface-700 dark:text-surface-300">Motif *</label>
+          <Dropdown
+            v-model="newReclamation.motif"
+            :options="RECLAMATION_MOTIFS"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Selectionner un motif"
             class="w-full"
           />
         </div>
@@ -460,6 +497,10 @@ onMounted(async () => {
           <div>
             <p class="text-xs text-surface-400 mb-1">Type</p>
             <Tag :value="getTypeLabel(selectedReclamation.type_reclamation)" severity="info" />
+          </div>
+          <div>
+            <p class="text-xs text-surface-400 mb-1">Motif</p>
+            <Tag :value="getMotifLabel(selectedReclamation.motif)" :severity="getMotifSeverity(selectedReclamation.motif)" />
           </div>
           <div>
             <p class="text-xs text-surface-400 mb-1">Gravite</p>
@@ -539,6 +580,17 @@ onMounted(async () => {
             v-model="actionCorrective"
             rows="4"
             placeholder="Decrivez l'action corrective mise en place..."
+            class="w-full"
+          />
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="font-semibold text-surface-700 dark:text-surface-300">Date de cloture</label>
+          <DatePicker
+            v-model="dateCloture"
+            dateFormat="dd/mm/yy"
+            showIcon
+            placeholder="jj/mm/aaaa"
             class="w-full"
           />
         </div>

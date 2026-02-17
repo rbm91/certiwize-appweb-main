@@ -59,6 +59,8 @@
     "sidebar_conseil_list": "Conseil",
     "sidebar_catalogue_formations": "Formations",
     "sidebar_catalogue_missions": "Missions",
+    "sidebar_catalogue_missions_create": "Nouvelle mission",
+    "sidebar_apprenant_create": "Nouvel apprenant",
     "sidebar_factures_create": "Nouvelle facture",
     "sidebar_factures_list": "Factures",
     "sidebar_avoirs": "Avoirs",

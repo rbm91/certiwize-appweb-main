@@ -15,6 +15,7 @@ import Button from 'primevue/button';
 import Message from 'primevue/message';
 import Divider from 'primevue/divider';
 import { useToast } from 'primevue/usetoast';
+import { useFormValidation } from '../../composables/useFormValidation';
 
 const router = useRouter();
 const route = useRoute();
@@ -26,6 +27,7 @@ const toast = useToast();
 const saving = ref(false);
 const isEditMode = computed(() => !!route.params.id);
 const isLocked = ref(false);
+const { errors, validate, clearError } = useFormValidation();
 
 // Formulaire
 const form = ref({
@@ -96,19 +98,16 @@ watch(
 
 // Sauvegarde
 const handleSave = async () => {
+  const isValid = validate({
+    prestation_id: form.value.prestation_id,
+    montant_ht: form.value.montant_ht && form.value.montant_ht > 0,
+  });
+  if (!isValid) {
+    toast.add({ severity: 'warn', summary: 'Champs requis', detail: 'Veuillez remplir tous les champs obligatoires.', life: 4000 });
+    return;
+  }
+
   saving.value = true;
-
-  if (!form.value.prestation_id) {
-    toast.add({ severity: 'warn', summary: 'Champ requis', detail: 'Veuillez selectionner une prestation', life: 4000 });
-    saving.value = false;
-    return;
-  }
-
-  if (!form.value.montant_ht || form.value.montant_ht <= 0) {
-    toast.add({ severity: 'warn', summary: 'Champ requis', detail: 'Le montant HT doit etre superieur a zero', life: 4000 });
-    saving.value = false;
-    return;
-  }
 
   const payload = {
     prestation_id: form.value.prestation_id,
@@ -231,6 +230,8 @@ onMounted(async () => {
             :disabled="isLocked"
             filter
             class="w-full"
+            :invalid="!!errors.prestation_id"
+            @change="clearError('prestation_id')"
           />
         </div>
 
@@ -269,6 +270,8 @@ onMounted(async () => {
             locale="fr-FR"
             :min="0"
             :disabled="isLocked"
+            :invalid="!!errors.montant_ht"
+            @input="clearError('montant_ht')"
           />
         </div>
 

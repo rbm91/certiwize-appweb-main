@@ -10,6 +10,7 @@ import Column from 'primevue/column';
 import Tag from 'primevue/tag';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
+import Dialog from 'primevue/dialog';
 import SlowLoadingDialog from '../../components/dashboard/SlowLoadingDialog.vue';
 
 const props = defineProps({
@@ -54,9 +55,14 @@ const editMission = (id) => {
   router.push(`/dashboard/catalogue/missions/edit/${id}`);
 };
 
+// --- PDF preview dialog ---
+const pdfDialogVisible = ref(false);
+const currentPdfUrl = ref('');
+
 const viewPdf = (pdfUrl) => {
   if (pdfUrl) {
-    window.open(pdfUrl, '_blank');
+    currentPdfUrl.value = pdfUrl;
+    pdfDialogVisible.value = true;
   }
 };
 
@@ -161,12 +167,12 @@ onMounted(async () => {
                 <Button icon="pi pi-pencil" text rounded severity="info" @click="editFormation(slotProps.data.id)" v-tooltip.top="'Modifier'" />
                 <Button
                   v-if="slotProps.data.pdf_url"
-                  icon="pi pi-file-pdf"
+                  icon="pi pi-eye"
                   text
                   rounded
                   severity="success"
                   @click="viewPdf(slotProps.data.pdf_url)"
-                  v-tooltip.top="'Voir le PDF'"
+                  v-tooltip.top="'Aperçu PDF'"
                 />
                 <Button icon="pi pi-trash" text rounded severity="danger" @click="confirmDeleteFormation(slotProps.data.id)" v-tooltip.top="'Supprimer'" />
               </div>
@@ -227,4 +233,28 @@ onMounted(async () => {
       </TabPanel>
     </TabView>
   </div>
+
+  <!-- ====== DIALOG APERCU PDF ====== -->
+  <Dialog
+    v-model:visible="pdfDialogVisible"
+    modal
+    header="Aperçu de la formation"
+    :style="{ width: '90vw', maxWidth: '1100px' }"
+    :contentStyle="{ padding: 0, height: '80vh', display: 'flex', flexDirection: 'column' }"
+    :dismissableMask="true"
+  >
+    <div class="flex flex-col h-full">
+      <iframe
+        :src="currentPdfUrl"
+        class="w-full flex-grow border-0"
+        title="Aperçu PDF"
+      ></iframe>
+      <div class="flex justify-end gap-2 p-3 border-t border-gray-200 dark:border-gray-700">
+        <a :href="currentPdfUrl" download target="_blank" rel="noopener">
+          <Button label="Télécharger" icon="pi pi-download" severity="secondary" size="small" />
+        </a>
+        <Button label="Fermer" icon="pi pi-times" severity="secondary" size="small" @click="pdfDialogVisible = false" />
+      </div>
+    </div>
+  </Dialog>
 </template>

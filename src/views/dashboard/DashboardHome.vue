@@ -209,13 +209,13 @@ onMounted(async () => {
         </div>
       </div>
 
-      <!-- ═══ Zone 4 — Relation entrante (orange) ═══ -->
+      <!-- ═══ Zone 4 — Contact entrant (orange) ═══ -->
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border-l-4 border-orange-500 p-6">
         <div class="flex items-center gap-3 mb-5">
           <div class="w-10 h-10 bg-orange-500/10 rounded-full flex items-center justify-center">
             <i class="pi pi-phone text-orange-500 text-lg"></i>
           </div>
-          <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Relation entrante</h2>
+          <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Contact entrant</h2>
         </div>
 
         <div class="space-y-4">

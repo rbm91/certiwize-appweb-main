@@ -22,6 +22,7 @@ import Divider from 'primevue/divider';
 import DatePicker from 'primevue/datepicker';
 
 import { useI18n } from 'vue-i18n';
+import { useFormValidation } from '../../composables/useFormValidation';
 
 const store = useCompanyStore();
 const authStore = useAuthStore();
@@ -29,6 +30,7 @@ const { t } = useI18n();
 const saving = ref(false);
 const message = ref(null);
 const activeTab = ref(0);
+const { errors, validate, clearError } = useFormValidation();
 
 // Données locales du formulaire — structure CDC 6 onglets
 const form = ref({
@@ -146,6 +148,12 @@ onMounted(async () => {
 });
 
 const handleSave = async () => {
+  const isValid = validate({ name: form.value.name });
+  if (!isValid) {
+    message.value = { severity: 'error', text: 'La raison sociale est obligatoire.' };
+    return;
+  }
+
   saving.value = true;
   message.value = null;
   const res = await store.saveCompany(form.value);
@@ -203,7 +211,7 @@ const uploadQualiopi = async (event) => {
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
             <div class="flex flex-col gap-2">
               <label class="font-semibold">Raison sociale <span class="text-red-500">*</span></label>
-              <InputText v-model="form.name" placeholder="Nom de l'entreprise" />
+              <InputText v-model="form.name" placeholder="Nom de l'entreprise" :invalid="!!errors.name" @input="clearError('name')" />
             </div>
             <div class="flex flex-col gap-2">
               <label class="font-semibold">Forme juridique</label>

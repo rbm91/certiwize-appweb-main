@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n';
 import Password from 'primevue/password';
 import Button from 'primevue/button';
 import Message from 'primevue/message';
+import { useFormValidation } from '../composables/useFormValidation';
 
 const { t } = useI18n();
 const auth = useAuthStore();
@@ -13,7 +14,12 @@ const confirmPassword = ref('');
 const loading = ref(false);
 const msg = ref('');
 
+const { errors, validate, clearError } = useFormValidation();
+
 const handleUpdate = async () => {
+  const isValid = validate({ password: password.value, confirmPassword: confirmPassword.value });
+  if (!isValid) return;
+
   if (password.value !== confirmPassword.value) {
     msg.value = t('update_password.error_mismatch');
     return;
@@ -41,11 +47,11 @@ const handleUpdate = async () => {
       <form @submit.prevent="handleUpdate" class="space-y-4">
         <div class="flex flex-col gap-2">
           <label class="text-gray-700 dark:text-gray-300">{{ t('update_password.new_password') }}</label>
-          <Password v-model="password" toggleMask class="w-full" inputClass="w-full" required />
+          <Password v-model="password" toggleMask class="w-full" inputClass="w-full" :invalid="!!errors.password" @input="clearError('password')" />
         </div>
         <div class="flex flex-col gap-2">
           <label class="text-gray-700 dark:text-gray-300">{{ t('update_password.confirm_password') }}</label>
-          <Password v-model="confirmPassword" toggleMask :feedback="false" class="w-full" inputClass="w-full" required />
+          <Password v-model="confirmPassword" toggleMask :feedback="false" class="w-full" inputClass="w-full" :invalid="!!errors.confirmPassword" @input="clearError('confirmPassword')" />
         </div>
         <Message v-if="msg" severity="error" :closable="false">{{ msg }}</Message>
         <Button type="submit" :label="t('update_password.submit')" :loading="loading" class="w-full" />

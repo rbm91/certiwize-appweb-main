@@ -10,6 +10,8 @@ import Tag from 'primevue/tag';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
+import TabView from 'primevue/tabview';
+import TabPanel from 'primevue/tabpanel';
 import { useToast } from 'primevue/usetoast';
 
 const { t } = useI18n();
@@ -17,171 +19,270 @@ const authStore = useAuthStore();
 const router = useRouter();
 const toast = useToast();
 
-// Redirect if not admin
-if (!authStore.isAdmin) {
+// Rediriger si pas super-admin
+if (!authStore.isSuperAdmin) {
     router.push('/dashboard');
 }
 
-// State
+// ── Onglet actif ──
+const activeTab = ref(0);
+
+// ── State : Utilisateurs ──
 const users = ref([]);
-const loading = ref(true);
+const loadingUsers = ref(true);
 const searchQuery = ref('');
 
-// Role change dialog state
+// ── State : Organisations ──
+const organizations = ref([]);
+const loadingOrgs = ref(true);
+const searchOrgs = ref('');
+
+// ── State : Demandes RGPD ──
+const deletionRequests = ref([]);
+const exportRequests = ref([]);
+const loadingGdpr = ref(true);
+
+// ── State : Dialogue changement de rôle ──
 const showRoleDialog = ref(false);
 const selectedUser = ref(null);
 const newRole = ref('');
 const isUpdating = ref(false);
 
-// Stats
+// ── Stats ──
 const stats = ref({
     totalUsers: 0,
-    admins: 0,
-    regularUsers: 0,
-    recentUsers: 0
+    totalOrgs: 0,
+    superAdmins: 0,
+    recentUsers: 0,
+    pendingDeletions: 0
 });
 
-// Fetch all users from profiles table
+// ── Fetch utilisateurs ──
 const fetchUsers = async () => {
-    loading.value = true;
+    loadingUsers.value = true;
     try {
-        await authStore.refreshSession();
         const { data, error } = await supabase
             .from('profiles')
             .select('*')
             .order('updated_at', { ascending: false });
 
         if (error) throw error;
-
         users.value = data || [];
 
-        // Calculate stats
         stats.value.totalUsers = users.value.length;
-        stats.value.admins = users.value.filter(u => u.role === 'admin').length;
-        stats.value.regularUsers = users.value.filter(u => u.role !== 'admin').length;
+        stats.value.superAdmins = users.value.filter(u => u.role === 'super_admin').length;
 
-        // Users created in the last 30 days
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
         stats.value.recentUsers = users.value.filter(u => {
             const updatedAt = new Date(u.updated_at);
             return updatedAt >= thirtyDaysAgo;
         }).length;
-
-    } catch (error) {
-        console.error('Error fetching users:', error);
+    } catch (err) {
+        console.error('[AdminDashboard] Erreur fetch users:', err);
     } finally {
-        loading.value = false;
+        loadingUsers.value = false;
     }
 };
 
-// Filtered users based on search
+// ── Fetch organisations ──
+const fetchOrganizations = async () => {
+    loadingOrgs.value = true;
+    try {
+        const { data, error } = await supabase
+            .from('organizations')
+            .select('*, organization_members(count)')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        organizations.value = (data || []).map(org => ({
+            ...org,
+            member_count: org.organization_members?.[0]?.count || 0
+        }));
+
+        stats.value.totalOrgs = organizations.value.length;
+    } catch (err) {
+        console.error('[AdminDashboard] Erreur fetch orgs:', err);
+    } finally {
+        loadingOrgs.value = false;
+    }
+};
+
+// ── Fetch demandes RGPD ──
+const fetchGdprRequests = async () => {
+    loadingGdpr.value = true;
+    try {
+        const [delRes, expRes] = await Promise.all([
+            supabase
+                .from('data_deletion_requests')
+                .select('*, profiles:user_id(email, full_name)')
+                .order('requested_at', { ascending: false }),
+            supabase
+                .from('data_export_requests')
+                .select('*, profiles:user_id(email, full_name)')
+                .order('requested_at', { ascending: false })
+        ]);
+
+        if (delRes.error) throw delRes.error;
+        if (expRes.error) throw expRes.error;
+
+        deletionRequests.value = delRes.data || [];
+        exportRequests.value = expRes.data || [];
+
+        stats.value.pendingDeletions = deletionRequests.value.filter(r => r.status === 'pending').length;
+    } catch (err) {
+        console.error('[AdminDashboard] Erreur fetch RGPD:', err);
+    } finally {
+        loadingGdpr.value = false;
+    }
+};
+
+// ── Filtres ──
 const filteredUsers = computed(() => {
     if (!searchQuery.value) return users.value;
-    const query = searchQuery.value.toLowerCase();
-    return users.value.filter(user =>
-        user.full_name?.toLowerCase().includes(query) ||
-        user.email?.toLowerCase().includes(query)
+    const q = searchQuery.value.toLowerCase();
+    return users.value.filter(u =>
+        u.full_name?.toLowerCase().includes(q) ||
+        u.email?.toLowerCase().includes(q)
     );
 });
 
-// Role badge severity
+const filteredOrgs = computed(() => {
+    if (!searchOrgs.value) return organizations.value;
+    const q = searchOrgs.value.toLowerCase();
+    return organizations.value.filter(o =>
+        o.name?.toLowerCase().includes(q) ||
+        o.slug?.toLowerCase().includes(q)
+    );
+});
+
+// ── Utilitaires ──
 const getRoleSeverity = (role) => {
-    return role === 'admin' ? 'danger' : 'info';
+    if (role === 'super_admin') return 'danger';
+    return 'info';
 };
 
-// Format date
+const getRoleLabel = (role) => {
+    if (role === 'super_admin') return 'Super Admin';
+    return 'Utilisateur';
+};
+
+const getStatusSeverity = (status) => {
+    const map = { pending: 'warning', processing: 'info', approved: 'info', completed: 'success', expired: 'secondary', rejected: 'danger' };
+    return map[status] || 'secondary';
+};
+
+const getStatusLabel = (status) => {
+    const map = { pending: 'En attente', processing: 'En cours', approved: 'Approuvé', completed: 'Terminé', expired: 'Expiré', rejected: 'Refusé' };
+    return map[status] || status;
+};
+
 const formatDate = (dateString) => {
     if (!dateString) return '-';
     return new Date(dateString).toLocaleDateString('fr-FR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
     });
 };
 
-// Open role change dialog
+const isCurrentUser = (userId) => authStore.user?.id === userId;
+
+// ── Dialogue changement de rôle plateforme ──
 const openRoleChangeDialog = (user) => {
     selectedUser.value = user;
-    newRole.value = user.role === 'admin' ? 'user' : 'admin';
+    newRole.value = user.role === 'super_admin' ? 'user' : 'super_admin';
     showRoleDialog.value = true;
 };
 
-// Confirm role change
 const confirmRoleChange = async () => {
     if (!selectedUser.value) return;
-
     isUpdating.value = true;
     try {
-        await authStore.refreshSession();
         const { error } = await supabase
             .from('profiles')
-            .update({
-                role: newRole.value,
-                updated_at: new Date().toISOString()
-            })
+            .update({ role: newRole.value, updated_at: new Date().toISOString() })
             .eq('id', selectedUser.value.id);
 
         if (error) throw error;
 
-        // Update local state
-        const userIndex = users.value.findIndex(u => u.id === selectedUser.value.id);
-        if (userIndex !== -1) {
-            users.value[userIndex].role = newRole.value;
-            users.value[userIndex].updated_at = new Date().toISOString();
+        const idx = users.value.findIndex(u => u.id === selectedUser.value.id);
+        if (idx !== -1) {
+            users.value[idx].role = newRole.value;
+            users.value[idx].updated_at = new Date().toISOString();
         }
+        stats.value.superAdmins = users.value.filter(u => u.role === 'super_admin').length;
 
-        // Recalculate stats
-        stats.value.admins = users.value.filter(u => u.role === 'admin').length;
-        stats.value.regularUsers = users.value.filter(u => u.role !== 'admin').length;
-
-        toast.add({
-            severity: 'success',
-            summary: t('admin.role_change.success_title'),
-            detail: t('admin.role_change.success_message', {
-                name: selectedUser.value.full_name || selectedUser.value.email,
-                role: newRole.value === 'admin' ? t('admin.role_admin') : t('admin.role_user')
-            }),
-            life: 3000
-        });
-
+        toast.add({ severity: 'success', summary: 'Rôle modifié', detail: `${selectedUser.value.full_name || selectedUser.value.email} est maintenant ${getRoleLabel(newRole.value)}`, life: 3000 });
         showRoleDialog.value = false;
-        window.location.reload();
-    } catch (error) {
-        console.error('Error updating role:', error);
-        toast.add({
-            severity: 'error',
-            summary: t('admin.role_change.error_title'),
-            detail: t('admin.role_change.error_message'),
-            life: 5000
-        });
+    } catch (err) {
+        console.error('[AdminDashboard] Erreur changement rôle:', err);
+        toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de modifier le rôle', life: 5000 });
     } finally {
         isUpdating.value = false;
     }
 };
 
-// Cancel role change
 const cancelRoleChange = () => {
     showRoleDialog.value = false;
     selectedUser.value = null;
-    newRole.value = '';
 };
 
-// Check if user is the current logged-in user
-const isCurrentUser = (userId) => {
-    return authStore.user?.id === userId;
+// ── Actions organisations ──
+const toggleOrgActive = async (org) => {
+    try {
+        const { error } = await supabase
+            .from('organizations')
+            .update({ is_active: !org.is_active })
+            .eq('id', org.id);
+
+        if (error) throw error;
+
+        const idx = organizations.value.findIndex(o => o.id === org.id);
+        if (idx !== -1) organizations.value[idx].is_active = !org.is_active;
+
+        toast.add({ severity: 'success', summary: org.is_active ? 'Organisation désactivée' : 'Organisation activée', life: 3000 });
+    } catch (err) {
+        toast.add({ severity: 'error', summary: 'Erreur', detail: err.message, life: 5000 });
+    }
+};
+
+// ── Actions RGPD ──
+const updateDeletionStatus = async (request, newStatus) => {
+    try {
+        const { error } = await supabase
+            .from('data_deletion_requests')
+            .update({
+                status: newStatus,
+                processed_at: new Date().toISOString(),
+                processed_by: authStore.user.id
+            })
+            .eq('id', request.id);
+
+        if (error) throw error;
+
+        const idx = deletionRequests.value.findIndex(r => r.id === request.id);
+        if (idx !== -1) {
+            deletionRequests.value[idx].status = newStatus;
+            deletionRequests.value[idx].processed_at = new Date().toISOString();
+        }
+        stats.value.pendingDeletions = deletionRequests.value.filter(r => r.status === 'pending').length;
+
+        toast.add({ severity: 'success', summary: 'Statut mis à jour', detail: `Demande ${getStatusLabel(newStatus).toLowerCase()}`, life: 3000 });
+    } catch (err) {
+        toast.add({ severity: 'error', summary: 'Erreur', detail: err.message, life: 5000 });
+    }
 };
 
 onMounted(() => {
     fetchUsers();
+    fetchOrganizations();
+    fetchGdprRequests();
 });
 </script>
 
 <template>
-    <div class="space-y-8" v-if="authStore.isAdmin">
-        <!-- Header -->
+    <div class="space-y-8" v-if="authStore.isSuperAdmin">
+        <!-- En-tête -->
         <div>
             <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
                 {{ t('admin.title') }}
@@ -189,120 +290,255 @@ onMounted(() => {
             <p class="text-gray-500 dark:text-gray-400">{{ t('admin.subtitle') }}</p>
         </div>
 
-        <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border-l-4 border-primary">
-                <div class="text-gray-500 mb-1 text-sm font-medium">{{ t('admin.stats.total_users') }}</div>
-                <div class="text-3xl font-bold" v-if="!loading">{{ stats.totalUsers }}</div>
-                <div class="text-3xl font-bold animate-pulse" v-else>...</div>
+        <!-- Cartes statistiques -->
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border-l-4 border-primary">
+                <div class="text-gray-500 mb-1 text-sm font-medium">Utilisateurs</div>
+                <div class="text-3xl font-bold">{{ stats.totalUsers }}</div>
             </div>
-
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border-l-4 border-red-500">
-                <div class="text-gray-500 mb-1 text-sm font-medium">{{ t('admin.stats.admins') }}</div>
-                <div class="text-3xl font-bold" v-if="!loading">{{ stats.admins }}</div>
-                <div class="text-3xl font-bold animate-pulse" v-else>...</div>
+            <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border-l-4 border-blue-500">
+                <div class="text-gray-500 mb-1 text-sm font-medium">Organisations</div>
+                <div class="text-3xl font-bold">{{ stats.totalOrgs }}</div>
             </div>
-
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
-                <div class="text-gray-500 mb-1 text-sm font-medium">{{ t('admin.stats.regular_users') }}</div>
-                <div class="text-3xl font-bold" v-if="!loading">{{ stats.regularUsers }}</div>
-                <div class="text-3xl font-bold animate-pulse" v-else>...</div>
+            <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border-l-4 border-red-500">
+                <div class="text-gray-500 mb-1 text-sm font-medium">Super Admins</div>
+                <div class="text-3xl font-bold">{{ stats.superAdmins }}</div>
             </div>
-
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border-l-4 border-green-500">
-                <div class="text-gray-500 mb-1 text-sm font-medium">{{ t('admin.stats.recent_users') }}</div>
-                <div class="text-3xl font-bold" v-if="!loading">{{ stats.recentUsers }}</div>
-                <div class="text-3xl font-bold animate-pulse" v-else>...</div>
+            <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border-l-4 border-green-500">
+                <div class="text-gray-500 mb-1 text-sm font-medium">Nouveaux (30j)</div>
+                <div class="text-3xl font-bold">{{ stats.recentUsers }}</div>
+            </div>
+            <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border-l-4 border-orange-500">
+                <div class="text-gray-500 mb-1 text-sm font-medium">Suppressions en attente</div>
+                <div class="text-3xl font-bold">{{ stats.pendingDeletions }}</div>
             </div>
         </div>
 
-        <!-- Users Table -->
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm">
-            <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-                <h2 class="text-xl font-bold text-gray-900 dark:text-white">{{ t('admin.users_list') }}</h2>
+        <!-- Onglets -->
+        <TabView v-model:activeIndex="activeTab">
 
-                <div class="flex items-center gap-3">
-                    <span class="p-input-icon-left">
-                        <i class="pi pi-search" />
-                        <InputText
-                            v-model="searchQuery"
-                            :placeholder="t('admin.search_placeholder')"
-                            class="w-64"
-                        />
-                    </span>
+            <!-- ═══════════ Onglet Organisations ═══════════ -->
+            <TabPanel header="Organisations">
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm">
+                    <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">Organisations</h2>
+                        <span class="p-input-icon-left">
+                            <i class="pi pi-search" />
+                            <InputText v-model="searchOrgs" placeholder="Rechercher une organisation..." class="w-64" />
+                        </span>
+                    </div>
+
+                    <DataTable :value="filteredOrgs" :loading="loadingOrgs" paginator :rows="10" dataKey="id">
+                        <template #empty>Aucune organisation trouvée</template>
+
+                        <Column field="name" header="Nom" sortable style="width: 25%">
+                            <template #body="{ data }">
+                                <div>
+                                    <span class="font-medium">{{ data.name }}</span>
+                                    <span class="block text-xs text-gray-400">{{ data.slug }}</span>
+                                </div>
+                            </template>
+                        </Column>
+
+                        <Column field="member_count" header="Membres" sortable style="width: 15%">
+                            <template #body="{ data }">
+                                <div class="flex items-center gap-2">
+                                    <i class="pi pi-users text-gray-400"></i>
+                                    <span>{{ data.member_count }}</span>
+                                </div>
+                            </template>
+                        </Column>
+
+                        <Column field="is_active" header="Statut" sortable style="width: 15%">
+                            <template #body="{ data }">
+                                <Tag :value="data.is_active ? 'Active' : 'Désactivée'"
+                                     :severity="data.is_active ? 'success' : 'danger'" />
+                            </template>
+                        </Column>
+
+                        <Column field="created_at" header="Créée le" sortable style="width: 20%">
+                            <template #body="{ data }">
+                                <span class="text-sm text-gray-500">{{ formatDate(data.created_at) }}</span>
+                            </template>
+                        </Column>
+
+                        <Column header="Actions" style="width: 25%">
+                            <template #body="{ data }">
+                                <Button
+                                    :label="data.is_active ? 'Désactiver' : 'Activer'"
+                                    :icon="data.is_active ? 'pi pi-ban' : 'pi pi-check'"
+                                    :severity="data.is_active ? 'danger' : 'success'"
+                                    size="small"
+                                    outlined
+                                    @click="toggleOrgActive(data)"
+                                />
+                            </template>
+                        </Column>
+                    </DataTable>
                 </div>
-            </div>
+            </TabPanel>
 
-            <DataTable
-                :value="filteredUsers"
-                :loading="loading"
-                paginator
-                :rows="10"
-                tableStyle="min-width: 50rem"
-                dataKey="id"
-            >
-                <template #empty>{{ t('admin.empty_list') }}</template>
-                <template #loading>{{ t('admin.loading_data') }}</template>
+            <!-- ═══════════ Onglet Utilisateurs ═══════════ -->
+            <TabPanel header="Utilisateurs">
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm">
+                    <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">{{ t('admin.users_list') }}</h2>
+                        <span class="p-input-icon-left">
+                            <i class="pi pi-search" />
+                            <InputText v-model="searchQuery" :placeholder="t('admin.search_placeholder')" class="w-64" />
+                        </span>
+                    </div>
 
-                <Column field="full_name" :header="t('admin.columns.name')" sortable style="width: 20%">
-                    <template #body="slotProps">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                <i class="pi pi-user text-primary"></i>
-                            </div>
-                            <div>
-                                <span class="font-medium">{{ slotProps.data.full_name || '-' }}</span>
-                                <span v-if="isCurrentUser(slotProps.data.id)" class="ml-2 text-xs text-primary">({{ t('admin.you') }})</span>
-                            </div>
-                        </div>
-                    </template>
-                </Column>
+                    <DataTable :value="filteredUsers" :loading="loadingUsers" paginator :rows="10" dataKey="id">
+                        <template #empty>{{ t('admin.empty_list') }}</template>
 
-                <Column field="email" :header="t('admin.columns.email')" sortable style="width: 25%">
-                    <template #body="slotProps">
-                        <span class="text-gray-600 dark:text-gray-400">{{ slotProps.data.email || '-' }}</span>
-                    </template>
-                </Column>
+                        <Column field="full_name" :header="t('admin.columns.name')" sortable style="width: 20%">
+                            <template #body="{ data }">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                        <i class="pi pi-user text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <span class="font-medium">{{ data.full_name || '-' }}</span>
+                                        <span v-if="isCurrentUser(data.id)" class="ml-2 text-xs text-primary">({{ t('admin.you') }})</span>
+                                    </div>
+                                </div>
+                            </template>
+                        </Column>
 
-                <Column field="role" :header="t('admin.columns.role')" sortable style="width: 15%">
-                    <template #body="slotProps">
-                        <Tag
-                            :value="slotProps.data.role === 'admin' ? t('admin.role_admin') : t('admin.role_user')"
-                            :severity="getRoleSeverity(slotProps.data.role)"
-                        />
-                    </template>
-                </Column>
+                        <Column field="email" :header="t('admin.columns.email')" sortable style="width: 25%">
+                            <template #body="{ data }">
+                                <span class="text-gray-600 dark:text-gray-400">{{ data.email || '-' }}</span>
+                            </template>
+                        </Column>
 
-                <Column field="updated_at" :header="t('admin.columns.last_activity')" sortable style="width: 25%">
-                    <template #body="slotProps">
-                        <span class="text-sm text-gray-500">{{ formatDate(slotProps.data.updated_at) }}</span>
-                    </template>
-                </Column>
+                        <Column field="role" :header="t('admin.columns.role')" sortable style="width: 15%">
+                            <template #body="{ data }">
+                                <Tag :value="getRoleLabel(data.role)" :severity="getRoleSeverity(data.role)" />
+                            </template>
+                        </Column>
 
-                <Column :header="t('admin.columns.actions')" style="width: 15%">
-                    <template #body="slotProps">
-                        <Button
-                            v-if="!isCurrentUser(slotProps.data.id)"
-                            :label="slotProps.data.role === 'admin' ? t('admin.demote') : t('admin.promote')"
-                            :icon="slotProps.data.role === 'admin' ? 'pi pi-user' : 'pi pi-shield'"
-                            :severity="slotProps.data.role === 'admin' ? 'secondary' : 'warning'"
-                            size="small"
-                            @click="openRoleChangeDialog(slotProps.data)"
-                        />
-                        <span v-else class="text-xs text-gray-400 italic">-</span>
-                    </template>
-                </Column>
-            </DataTable>
-        </div>
+                        <Column field="updated_at" :header="t('admin.columns.last_activity')" sortable style="width: 25%">
+                            <template #body="{ data }">
+                                <span class="text-sm text-gray-500">{{ formatDate(data.updated_at) }}</span>
+                            </template>
+                        </Column>
 
-        <!-- Role Change Confirmation Dialog -->
-        <Dialog
-            v-model:visible="showRoleDialog"
-            :header="t('admin.role_change.dialog_title')"
-            :modal="true"
-            :closable="!isUpdating"
-            :style="{ width: '450px' }"
-        >
+                        <Column :header="t('admin.columns.actions')" style="width: 15%">
+                            <template #body="{ data }">
+                                <Button
+                                    v-if="!isCurrentUser(data.id)"
+                                    :label="data.role === 'super_admin' ? 'Rétrograder' : 'Promouvoir'"
+                                    :icon="data.role === 'super_admin' ? 'pi pi-user' : 'pi pi-shield'"
+                                    :severity="data.role === 'super_admin' ? 'secondary' : 'warning'"
+                                    size="small"
+                                    outlined
+                                    @click="openRoleChangeDialog(data)"
+                                />
+                                <span v-else class="text-xs text-gray-400 italic">-</span>
+                            </template>
+                        </Column>
+                    </DataTable>
+                </div>
+            </TabPanel>
+
+            <!-- ═══════════ Onglet RGPD ═══════════ -->
+            <TabPanel header="RGPD">
+                <div class="space-y-6">
+                    <!-- Demandes de suppression -->
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm">
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                            <i class="pi pi-trash mr-2"></i>Demandes de suppression
+                        </h2>
+
+                        <DataTable :value="deletionRequests" :loading="loadingGdpr" paginator :rows="10" dataKey="id">
+                            <template #empty>Aucune demande de suppression</template>
+
+                            <Column header="Utilisateur" style="width: 25%">
+                                <template #body="{ data }">
+                                    <div>
+                                        <span class="font-medium">{{ data.profiles?.full_name || '-' }}</span>
+                                        <span class="block text-xs text-gray-400">{{ data.profiles?.email }}</span>
+                                    </div>
+                                </template>
+                            </Column>
+
+                            <Column field="reason" header="Raison" style="width: 25%">
+                                <template #body="{ data }">
+                                    <span class="text-sm text-gray-600">{{ data.reason || '-' }}</span>
+                                </template>
+                            </Column>
+
+                            <Column field="status" header="Statut" style="width: 15%">
+                                <template #body="{ data }">
+                                    <Tag :value="getStatusLabel(data.status)" :severity="getStatusSeverity(data.status)" />
+                                </template>
+                            </Column>
+
+                            <Column field="requested_at" header="Date" sortable style="width: 15%">
+                                <template #body="{ data }">
+                                    <span class="text-sm text-gray-500">{{ formatDate(data.requested_at) }}</span>
+                                </template>
+                            </Column>
+
+                            <Column header="Actions" style="width: 20%">
+                                <template #body="{ data }">
+                                    <div v-if="data.status === 'pending'" class="flex gap-2">
+                                        <Button label="Approuver" icon="pi pi-check" severity="success" size="small" outlined @click="updateDeletionStatus(data, 'approved')" />
+                                        <Button label="Refuser" icon="pi pi-times" severity="danger" size="small" outlined @click="updateDeletionStatus(data, 'rejected')" />
+                                    </div>
+                                    <span v-else-if="data.status === 'approved'">
+                                        <Button label="Terminé" icon="pi pi-check-circle" severity="success" size="small" outlined @click="updateDeletionStatus(data, 'completed')" />
+                                    </span>
+                                    <span v-else class="text-xs text-gray-400 italic">Traité</span>
+                                </template>
+                            </Column>
+                        </DataTable>
+                    </div>
+
+                    <!-- Demandes d'export -->
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm">
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                            <i class="pi pi-download mr-2"></i>Demandes d'export
+                        </h2>
+
+                        <DataTable :value="exportRequests" :loading="loadingGdpr" paginator :rows="10" dataKey="id">
+                            <template #empty>Aucune demande d'export</template>
+
+                            <Column header="Utilisateur" style="width: 30%">
+                                <template #body="{ data }">
+                                    <div>
+                                        <span class="font-medium">{{ data.profiles?.full_name || '-' }}</span>
+                                        <span class="block text-xs text-gray-400">{{ data.profiles?.email }}</span>
+                                    </div>
+                                </template>
+                            </Column>
+
+                            <Column field="status" header="Statut" style="width: 20%">
+                                <template #body="{ data }">
+                                    <Tag :value="getStatusLabel(data.status)" :severity="getStatusSeverity(data.status)" />
+                                </template>
+                            </Column>
+
+                            <Column field="requested_at" header="Date" sortable style="width: 25%">
+                                <template #body="{ data }">
+                                    <span class="text-sm text-gray-500">{{ formatDate(data.requested_at) }}</span>
+                                </template>
+                            </Column>
+
+                            <Column field="completed_at" header="Traité le" style="width: 25%">
+                                <template #body="{ data }">
+                                    <span class="text-sm text-gray-500">{{ data.completed_at ? formatDate(data.completed_at) : '-' }}</span>
+                                </template>
+                            </Column>
+                        </DataTable>
+                    </div>
+                </div>
+            </TabPanel>
+        </TabView>
+
+        <!-- Dialogue changement de rôle -->
+        <Dialog v-model:visible="showRoleDialog" header="Modifier le rôle plateforme" :modal="true" :closable="!isUpdating" :style="{ width: '450px' }">
             <div class="flex flex-col gap-4" v-if="selectedUser">
                 <div class="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                     <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -316,21 +552,13 @@ onMounted(() => {
 
                 <div class="flex items-center justify-center gap-4 py-4">
                     <div class="text-center">
-                        <Tag
-                            :value="selectedUser.role === 'admin' ? t('admin.role_admin') : t('admin.role_user')"
-                            :severity="getRoleSeverity(selectedUser.role)"
-                            class="text-lg px-4 py-2"
-                        />
-                        <p class="text-xs text-gray-500 mt-1">{{ t('admin.role_change.current') }}</p>
+                        <Tag :value="getRoleLabel(selectedUser.role)" :severity="getRoleSeverity(selectedUser.role)" class="text-lg px-4 py-2" />
+                        <p class="text-xs text-gray-500 mt-1">Actuel</p>
                     </div>
                     <i class="pi pi-arrow-right text-2xl text-gray-400"></i>
                     <div class="text-center">
-                        <Tag
-                            :value="newRole === 'admin' ? t('admin.role_admin') : t('admin.role_user')"
-                            :severity="getRoleSeverity(newRole)"
-                            class="text-lg px-4 py-2"
-                        />
-                        <p class="text-xs text-gray-500 mt-1">{{ t('admin.role_change.new') }}</p>
+                        <Tag :value="getRoleLabel(newRole)" :severity="getRoleSeverity(newRole)" class="text-lg px-4 py-2" />
+                        <p class="text-xs text-gray-500 mt-1">Nouveau</p>
                     </div>
                 </div>
 
@@ -338,7 +566,9 @@ onMounted(() => {
                     <div class="flex items-start gap-3">
                         <i class="pi pi-exclamation-triangle text-yellow-600 dark:text-yellow-400 mt-0.5"></i>
                         <p class="text-sm text-yellow-700 dark:text-yellow-300">
-                            {{ newRole === 'admin' ? t('admin.role_change.warning_promote') : t('admin.role_change.warning_demote') }}
+                            {{ newRole === 'super_admin'
+                                ? 'Cet utilisateur aura accès à toutes les données de toutes les organisations.'
+                                : 'Cet utilisateur perdra son accès super-admin et ne verra plus que les données de ses organisations.' }}
                         </p>
                     </div>
                 </div>
@@ -346,25 +576,16 @@ onMounted(() => {
 
             <template #footer>
                 <div class="flex justify-end gap-2">
-                    <Button
-                        :label="t('common.cancel')"
-                        severity="secondary"
-                        @click="cancelRoleChange"
-                        :disabled="isUpdating"
-                    />
-                    <Button
-                        :label="t('admin.role_change.confirm')"
-                        :icon="isUpdating ? 'pi pi-spin pi-spinner' : 'pi pi-check'"
-                        :severity="newRole === 'admin' ? 'warning' : 'secondary'"
-                        @click="confirmRoleChange"
-                        :disabled="isUpdating"
-                    />
+                    <Button label="Annuler" severity="secondary" @click="cancelRoleChange" :disabled="isUpdating" />
+                    <Button label="Confirmer" :icon="isUpdating ? 'pi pi-spin pi-spinner' : 'pi pi-check'"
+                            :severity="newRole === 'super_admin' ? 'warning' : 'secondary'"
+                            @click="confirmRoleChange" :disabled="isUpdating" />
                 </div>
             </template>
         </Dialog>
     </div>
 
-    <!-- Access Denied -->
+    <!-- Accès refusé -->
     <div v-else class="flex items-center justify-center h-64">
         <div class="text-center">
             <i class="pi pi-lock text-6xl text-gray-300 mb-4"></i>

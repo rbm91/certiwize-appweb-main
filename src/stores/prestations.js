@@ -66,11 +66,13 @@ export const usePrestationsStore = defineStore('prestations', () => {
   // ── Fetch ──
 
   const fetchPrestations = async (type = null) => {
-    if (!auth.user?.id) return;
+    if (!auth.currentOrganization?.id && !auth.isSuperAdmin) return;
 
     loading.value = true;
     error.value = null;
     try {
+      const orgId = auth.currentOrganization?.id;
+
       let query = supabase
         .from('prestations')
         .select(`
@@ -87,8 +89,8 @@ export const usePrestationsStore = defineStore('prestations', () => {
         query = query.eq('type', type);
       }
 
-      if (auth.userRole !== 'admin') {
-        query = query.eq('user_id', auth.user.id);
+      if (!auth.isSuperAdmin) {
+        query = query.eq('organization_id', orgId);
       }
 
       const { data, error: err } = await query;
@@ -104,8 +106,12 @@ export const usePrestationsStore = defineStore('prestations', () => {
   };
 
   const fetchPrestationById = async (id) => {
+    if (!auth.currentOrganization?.id && !auth.isSuperAdmin) return;
+
     try {
-      const { data, error: err } = await supabase
+      const orgId = auth.currentOrganization?.id;
+
+      let query = supabase
         .from('prestations')
         .select(`
           *,
@@ -116,8 +122,13 @@ export const usePrestationsStore = defineStore('prestations', () => {
           prestation_apprenants(*, apprenant:apprenant_id(id, nom_affiche, email, date_naissance, situation_handicap)),
           prestation_documents(*)
         `)
-        .eq('id', id)
-        .single();
+        .eq('id', id);
+
+      if (!auth.isSuperAdmin) {
+        query = query.eq('organization_id', orgId);
+      }
+
+      const { data, error: err } = await query.single();
 
       if (err) throw err;
       currentPrestation.value = data;
@@ -143,6 +154,7 @@ export const usePrestationsStore = defineStore('prestations', () => {
         etape_courante: 1,
         statut: 'brouillon',
         workflow_data: prestationData.workflow_data || {},
+        organization_id: auth.currentOrganization?.id,
         user_id: auth.user.id,
       });
 

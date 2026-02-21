@@ -87,6 +87,20 @@ const DEFAULT_COMPANY = {
   accountant_info: {},
 };
 
+/**
+ * Nettoyage du payload avant envoi à Supabase.
+ * Supprime les clés undefined pour éviter les erreurs.
+ */
+const cleanPayload = (obj) => {
+  const cleaned = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value !== undefined) {
+      cleaned[key] = value;
+    }
+  }
+  return cleaned;
+};
+
 export const useCompanyStore = defineStore('company', () => {
   const company = ref(null);
   const loading = ref(false);
@@ -102,14 +116,18 @@ export const useCompanyStore = defineStore('company', () => {
 
   /**
    * Initialiser les données (récupérer ou créer une entrée vide)
+   * Filtré par organization_id au lieu de user_id
    */
   const fetchCompany = async () => {
+    const orgId = auth.currentOrganization?.id;
+    if (!orgId) return;
+
     loading.value = true;
     try {
       const { data, error } = await supabase
         .from('companies')
         .select('*')
-        .eq('user_id', auth.user.id)
+        .eq('organization_id', orgId)
         .single();
 
       if (error && error.code !== 'PGRST116') throw error;
@@ -120,12 +138,13 @@ export const useCompanyStore = defineStore('company', () => {
       } else {
         company.value = {
           ...DEFAULT_COMPANY,
-          user_id: auth.user.id,
+          organization_id: orgId,
+          user_id: auth.user?.id,
         };
       }
     } catch (err) {
       // Erreur silencieuse — les données par défaut seront utilisées
-      company.value = { ...DEFAULT_COMPANY, user_id: auth.user?.id };
+      company.value = { ...DEFAULT_COMPANY, organization_id: orgId, user_id: auth.user?.id };
     } finally {
       loading.value = false;
     }
@@ -133,23 +152,26 @@ export const useCompanyStore = defineStore('company', () => {
 
   /**
    * Sauvegarde complète (upsert)
+   * Conflit sur organization_id au lieu de user_id
    */
   const saveCompany = async (formValues) => {
+    const orgId = auth.currentOrganization?.id;
     loading.value = true;
     try {
-      const payload = {
+      const payload = cleanPayload({
         ...formValues,
+        organization_id: orgId,
         user_id: auth.user?.id,
         updated_at: new Date()
-      };
+      });
 
-      if (!payload.user_id) {
-        throw new Error("User ID is missing. Are you logged in?");
+      if (!payload.organization_id) {
+        throw new Error("Aucune organisation sélectionnée.");
       }
 
       const { data, error } = await supabase
         .from('companies')
-        .upsert(payload, { onConflict: 'user_id' })
+        .upsert(payload, { onConflict: 'organization_id' })
         .select()
         .single();
 
@@ -166,10 +188,9 @@ export const useCompanyStore = defineStore('company', () => {
 
   /**
    * Sauvegarde partielle — met à jour uniquement certains champs
-   * Utile pour sauvegarder un onglet à la fois
    */
   const savePartial = async (partialValues) => {
-    if (!company.value?.id && !company.value?.user_id) {
+    if (!company.value?.id && !company.value?.organization_id) {
       return { success: false, error: 'Aucune entreprise chargée' };
     }
 

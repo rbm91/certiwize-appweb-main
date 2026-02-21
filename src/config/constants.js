@@ -70,11 +70,24 @@ export const DOCUMENT_COLUMNS = {
   [DOCUMENT_TYPES.BOOKLET]: 'livret',
 };
 
-// Rôles utilisateur
+// Rôles utilisateur (niveau plateforme)
 export const USER_ROLES = {
-  ADMIN: 'admin',
+  SUPER_ADMIN: 'super_admin',
   USER: 'user',
 };
+
+// Rôles au sein d'une organisation
+export const ORG_ROLES = {
+  OWNER: 'owner',
+  ADMIN: 'admin',
+  MEMBER: 'member',
+};
+
+export const ORG_ROLE_OPTIONS = [
+  { label: 'Propriétaire', value: 'owner', severity: 'danger' },
+  { label: 'Administrateur', value: 'admin', severity: 'warn' },
+  { label: 'Membre', value: 'member', severity: 'info' },
+];
 
 // Configuration de génération de séquences
 export const SEQUENCE = {
@@ -231,7 +244,7 @@ export const PRESTATION_STATUTS = [
   { label: 'Annulée', value: 'annulee', severity: 'danger' },
 ];
 
-// Prestations — Étapes workflow Formation (8 étapes)
+// Prestations — Étapes workflow Formation (10 étapes)
 export const FORMATION_WORKFLOW_STEPS = [
   { step: 1, label: 'Identification', icon: 'pi-user' },
   { step: 2, label: 'Analyse du besoin', icon: 'pi-search' },
@@ -240,7 +253,9 @@ export const FORMATION_WORKFLOW_STEPS = [
   { step: 5, label: 'Réalisation', icon: 'pi-play' },
   { step: 6, label: 'Évaluation', icon: 'pi-check-circle' },
   { step: 7, label: 'Satisfaction', icon: 'pi-star' },
-  { step: 8, label: 'Clôture', icon: 'pi-lock' },
+  { step: 8, label: 'Facturation', icon: 'pi-wallet' },
+  { step: 9, label: 'Clôture', icon: 'pi-lock' },
+  { step: 10, label: 'Archivé', icon: 'pi-box' },
 ];
 
 // Prestations — Étapes workflow Coaching (6 étapes)
@@ -515,6 +530,8 @@ export default {
   DOCUMENT_TYPES,
   DOCUMENT_COLUMNS,
   USER_ROLES,
+  ORG_ROLES,
+  ORG_ROLE_OPTIONS,
   SEQUENCE,
   VALIDATION,
   ERROR_MESSAGES,

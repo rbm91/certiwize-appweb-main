@@ -73,7 +73,7 @@ export const useDataStore = defineStore('data', () => {
     // Les nouveaux composants doivent utiliser useTiersStore.
 
     const fetchTiers = async () => {
-        if (!auth.user?.id) {
+        if (!auth.currentOrganization?.id && !auth.isSuperAdmin) {
             loading.value = false;
             return;
         }
@@ -81,15 +81,15 @@ export const useDataStore = defineStore('data', () => {
         loading.value = true;
         error.value = null;
         try {
-            const checkAdmin = auth.userRole === 'admin';
+            const orgId = auth.currentOrganization?.id;
 
             let query = supabase
                 .from('tiers')
                 .select('*, profiles(email)')
                 .order('created_at', { ascending: false });
 
-            if (!checkAdmin) {
-                query = query.eq('user_id', auth.user.id);
+            if (!auth.isSuperAdmin) {
+                query = query.eq('organization_id', orgId);
             }
 
             const { data, error: err } = await query;
@@ -111,6 +111,7 @@ export const useDataStore = defineStore('data', () => {
                 ...tierData,
                 code_client: tierData.code_client || generateCode('CU'),
                 code_fournisseur: tierData.code_fournisseur || generateCode('SU'),
+                organization_id: auth.currentOrganization?.id,
                 user_id: auth.user.id
             });
 

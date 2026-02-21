@@ -29,9 +29,13 @@ export const useEvaluationsStore = defineStore('evaluations', () => {
   // ── Fetch ──
 
   const fetchExecutions = async (prestationId = null) => {
+    if (!auth.currentOrganization?.id && !auth.isSuperAdmin) return;
+
     loading.value = true;
     error.value = null;
     try {
+      const orgId = auth.currentOrganization?.id;
+
       let query = supabase
         .from('evaluation_executions')
         .select(`
@@ -39,6 +43,10 @@ export const useEvaluationsStore = defineStore('evaluations', () => {
           prestation:prestation_id(id, intitule, reference, type)
         `)
         .order('created_at', { ascending: false });
+
+      if (orgId) {
+        query = query.eq('organization_id', orgId);
+      }
 
       if (prestationId) {
         query = query.eq('prestation_id', prestationId);
@@ -74,6 +82,7 @@ export const useEvaluationsStore = defineStore('evaluations', () => {
           type_evaluation: typeEvaluation,
           seuil_session: seuilSession,
           statut: 'non_envoye',
+          organization_id: auth.currentOrganization?.id,
           user_id: auth.user.id,
         })
         .select()
@@ -227,6 +236,7 @@ export const useEvaluationsStore = defineStore('evaluations', () => {
               seuil_applique: seuilApplicable,
               valeur_obtenue: Math.round(moyenne * 100) / 100,
               statut: 'ouvert',
+              organization_id: auth.currentOrganization?.id,
               user_id: auth.user.id,
             })
             .select()
@@ -252,6 +262,7 @@ export const useEvaluationsStore = defineStore('evaluations', () => {
               seuil_applique: seuilTauxReponse,
               valeur_obtenue: Math.round(tauxReponse * 100) / 100,
               statut: 'ouvert',
+              organization_id: auth.currentOrganization?.id,
               user_id: auth.user.id,
             })
             .select()
@@ -273,6 +284,7 @@ export const useEvaluationsStore = defineStore('evaluations', () => {
               type_signal: 'question_critique',
               description_probleme: `Question critique détectée: ${qc.question || 'N/A'}`,
               statut: 'ouvert',
+              organization_id: auth.currentOrganization?.id,
               user_id: auth.user.id,
             })
             .select()
@@ -294,11 +306,21 @@ export const useEvaluationsStore = defineStore('evaluations', () => {
    * Retourne les indicateurs consolidés pour l'ensemble des évaluations
    */
   const getIndicateursConsolides = async () => {
+    if (!auth.currentOrganization?.id && !auth.isSuperAdmin) return {};
+
     try {
-      const { data, error: err } = await supabase
+      const orgId = auth.currentOrganization?.id;
+
+      let query = supabase
         .from('evaluation_executions')
         .select('type_evaluation, resultats, statut')
         .eq('statut', 'cloture');
+
+      if (orgId) {
+        query = query.eq('organization_id', orgId);
+      }
+
+      const { data, error: err } = await query;
 
       if (err) throw err;
 
@@ -346,15 +368,23 @@ export const useEvaluationsStore = defineStore('evaluations', () => {
       }
 
       // Compter les signaux
-      const { count: signauxOuverts } = await supabase
+      let signauxOuvertsQuery = supabase
         .from('signaux_qualite')
         .select('*', { count: 'exact', head: true })
         .eq('statut', 'ouvert');
+      if (orgId) {
+        signauxOuvertsQuery = signauxOuvertsQuery.eq('organization_id', orgId);
+      }
+      const { count: signauxOuverts } = await signauxOuvertsQuery;
 
-      const { count: signauxClos } = await supabase
+      let signauxClosQuery = supabase
         .from('signaux_qualite')
         .select('*', { count: 'exact', head: true })
         .eq('statut', 'clos');
+      if (orgId) {
+        signauxClosQuery = signauxClosQuery.eq('organization_id', orgId);
+      }
+      const { count: signauxClos } = await signauxClosQuery;
 
       result.signaux = { ouverts: signauxOuverts || 0, clos: signauxClos || 0 };
 

@@ -16,7 +16,12 @@ const topNavItems = [
   { name: 'prestations', href: '/dashboard/sessions', icon: 'pi-briefcase' },
   { name: 'facturation', href: '/dashboard/factures', icon: 'pi-wallet' },
   { name: 'qualite', href: '/dashboard/qualite', icon: 'pi-shield' },
+  { name: 'veille', href: '/dashboard/veille', icon: 'pi-eye' },
   { name: 'assistant_ia', href: '/dashboard/assistant-ia', icon: 'pi-microphone' },
+  { name: 'bpf', href: '/dashboard/bpf', icon: 'pi-file-export' },
+  { name: 'audit_blanc', href: 'https://qualiopi.genedoc.fr/', icon: 'pi-search', external: true },
+  { name: 'elearning', href: '/dashboard/elearning', icon: 'pi-graduation-cap' },
+  { name: 'parrainage', href: '/dashboard/parrainage', icon: 'pi-gift' },
 ];
 
 // Sous-éléments de la sidebar contextuelle par section
@@ -36,7 +41,7 @@ const sidebarItemsBySection = {
   ],
 
   prestations: [
-    { type: 'separator', label: 'Formations' },
+    { type: 'separator', label: 'Formation' },
     { name: 'sidebar_sessions_create', href: '/dashboard/sessions/create', icon: 'pi-plus', badge: 'blue' },
     { name: 'sidebar_sessions_list', href: '/dashboard/sessions', icon: 'pi-list' },
     { type: 'separator', label: 'Coaching' },
@@ -67,10 +72,20 @@ const sidebarItemsBySection = {
     { name: 'sidebar_qualite_audit_blanc', href: 'https://qualiopi-modelisation.genedoc.fr/', icon: 'pi-link', external: true },
   ],
 
+  veille: [
+    { name: 'sidebar_veille_all', href: '/dashboard/veille', icon: 'pi-list' },
+  ],
+
   assistant_ia: [
     { name: 'sidebar_ia_historique', href: '/dashboard/assistant-ia/historique', icon: 'pi-history' },
     { name: 'sidebar_ia_stats', href: '/dashboard/assistant-ia/stats', icon: 'pi-chart-bar' },
   ],
+
+  bpf: [],
+
+  elearning: [],
+
+  parrainage: [],
 };
 
 // Items fixes en bas du sidebar (toujours visibles)
@@ -83,12 +98,13 @@ const fixedSideNavItems = [
       { name: 'company_settings', href: '/dashboard/company', icon: 'pi-building' },
       { name: 'users_groups', href: '/dashboard/users', icon: 'pi-users' },
       { name: 'doc_types_settings', href: '/dashboard/doc-types-settings', icon: 'pi-file-edit' },
-      { name: 'workflow_settings', href: '/dashboard/workflow-settings', icon: 'pi-sliders-h', adminOnly: true },
+      { name: 'workflow_settings', href: '/dashboard/workflow-settings', icon: 'pi-sliders-h', orgAdminOnly: true },
+      { name: 'gdpr_settings', href: '/dashboard/gdpr', icon: 'pi-lock' },
     ],
   },
 ];
 
-const adminNavItem = { name: 'admin', href: '/dashboard/admin', icon: 'pi-shield', adminOnly: true };
+const adminNavItem = { name: 'admin', href: '/dashboard/admin', icon: 'pi-shield', superAdminOnly: true };
 
 // Tous les items pour le mode sidebar classique
 const allNavItems = [
@@ -98,7 +114,12 @@ const allNavItems = [
   { name: 'prestations', href: '/dashboard/sessions', icon: 'pi-briefcase' },
   { name: 'facturation', href: '/dashboard/factures', icon: 'pi-wallet' },
   { name: 'qualite', href: '/dashboard/qualite', icon: 'pi-shield' },
+  { name: 'veille', href: '/dashboard/veille', icon: 'pi-eye' },
   { name: 'assistant_ia', href: '/dashboard/assistant-ia', icon: 'pi-microphone' },
+  { name: 'bpf', href: '/dashboard/bpf', icon: 'pi-file-export' },
+  { name: 'audit_blanc', href: 'https://qualiopi.genedoc.fr/', icon: 'pi-search', external: true },
+  { name: 'elearning', href: '/dashboard/elearning', icon: 'pi-graduation-cap' },
+  { name: 'parrainage', href: '/dashboard/parrainage', icon: 'pi-gift' },
   {
     name: 'settings',
     href: '/dashboard/company',
@@ -107,7 +128,8 @@ const allNavItems = [
       { name: 'company_settings', href: '/dashboard/company', icon: 'pi-building' },
       { name: 'users_groups', href: '/dashboard/users', icon: 'pi-users' },
       { name: 'doc_types_settings', href: '/dashboard/doc-types-settings', icon: 'pi-file-edit' },
-      { name: 'workflow_settings', href: '/dashboard/workflow-settings', icon: 'pi-sliders-h', adminOnly: true },
+      { name: 'workflow_settings', href: '/dashboard/workflow-settings', icon: 'pi-sliders-h', orgAdminOnly: true },
+      { name: 'gdpr_settings', href: '/dashboard/gdpr', icon: 'pi-lock' },
     ],
   },
 ];
@@ -120,7 +142,7 @@ export const useNavigation = () => {
 
   // Navigation complète (mode sidebar classique)
   const navigation = computed(() => {
-    if (authStore.isAdmin) {
+    if (authStore.isSuperAdmin) {
       return [...allNavItems, adminNavItem];
     }
     return allNavItems;
@@ -163,11 +185,16 @@ export const useNavigation = () => {
         path.startsWith('/dashboard/analyse-doc') ||
         path.startsWith('/dashboard/manuel-qualiopi') ||
         path.startsWith('/dashboard/quiz')) return 'qualite';
+    if (path.startsWith('/dashboard/veille')) return 'veille';
     if (path.startsWith('/dashboard/assistant-ia')) return 'assistant_ia';
+    if (path.startsWith('/dashboard/bpf')) return 'bpf';
+    if (path.startsWith('/dashboard/elearning')) return 'elearning';
+    if (path.startsWith('/dashboard/parrainage')) return 'parrainage';
     if (path.startsWith('/dashboard/company') ||
         path.startsWith('/dashboard/users') ||
         path.startsWith('/dashboard/doc-types-settings') ||
-        path.startsWith('/dashboard/workflow-settings')) return 'settings';
+        path.startsWith('/dashboard/workflow-settings') ||
+        path.startsWith('/dashboard/gdpr')) return 'settings';
     if (path.startsWith('/dashboard/admin')) return 'admin';
     return 'accueil';
   });
@@ -186,7 +213,7 @@ export const useNavigation = () => {
 
     // Items fixes toujours présents en bas
     const fixed = [...fixedSideNavItems];
-    if (authStore.isAdmin) {
+    if (authStore.isSuperAdmin) {
       fixed.push(adminNavItem);
     }
 

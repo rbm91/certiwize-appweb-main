@@ -25,9 +25,11 @@ export const useNavConfigStore = defineStore('navConfig', () => {
   const fetchConfig = async () => {
     loading.value = true;
     try {
+      const orgId = auth.currentOrganization?.id;
       const { data, error } = await supabase
         .from('nav_config')
         .select('config')
+        .eq('organization_id', orgId)
         .order('updated_at', { ascending: false })
         .limit(1)
         .single();
@@ -54,7 +56,8 @@ export const useNavConfigStore = defineStore('navConfig', () => {
         .insert({
           config: newConfig,
           updated_at: new Date().toISOString(),
-          updated_by: auth.user?.id || null
+          updated_by: auth.user?.id || null,
+          organization_id: auth.currentOrganization?.id
         });
 
       if (error) throw error;
@@ -96,10 +99,11 @@ export const useNavConfigStore = defineStore('navConfig', () => {
   const resetConfig = async () => {
     loading.value = true;
     try {
+      const orgId = auth.currentOrganization?.id;
       const { error } = await supabase
         .from('nav_config')
         .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000'); // delete all
+        .eq('organization_id', orgId);
 
       if (error) throw error;
 

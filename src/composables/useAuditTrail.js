@@ -6,6 +6,7 @@ import { useAuthStore } from '../stores/auth';
  * Composable pour le journal d'audit.
  * Toutes les actions critiques sont journalisées (création, modification, ajout/suppression rôle, ajout document).
  * Le journal n'est pas modifiable.
+ * Chaque entrée est liée à une organization_id pour le cloisonnement multi-tenant.
  */
 export const useAuditTrail = () => {
   const loading = ref(false);
@@ -15,7 +16,7 @@ export const useAuditTrail = () => {
    * Enregistre un événement dans le journal d'audit
    * @param {string} objet - Type d'objet (tiers, prestation, facture, etc.)
    * @param {string} objet_id - ID de l'objet
-   * @param {string} type_evenement - Type d'événement (creation, modification, ajout_role, suppression_role, ajout_document, etc.)
+   * @param {string} type_evenement - Type d'événement (creation, modification, ajout_role, etc.)
    * @param {string|null} champ - Champ modifié (optionnel)
    * @param {*} ancienne_valeur - Ancienne valeur (optionnel)
    * @param {*} nouvelle_valeur - Nouvelle valeur (optionnel)
@@ -33,6 +34,7 @@ export const useAuditTrail = () => {
           ancienne_valeur: ancienne_valeur !== null ? JSON.stringify(ancienne_valeur) : null,
           nouvelle_valeur: nouvelle_valeur !== null ? JSON.stringify(nouvelle_valeur) : null,
           user_id: auth.user?.id,
+          organization_id: auth.currentOrganization?.id,
         });
 
       if (err) {
@@ -46,9 +48,7 @@ export const useAuditTrail = () => {
 
   /**
    * Récupère le journal d'audit pour un objet
-   * @param {string} objet - Type d'objet
-   * @param {string} objet_id - ID de l'objet
-   * @returns {Array} Liste des événements triés par date desc
+   * Les RLS policies filtrent automatiquement par organization_id
    */
   const fetchAuditLog = async (objet, objet_id) => {
     loading.value = true;
@@ -72,9 +72,7 @@ export const useAuditTrail = () => {
   };
 
   /**
-   * Récupère tous les événements d'audit récents (pour dashboard admin)
-   * @param {number} limit - Nombre max d'événements
-   * @returns {Array}
+   * Récupère les événements d'audit récents (filtrés par RLS = org courante)
    */
   const fetchRecentAudit = async (limit = 50) => {
     loading.value = true;

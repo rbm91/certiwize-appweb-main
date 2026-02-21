@@ -20,14 +20,34 @@ export const useOrganizationStore = defineStore('organization', () => {
     loading.value = true;
     error.value = null;
     try {
-      const { data, error: err } = await supabase
+      // Récupérer les membres de l'organisation
+      const { data: membersData, error: membersErr } = await supabase
         .from('organization_members')
-        .select('*, profiles:user_id(id, email, full_name, role)')
+        .select('id, organization_id, user_id, role, joined_at')
         .eq('organization_id', orgId)
         .order('joined_at', { ascending: true });
 
-      if (err) throw err;
-      members.value = data || [];
+      if (membersErr) throw membersErr;
+
+      if (!membersData || membersData.length === 0) {
+        members.value = [];
+        return;
+      }
+
+      // Récupérer les profils correspondants
+      const userIds = membersData.map(m => m.user_id);
+      const { data: profilesData, error: profilesErr } = await supabase
+        .from('profiles')
+        .select('id, email, full_name, role')
+        .in('id', userIds);
+
+      if (profilesErr) throw profilesErr;
+
+      // Fusionner membres + profils
+      members.value = membersData.map(m => ({
+        ...m,
+        profiles: (profilesData || []).find(p => p.id === m.user_id) || null,
+      }));
     } catch (err) {
       error.value = err.message;
       console.error('[OrganizationStore] fetchMembers:', err.message);

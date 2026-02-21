@@ -11,22 +11,22 @@ export const useTrainingStore = defineStore('training', () => {
 
     // Récupérer les formations (filtrées par user_id sauf si admin)
     const fetchFormations = async () => {
-        if (!auth.user?.id) {
+        if (!auth.currentOrganization?.id && !auth.isSuperAdmin) {
             loading.value = false;
             return;
         }
 
         loading.value = true;
         try {
-            const checkAdmin = auth.userRole === 'admin';
+            const orgId = auth.currentOrganization?.id;
 
             let query = supabase
                 .from('formations')
                 .select('*, profiles(email)')
                 .order('updated_at', { ascending: false });
 
-            if (!checkAdmin) {
-                query = query.eq('user_id', auth.user.id);
+            if (!auth.isSuperAdmin) {
+                query = query.eq('organization_id', orgId);
             }
 
             const { data, error: err } = await query;
@@ -47,6 +47,7 @@ export const useTrainingStore = defineStore('training', () => {
         loading.value = true;
         try {
             const payload = {
+                organization_id: auth.currentOrganization?.id,
                 user_id: auth.user.id,
                 title: trainingData.titre || 'Nouvelle Formation',
                 content: trainingData, // Tout le formulaire

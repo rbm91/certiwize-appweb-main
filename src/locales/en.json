@@ -60,9 +60,16 @@
     "sidebar_qualite_reclamations": "Complaints",
     "sidebar_qualite_indicateurs": "Indicators",
     "sidebar_qualite_audit_blanc": "White Audit",
+    "veille": "Watch",
+    "sidebar_veille_all": "All articles",
     "sidebar_ia_historique": "Call History",
     "sidebar_ia_stats": "Statistics",
-    "sidebar_coming_soon": "Coming soon"
+    "sidebar_coming_soon": "Coming soon",
+    "bpf": "BPF",
+    "audit_blanc": "White Audit",
+    "elearning": "E-learning",
+    "parrainage": "Referral",
+    "gdpr_settings": "GDPR"
   },
   "manual": {
     "title": "Quality Manual & Tools",

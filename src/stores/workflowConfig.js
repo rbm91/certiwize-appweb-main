@@ -236,9 +236,11 @@ export const useWorkflowConfigStore = defineStore('workflowConfig', () => {
   const fetchConfig = async () => {
     loading.value = true;
     try {
+      const orgId = auth.currentOrganization?.id;
       const { data, error } = await supabase
         .from('workflow_config')
         .select('config')
+        .eq('organization_id', orgId)
         .order('updated_at', { ascending: false })
         .limit(1)
         .single();
@@ -266,7 +268,8 @@ export const useWorkflowConfigStore = defineStore('workflowConfig', () => {
           config: newConfig,
           is_default: false,
           updated_at: new Date().toISOString(),
-          updated_by: auth.user?.id || null
+          updated_by: auth.user?.id || null,
+          organization_id: auth.currentOrganization?.id
         });
 
       if (error) throw error;
@@ -287,11 +290,13 @@ export const useWorkflowConfigStore = defineStore('workflowConfig', () => {
   const resetConfig = async () => {
     loading.value = true;
     try {
+      const orgId = auth.currentOrganization?.id;
       // Supprimer toutes les configs custom
       const { error: deleteError } = await supabase
         .from('workflow_config')
         .delete()
-        .eq('is_default', false);
+        .eq('is_default', false)
+        .eq('organization_id', orgId);
 
       if (deleteError) throw deleteError;
 
@@ -300,6 +305,7 @@ export const useWorkflowConfigStore = defineStore('workflowConfig', () => {
         .from('workflow_config')
         .select('config')
         .eq('is_default', true)
+        .eq('organization_id', orgId)
         .limit(1)
         .single();
 

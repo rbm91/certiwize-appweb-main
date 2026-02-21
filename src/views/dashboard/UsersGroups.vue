@@ -1,8 +1,8 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-import { supabase } from '../../supabase';
+import { ref, onMounted, computed } from 'vue';
 import { useAuthStore } from '../../stores/auth';
-import { USER_ROLES_CDC } from '../../config/constants';
+import { useOrganizationStore } from '../../stores/organization';
+import { ORG_ROLE_OPTIONS, USER_ROLES_CDC } from '../../config/constants';
 
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
@@ -12,92 +12,165 @@ import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 import Message from 'primevue/message';
+import { useConfirm } from 'primevue/useconfirm';
+import ConfirmDialog from 'primevue/confirmdialog';
 
 const authStore = useAuthStore();
-const users = ref([]);
-const loading = ref(false);
+const orgStore = useOrganizationStore();
+const confirm = useConfirm();
+
 const showInviteDialog = ref(false);
-const inviteForm = ref({ email: '', role: 'assistant_administratif' });
+const inviteForm = ref({ email: '', role: 'member' });
 const message = ref(null);
+const inviteLoading = ref(false);
 
-const roleOptions = USER_ROLES_CDC.map(r => ({
-  label: r.label,
-  value: r.value,
-}));
+// Rôles disponibles pour l'invitation (pas owner — un seul owner par org)
+const inviteRoleOptions = ORG_ROLE_OPTIONS.filter(r => r.value !== 'owner');
 
+// Permissions
+const canManageMembers = computed(() => authStore.isOrgAdmin);
+const canChangeRoles = computed(() => authStore.isOrgOwner);
+
+onMounted(async () => {
+  await Promise.all([
+    orgStore.fetchMembers(),
+    orgStore.fetchPendingInvitations(),
+  ]);
+});
+
+// ── Rôles helpers ──
 const getRoleSeverity = (role) => {
-  const map = {
-    administrateur: 'danger',
-    responsable_pedagogique: 'warn',
-    assistant_administratif: 'info',
-    formateur: 'success',
-    consultant: 'secondary',
-  };
-  return map[role] || 'info';
+  const found = ORG_ROLE_OPTIONS.find(r => r.value === role);
+  return found?.severity || 'info';
 };
 
 const getRoleLabel = (role) => {
-  const found = USER_ROLES_CDC.find(r => r.value === role);
-  return found ? found.label : role || 'Utilisateur';
+  const found = ORG_ROLE_OPTIONS.find(r => r.value === role);
+  return found?.label || role;
 };
 
-onMounted(async () => {
-  await fetchUsers();
-});
-
-const fetchUsers = async () => {
-  loading.value = true;
-  try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    users.value = data || [];
-  } catch (e) {
-    console.error('[UsersGroups] Erreur:', e.message);
-  } finally {
-    loading.value = false;
-  }
+const formatDate = (date) => {
+  if (!date) return '—';
+  return new Date(date).toLocaleDateString('fr-FR', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+  });
 };
 
+// ── Invitation ──
 const openInviteDialog = () => {
-  inviteForm.value = { email: '', role: 'assistant_administratif' };
+  inviteForm.value = { email: '', role: 'member' };
   showInviteDialog.value = true;
 };
 
 const handleInvite = async () => {
-  message.value = {
-    severity: 'info',
-    text: `L'invitation par email sera disponible prochainement. Email: ${inviteForm.value.email}`,
-  };
-  showInviteDialog.value = false;
+  if (!inviteForm.value.email) return;
+
+  inviteLoading.value = true;
+  const result = await orgStore.inviteMember(inviteForm.value.email, inviteForm.value.role);
+  inviteLoading.value = false;
+
+  if (result.success) {
+    message.value = {
+      severity: 'success',
+      text: `Invitation envoyée à ${inviteForm.value.email}. Le lien d'invitation est valable 7 jours.`,
+    };
+    showInviteDialog.value = false;
+  } else {
+    message.value = {
+      severity: 'error',
+      text: result.error || 'Erreur lors de l\'envoi de l\'invitation.',
+    };
+  }
 };
 
-const formatDate = (date) => {
-  if (!date) return '\u2014';
-  return new Date(date).toLocaleDateString('fr-FR', {
-    day: '2-digit', month: '2-digit', year: 'numeric',
+// ── Gestion des membres ──
+const handleChangeRole = async (member, newRole) => {
+  const result = await orgStore.updateMemberRole(member.id, newRole);
+  if (result.success) {
+    message.value = { severity: 'success', text: 'Rôle mis à jour.' };
+  } else {
+    message.value = { severity: 'error', text: result.error };
+  }
+};
+
+const handleRemoveMember = (member) => {
+  // Protection : ne pas retirer le owner
+  if (member.role === 'owner') return;
+  // Protection : ne pas se retirer soi-même
+  if (member.user_id === authStore.user?.id) return;
+
+  confirm.require({
+    message: `Voulez-vous vraiment retirer ${member.profiles?.email || 'cet utilisateur'} de l'organisation ?`,
+    header: 'Confirmer le retrait',
+    icon: 'pi pi-exclamation-triangle',
+    acceptLabel: 'Retirer',
+    rejectLabel: 'Annuler',
+    accept: async () => {
+      const result = await orgStore.removeMember(member.id);
+      if (result.success) {
+        message.value = { severity: 'success', text: 'Membre retiré.' };
+      } else {
+        message.value = { severity: 'error', text: result.error };
+      }
+    },
   });
+};
+
+const handleCancelInvitation = async (invitation) => {
+  const result = await orgStore.cancelInvitation(invitation.id);
+  if (result.success) {
+    message.value = { severity: 'success', text: 'Invitation annulée.' };
+  } else {
+    message.value = { severity: 'error', text: result.error };
+  }
+};
+
+// Générer le lien d'invitation pour copier
+const getInviteLink = (invitation) => {
+  return `${window.location.origin}/join/${invitation.token}`;
+};
+
+const copyInviteLink = async (invitation) => {
+  try {
+    await navigator.clipboard.writeText(getInviteLink(invitation));
+    message.value = { severity: 'success', text: 'Lien copié dans le presse-papier.' };
+  } catch {
+    message.value = { severity: 'warn', text: 'Impossible de copier le lien.' };
+  }
 };
 </script>
 
 <template>
   <div class="max-w-6xl mx-auto pb-10">
+    <ConfirmDialog />
+
     <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Utilisateurs & Groupes</h1>
-      <Button label="Inviter un utilisateur" icon="pi pi-user-plus" @click="openInviteDialog" />
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Membres de l'organisation</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          {{ authStore.currentOrganization?.name }}
+        </p>
+      </div>
+      <Button
+        v-if="canManageMembers"
+        label="Inviter un membre"
+        icon="pi pi-user-plus"
+        @click="openInviteDialog"
+      />
     </div>
 
     <Message v-if="message" :severity="message.severity" class="mb-4" :closable="true" @close="message = null">
       {{ message.text }}
     </Message>
 
-    <div class="card bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+    <!-- Tableau des membres -->
+    <div class="card bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-6">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+        <i class="pi pi-users mr-2"></i>Membres actifs
+      </h2>
       <DataTable
-        :value="users"
-        :loading="loading"
+        :value="orgStore.members"
+        :loading="orgStore.loading"
         stripedRows
         paginator
         :rows="20"
@@ -107,70 +180,146 @@ const formatDate = (date) => {
         <template #empty>
           <div class="text-center py-8 text-gray-500">
             <i class="pi pi-users text-4xl mb-3 block"></i>
-            <p>Aucun utilisateur trouv\u00e9</p>
+            <p>Aucun membre trouvé</p>
           </div>
         </template>
 
-        <Column field="email" header="Email" sortable>
+        <Column field="profiles.email" header="Email" sortable>
           <template #body="{ data }">
             <div class="flex items-center gap-2">
               <i class="pi pi-user text-gray-400"></i>
-              <span class="font-medium">{{ data.email }}</span>
+              <span class="font-medium">{{ data.profiles?.email }}</span>
+              <Tag v-if="data.user_id === authStore.user?.id" value="Vous" severity="secondary" class="text-xs" />
             </div>
           </template>
         </Column>
 
-        <Column field="role" header="R\u00f4le" sortable>
+        <Column field="role" header="Rôle dans l'organisation" sortable>
           <template #body="{ data }">
-            <Tag :value="getRoleLabel(data.role)" :severity="getRoleSeverity(data.role)" />
+            <Dropdown
+              v-if="canChangeRoles && data.role !== 'owner' && data.user_id !== authStore.user?.id"
+              :modelValue="data.role"
+              :options="ORG_ROLE_OPTIONS.filter(r => r.value !== 'owner')"
+              optionLabel="label"
+              optionValue="value"
+              @update:modelValue="(val) => handleChangeRole(data, val)"
+              class="w-40"
+            />
+            <Tag v-else :value="getRoleLabel(data.role)" :severity="getRoleSeverity(data.role)" />
           </template>
         </Column>
 
-        <Column field="created_at" header="Inscrit le" sortable>
+        <Column field="joined_at" header="Membre depuis" sortable>
           <template #body="{ data }">
-            <span class="text-gray-500">{{ formatDate(data.created_at) }}</span>
-          </template>
-        </Column>
-
-        <Column header="Statut">
-          <template #body>
-            <Tag value="Actif" severity="success" />
+            <span class="text-gray-500">{{ formatDate(data.joined_at) }}</span>
           </template>
         </Column>
 
         <Column header="Actions" style="width: 100px">
-          <template #body>
-            <Button icon="pi pi-ellipsis-v" text rounded severity="secondary" size="small" disabled />
+          <template #body="{ data }">
+            <Button
+              v-if="canManageMembers && data.role !== 'owner' && data.user_id !== authStore.user?.id"
+              icon="pi pi-trash"
+              text
+              rounded
+              severity="danger"
+              size="small"
+              v-tooltip="'Retirer de l\'organisation'"
+              @click="handleRemoveMember(data)"
+            />
           </template>
         </Column>
       </DataTable>
     </div>
 
-    <div class="mt-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-      <div class="flex items-center gap-2 mb-2">
-        <i class="pi pi-info-circle text-blue-500"></i>
-        <span class="font-semibold text-blue-700 dark:text-blue-300">Gestion des r\u00f4les</span>
-      </div>
-      <p class="text-sm text-blue-600 dark:text-blue-400">
-        Les r\u00f4les disponibles sont : Administrateur, Responsable p\u00e9dagogique, Assistant administratif, Formateur, Consultant.
-        La modification des r\u00f4les et les invitations par email seront disponibles dans une prochaine version.
-      </p>
+    <!-- Invitations en attente -->
+    <div v-if="canManageMembers && orgStore.pendingInvitations.length > 0" class="card bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-6">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+        <i class="pi pi-envelope mr-2"></i>Invitations en attente
+      </h2>
+      <DataTable :value="orgStore.pendingInvitations" stripedRows dataKey="id">
+        <Column field="email" header="Email">
+          <template #body="{ data }">
+            <span class="font-medium">{{ data.email }}</span>
+          </template>
+        </Column>
+
+        <Column field="role" header="Rôle">
+          <template #body="{ data }">
+            <Tag :value="getRoleLabel(data.role)" :severity="getRoleSeverity(data.role)" />
+          </template>
+        </Column>
+
+        <Column field="expires_at" header="Expire le">
+          <template #body="{ data }">
+            <span class="text-gray-500">{{ formatDate(data.expires_at) }}</span>
+          </template>
+        </Column>
+
+        <Column header="Actions" style="width: 150px">
+          <template #body="{ data }">
+            <div class="flex gap-1">
+              <Button
+                icon="pi pi-copy"
+                text
+                rounded
+                size="small"
+                v-tooltip="'Copier le lien'"
+                @click="copyInviteLink(data)"
+              />
+              <Button
+                icon="pi pi-times"
+                text
+                rounded
+                severity="danger"
+                size="small"
+                v-tooltip="'Annuler l\'invitation'"
+                @click="handleCancelInvitation(data)"
+              />
+            </div>
+          </template>
+        </Column>
+      </DataTable>
     </div>
 
-    <Dialog v-model:visible="showInviteDialog" header="Inviter un utilisateur" :modal="true" :style="{ width: '450px' }">
+    <!-- Info rôles -->
+    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+      <div class="flex items-center gap-2 mb-2">
+        <i class="pi pi-info-circle text-blue-500"></i>
+        <span class="font-semibold text-blue-700 dark:text-blue-300">Rôles dans l'organisation</span>
+      </div>
+      <ul class="text-sm text-blue-600 dark:text-blue-400 space-y-1 ml-6 list-disc">
+        <li><strong>Propriétaire</strong> : accès complet, gestion des admins et des membres, paramètres organisation</li>
+        <li><strong>Administrateur</strong> : gestion des membres, invitations, configuration</li>
+        <li><strong>Membre</strong> : accès aux données de l'organisation (lecture et écriture)</li>
+      </ul>
+    </div>
+
+    <!-- Dialog d'invitation -->
+    <Dialog v-model:visible="showInviteDialog" header="Inviter un membre" :modal="true" :style="{ width: '450px' }">
       <div class="flex flex-col gap-4 p-2">
         <div class="flex flex-col gap-2">
           <label class="font-semibold">Email</label>
           <InputText v-model="inviteForm.email" type="email" placeholder="utilisateur@organisme.fr" />
         </div>
         <div class="flex flex-col gap-2">
-          <label class="font-semibold">R\u00f4le</label>
-          <Dropdown v-model="inviteForm.role" :options="roleOptions" optionLabel="label" optionValue="value" />
+          <label class="font-semibold">Rôle</label>
+          <Dropdown v-model="inviteForm.role" :options="inviteRoleOptions" optionLabel="label" optionValue="value" />
         </div>
+        <Message severity="info" :closable="false" class="text-sm">
+          Un lien d'invitation sera généré. Partagez-le avec la personne pour qu'elle rejoigne votre organisation.
+          Le lien est valable 7 jours.
+        </Message>
       </div>
       <template #footer>
         <Button label="Annuler" text @click="showInviteDialog = false" />
-        <Button label="Envoyer l'invitation" icon="pi pi-send" @click="handleInvite" :disabled="!inviteForm.email" />
+        <Button
+          label="Envoyer l'invitation"
+          icon="pi pi-send"
+          :loading="inviteLoading"
+          @click="handleInvite"
+          :disabled="!inviteForm.email"
+        />
       </template>
     </Dialog>
   </div>

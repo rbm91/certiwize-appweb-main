@@ -33,8 +33,20 @@ const logout = async () => {
 
 <template>
   <div class="flex flex-col h-full bg-slate-900 w-64 text-white">
-    <div class="p-6 flex items-center justify-center border-b border-slate-800">
+    <div class="p-6 flex flex-col items-center justify-center border-b border-slate-800 gap-2">
       <h1 class="text-xl font-bold bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">Certiwize</h1>
+      <!-- Nom de l'organisation courante -->
+      <div v-if="authStore.currentOrganization" class="w-full">
+        <select
+          v-if="authStore.organizations.length > 1"
+          :value="authStore.currentOrganization?.id"
+          @change="authStore.switchOrganization($event.target.value)"
+          class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:ring-1 focus:ring-primary"
+        >
+          <option v-for="org in authStore.organizations" :key="org.id" :value="org.id">{{ org.name }}</option>
+        </select>
+        <p v-else class="text-xs text-slate-400 text-center truncate">{{ authStore.currentOrganization.name }}</p>
+      </div>
     </div>
 
     <nav class="flex-1 p-4 space-y-2 flex flex-col">
@@ -51,17 +63,17 @@ const logout = async () => {
           :href="item.disabled ? undefined : (item.submenu ? undefined : item.href)"
           :target="item.href?.startsWith('http') ? '_blank' : undefined"
           :rel="item.href?.startsWith('http') ? 'noopener noreferrer' : undefined"
-          class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group no-underline"
+          class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group no-underline"
           :class="[
             item.disabled
               ? 'text-slate-600 cursor-not-allowed'
-              : isCurrent(item.href)
+              : (!item.href?.startsWith('http') && isCurrent(item.href))
                 ? 'bg-primary text-white shadow-lg shadow-primary/25 cursor-pointer'
                 : 'text-slate-400 hover:bg-slate-800 hover:text-white cursor-pointer'
           ]"
           @click="item.disabled ? $event.preventDefault() : (item.submenu ? $event.preventDefault() : null)"
         >
-          <i class="pi" :class="[item.icon, item.disabled ? 'text-slate-600' : isCurrent(item.href) ? 'text-white' : 'text-slate-400 group-hover:text-white']"></i>
+          <i class="pi" :class="[item.icon, item.disabled ? 'text-slate-600' : (!item.href?.startsWith('http') && isCurrent(item.href)) ? 'text-white' : 'text-slate-400 group-hover:text-white']"></i>
           <span class="font-medium flex-1">{{ t(`nav.${item.name}`) }}</span>
           <span v-if="item.disabled" class="text-xs bg-slate-700 px-1.5 py-0.5 rounded">{{ t('nav.coming_soon') }}</span>
           <i v-if="item.submenu" class="pi pi-chevron-right text-xs opacity-50"></i>
@@ -110,6 +122,13 @@ const logout = async () => {
 </template>
 
 <style scoped>
+/* Forcer la couleur des liens visités dans la sidebar */
+.sidebar-link,
+.sidebar-link:visited,
+.sidebar-link:link {
+  color: inherit !important;
+}
+
 .submenu-fade-enter-active,
 .submenu-fade-leave-active {
   transition: opacity 0.15s ease, transform 0.15s ease;

@@ -52,7 +52,6 @@ export const useTiersStore = defineStore('tiers', () => {
 
   /**
    * Filtre les tiers par rôle
-   * @param {string} role - 'client', 'apprenant', 'formateur', etc.
    */
   const tiersByRole = (role) =>
     activeTiers.value.filter(t =>
@@ -62,21 +61,21 @@ export const useTiersStore = defineStore('tiers', () => {
   // ── Fetch ──
 
   const fetchTiers = async () => {
-    if (!auth.user?.id) return;
+    const orgId = auth.currentOrganization?.id;
+    if (!orgId && !auth.isSuperAdmin) return;
 
     loading.value = true;
     error.value = null;
     try {
-      const isAdmin = auth.userRole === 'admin';
-
       let query = supabase
         .from('tiers')
         .select('*, tiers_roles(*), profiles:user_id(email)')
         .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
-      if (!isAdmin) {
-        query = query.eq('user_id', auth.user.id);
+      // Filtrage par organisation (super-admin voit tout)
+      if (!auth.isSuperAdmin) {
+        query = query.eq('organization_id', orgId);
       }
 
       const { data, error: err } = await query;
@@ -93,16 +92,12 @@ export const useTiersStore = defineStore('tiers', () => {
 
   // ── CRUD ──
 
-  /**
-   * Crée un nouveau tiers avec ses rôles
-   * @param {Object} tierData - Données du tiers
-   * @param {string[]} roles - Tableau de rôles ['client', 'apprenant', ...]
-   * @returns {{ success: boolean, data?: Object, error?: string }}
-   */
   const createTier = async (tierData, roles = []) => {
+    const orgId = auth.currentOrganization?.id;
+    if (!orgId) return { success: false, error: 'Aucune organisation sélectionnée' };
+
     loading.value = true;
     try {
-      // Calcul du score avant sauvegarde
       const scoreResult = computeScore(tierData, roles, []);
 
       const finalData = cleanPayload({
@@ -110,10 +105,10 @@ export const useTiersStore = defineStore('tiers', () => {
         code_client: tierData.code_client || generateCode('CU'),
         code_fournisseur: tierData.code_fournisseur || generateCode('SU'),
         score_completude: scoreResult.score,
-        user_id: auth.user.id,
+        organization_id: orgId,
+        user_id: auth.user.id, // traçabilité : qui a créé
       });
 
-      // Insérer le tiers
       const { data, error: err } = await supabase
         .from('tiers')
         .insert([finalData])
@@ -161,19 +156,11 @@ export const useTiersStore = defineStore('tiers', () => {
     }
   };
 
-  /**
-   * Met à jour un tiers
-   * @param {string} id - UUID du tiers
-   * @param {Object} updates - Champs à mettre à jour
-   * @param {string[]} [currentRoles] - Rôles actuels (si changement de rôles)
-   */
   const updateTier = async (id, updates, currentRoles = null) => {
     loading.value = true;
     try {
-      // Récupérer l'ancien pour audit
       const oldTier = tiers.value.find(t => t.id === id);
 
-      // Recalcul score si rôles fournis
       if (currentRoles !== null) {
         const scoreResult = computeScore({ ...oldTier, ...updates }, currentRoles, []);
         updates.score_completude = scoreResult.score;
@@ -188,13 +175,12 @@ export const useTiersStore = defineStore('tiers', () => {
 
       if (err) throw err;
 
-      // Mise à jour locale
       const index = tiers.value.findIndex(t => t.id === id);
       if (index !== -1) {
         tiers.value[index] = data;
       }
 
-      // Audit — enregistrer les champs modifiés
+      // Audit
       const changedFields = Object.keys(updates).filter(
         key => oldTier && JSON.stringify(oldTier[key]) !== JSON.stringify(updates[key])
       );
@@ -213,9 +199,6 @@ export const useTiersStore = defineStore('tiers', () => {
     }
   };
 
-  /**
-   * Soft delete — jamais de suppression physique si lié à une prestation
-   */
   const softDeleteTier = async (id) => {
     try {
       const { error: err } = await supabase
@@ -234,9 +217,6 @@ export const useTiersStore = defineStore('tiers', () => {
     }
   };
 
-  /**
-   * Récupérer un tiers par ID (cache ou base)
-   */
   const getTierById = async (id) => {
     const local = tiers.value.find(t => t.id === id);
     if (local) return local;
@@ -265,7 +245,6 @@ export const useTiersStore = defineStore('tiers', () => {
 
       if (err) throw err;
 
-      // Mettre à jour le cache local
       const tier = tiers.value.find(t => t.id === tiersId);
       if (tier) {
         if (!tier.tiers_roles) tier.tiers_roles = [];
@@ -374,8 +353,9 @@ export const useTiersStore = defineStore('tiers', () => {
       const authStore = useAuthStore();
       await authStore.refreshSession();
 
+      const orgId = authStore.currentOrganization?.id || 'no-org';
       const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-      const fileName = `${authStore.user.id}/tiers/${tiersId}/${typeDocument}-${Date.now()}-${cleanName}`;
+      const fileName = `${orgId}/${authStore.user.id}/tiers/${tiersId}/${typeDocument}-${Date.now()}-${cleanName}`;
 
       const { error: uploadErr } = await supabase.storage
         .from('tier-files')

@@ -59,11 +59,13 @@ export const useFacturationStore = defineStore('facturation', () => {
   // ── Fetch ──
 
   const fetchFactures = async () => {
-    if (!auth.user?.id) return;
+    if (!auth.currentOrganization?.id && !auth.isSuperAdmin) return;
 
     loading.value = true;
     error.value = null;
     try {
+      const orgId = auth.currentOrganization?.id;
+
       let query = supabase
         .from('factures')
         .select(`
@@ -75,8 +77,8 @@ export const useFacturationStore = defineStore('facturation', () => {
         .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
-      if (auth.userRole !== 'admin') {
-        query = query.eq('user_id', auth.user.id);
+      if (!auth.isSuperAdmin) {
+        query = query.eq('organization_id', orgId);
       }
 
       const { data, error: err } = await query;
@@ -125,6 +127,7 @@ export const useFacturationStore = defineStore('facturation', () => {
         montant_ttc: montantTtc,
         montant_paye: 0,
         statut: 'brouillon',
+        organization_id: auth.currentOrganization?.id,
         user_id: auth.user.id,
       });
 
@@ -219,6 +222,7 @@ export const useFacturationStore = defineStore('facturation', () => {
           montant: parseFloat(montant),
           mode,
           notes,
+          organization_id: auth.currentOrganization?.id,
           created_by: auth.user.id,
         })
         .select()

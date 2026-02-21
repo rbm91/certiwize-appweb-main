@@ -12,22 +12,22 @@ export const useQuizStore = defineStore('quiz', () => {
   // ─── QUIZ CRUD (authentifié) ───────────────────────────
 
   const fetchQuizzes = async () => {
-    if (!auth.user?.id) {
+    if (!auth.currentOrganization?.id && !auth.isSuperAdmin) {
       loading.value = false;
       return;
     }
 
     loading.value = true;
     try {
-      const isAdmin = auth.userRole === 'admin';
+      const orgId = auth.currentOrganization?.id;
 
       let query = supabase
         .from('quizzes')
         .select('*, formations(title)')
         .order('updated_at', { ascending: false });
 
-      if (!isAdmin) {
-        query = query.eq('user_id', auth.user.id);
+      if (!auth.isSuperAdmin) {
+        query = query.eq('organization_id', orgId);
       }
 
       const { data, error } = await query;
@@ -87,6 +87,7 @@ export const useQuizStore = defineStore('quiz', () => {
     loading.value = true;
     try {
       const payload = {
+        organization_id: auth.currentOrganization?.id,
         user_id: auth.user.id,
         title: quizData.title || 'Nouveau quiz',
         description: quizData.description || null,

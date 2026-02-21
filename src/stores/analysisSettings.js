@@ -148,10 +148,12 @@ export const useAnalysisSettingsStore = defineStore('analysisSettings', () => {
   // Charger l'URL du webhook depuis Supabase
   const fetchWebhookUrl = async () => {
     try {
+      const orgId = auth.currentOrganization?.id;
       const { data, error } = await supabase
         .from('analysis_settings')
         .select('value')
         .eq('key', 'webhook_url')
+        .eq('organization_id', orgId)
         .limit(1)
         .single();
 
@@ -166,10 +168,12 @@ export const useAnalysisSettingsStore = defineStore('analysisSettings', () => {
   const fetchSystemPrompt = async () => {
     loading.value = true;
     try {
+      const orgId = auth.currentOrganization?.id;
       const { data, error } = await supabase
         .from('analysis_settings')
         .select('value')
         .eq('key', 'system_prompt')
+        .eq('organization_id', orgId)
         .order('updated_at', { ascending: false })
         .limit(1)
         .single();
@@ -201,6 +205,7 @@ export const useAnalysisSettingsStore = defineStore('analysisSettings', () => {
           is_default: false,
           updated_at: new Date().toISOString(),
           updated_by: auth.user?.id || null,
+          organization_id: auth.currentOrganization?.id,
         });
 
       if (error) throw error;
@@ -219,12 +224,14 @@ export const useAnalysisSettingsStore = defineStore('analysisSettings', () => {
   const resetSystemPrompt = async () => {
     loading.value = true;
     try {
+      const orgId = auth.currentOrganization?.id;
       // Supprimer toutes les lignes custom (is_default = false)
       const { error: deleteError } = await supabase
         .from('analysis_settings')
         .delete()
         .eq('key', 'system_prompt')
-        .eq('is_default', false);
+        .eq('is_default', false)
+        .eq('organization_id', orgId);
 
       if (deleteError) throw deleteError;
 
@@ -234,6 +241,7 @@ export const useAnalysisSettingsStore = defineStore('analysisSettings', () => {
         .select('value')
         .eq('key', 'system_prompt')
         .eq('is_default', true)
+        .eq('organization_id', orgId)
         .limit(1)
         .single();
 

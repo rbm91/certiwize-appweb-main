@@ -18,6 +18,13 @@ const routes = [
   { path: '/forgot-password', component: () => import('../views/ForgotPassword.vue') },
   { path: '/update-password', component: () => import('../views/UpdatePassword.vue') },
 
+  // Page d'acceptation d'invitation
+  {
+    path: '/join/:token',
+    name: 'join-organization',
+    component: () => import('../views/JoinOrganization.vue')
+  },
+
   // Public pages (Sales Funnel)
   { path: '/pricing', component: () => import('../views/public/Pricing.vue') },
   { path: '/checkout', component: () => import('../views/public/Checkout.vue') },
@@ -260,6 +267,42 @@ const routes = [
       },
 
       // ══════════════════════════════════
+      // MODULE BPF
+      // ══════════════════════════════════
+      {
+        path: 'bpf',
+        name: 'dashboard-bpf',
+        component: () => import('../views/dashboard/BPF.vue')
+      },
+
+      // ══════════════════════════════════
+      // MODULE E-LEARNING
+      // ══════════════════════════════════
+      {
+        path: 'elearning',
+        name: 'dashboard-elearning',
+        component: () => import('../views/dashboard/Elearning.vue')
+      },
+
+      // ══════════════════════════════════
+      // MODULE PARRAINAGE
+      // ══════════════════════════════════
+      {
+        path: 'parrainage',
+        name: 'dashboard-parrainage',
+        component: () => import('../views/dashboard/Parrainage.vue')
+      },
+
+      // ══════════════════════════════════
+      // MODULE VEILLE
+      // ══════════════════════════════════
+      {
+        path: 'veille',
+        name: 'dashboard-veille',
+        component: () => import('../views/dashboard/Veille.vue')
+      },
+
+      // ══════════════════════════════════
       // MODULE ASSISTANT IA
       // ══════════════════════════════════
       {
@@ -300,16 +343,23 @@ const routes = [
         path: 'workflow-settings',
         name: 'dashboard-workflow-settings',
         component: () => import('../views/dashboard/WorkflowSettings.vue'),
-        meta: { requiresAdmin: true }
+        meta: { requiresOrgAdmin: true }
       },
+      {
+        path: 'gdpr',
+        name: 'dashboard-gdpr',
+        component: () => import('../views/dashboard/GDPRSettings.vue')
+      },
+
+      // ── Super-Admin (niveau plateforme) ──
       {
         path: 'admin',
         name: 'dashboard-admin',
         component: () => import('../views/dashboard/AdminDashboard.vue'),
-        meta: { requiresAdmin: true }
+        meta: { requiresSuperAdmin: true }
       },
 
-      // ── Quiz (existant, maintenu pour rétro-compatibilité) ──
+      // ── Quiz ──
       {
         path: 'quiz',
         name: 'dashboard-quiz',
@@ -396,9 +446,12 @@ router.beforeEach(async (to, from, next) => {
     await new Promise(resolve => setTimeout(resolve, 300));
   }
 
+  // Vérifications d'accès
   if (to.meta.requiresAuth && !authStore.user) {
     next('/login');
-  } else if (to.meta.requiresAdmin && authStore.userRole !== 'admin') {
+  } else if (to.meta.requiresSuperAdmin && !authStore.isSuperAdmin) {
+    next('/dashboard');
+  } else if (to.meta.requiresOrgAdmin && !authStore.isOrgAdmin) {
     next('/dashboard');
   } else {
     next();

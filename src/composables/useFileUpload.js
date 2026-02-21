@@ -4,7 +4,7 @@ import { useAuthStore } from '../stores/auth';
 
 /**
  * Composable réutilisable pour l'upload de fichiers vers Supabase Storage.
- * Pattern basé sur SettingsCompany.vue (uploadLogo).
+ * Les fichiers sont stockés dans un path isolé par organisation : orgId/userId/...
  *
  * @param {string} bucketName - Nom du bucket Supabase Storage (ex: 'tier-files')
  */
@@ -38,8 +38,9 @@ export function useFileUpload(bucketName = 'tier-files') {
       }
 
       const userId = authStore.user?.id || 'unknown';
+      const orgId = authStore.currentOrganization?.id || 'no-org';
       const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-      const fileName = `${userId}/${prefix}-${Date.now()}-${cleanName}`;
+      const fileName = `${orgId}/${userId}/${prefix}-${Date.now()}-${cleanName}`;
 
       const { error: uploadError } = await supabase.storage
         .from(bucketName)

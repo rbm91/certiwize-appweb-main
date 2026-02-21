@@ -85,7 +85,7 @@ const cancelRename = () => {
 
           <!-- Inline rename input (admin) -->
           <input
-            v-if="authStore.isAdmin && editingSidebarItem === item.name"
+            v-if="authStore.isOrgAdmin && editingSidebarItem === item.name"
             ref="renameInput"
             v-model="editingLabel"
             @blur="saveRename(item)"
@@ -102,7 +102,7 @@ const cancelRename = () => {
 
           <!-- Pencil icon (admin, visible on hover) -->
           <i
-            v-if="authStore.isAdmin && editingSidebarItem !== item.name"
+            v-if="authStore.isOrgAdmin && editingSidebarItem !== item.name"
             class="pi pi-pencil text-xs text-gray-400 hover:text-primary
                    cursor-pointer opacity-0 group-hover/item:opacity-60 transition-opacity flex-shrink-0"
             @click.stop.prevent="startRename(item)"

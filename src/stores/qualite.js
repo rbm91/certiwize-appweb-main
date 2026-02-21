@@ -57,15 +57,24 @@ export const useQualiteStore = defineStore('qualite', () => {
   // ═══════════════════════════════════
 
   const fetchProcedures = async () => {
+    if (!auth.currentOrganization?.id && !auth.isSuperAdmin) return;
+
     loading.value = true;
     try {
-      const { data, error: err } = await supabase
+      const orgId = auth.currentOrganization?.id;
+
+      let query = supabase
         .from('procedures_qualite')
         .select('*')
         .is('deleted_at', null)
         .order('theme', { ascending: true })
         .order('created_at', { ascending: false });
 
+      if (orgId) {
+        query = query.eq('organization_id', orgId);
+      }
+
+      const { data, error: err } = await query;
       if (err) throw err;
       procedures.value = data || [];
     } catch (err) {
@@ -83,6 +92,7 @@ export const useQualiteStore = defineStore('qualite', () => {
         statut: 'brouillon',
         version: 1,
         mode: procedureData.fichier_url ? 'importee' : 'creee',
+        organization_id: auth.currentOrganization?.id,
         user_id: auth.user.id,
       });
 
@@ -174,6 +184,7 @@ export const useQualiteStore = defineStore('qualite', () => {
         indicateurs_rnq: old.indicateurs_rnq,
         parent_id: procedureId,
         motif_modification: '',
+        organization_id: auth.currentOrganization?.id,
         user_id: auth.user.id,
       };
 
@@ -219,14 +230,23 @@ export const useQualiteStore = defineStore('qualite', () => {
   // ═══════════════════════════════════
 
   const fetchReclamations = async () => {
+    if (!auth.currentOrganization?.id && !auth.isSuperAdmin) return;
+
     loading.value = true;
     try {
-      const { data, error: err } = await supabase
+      const orgId = auth.currentOrganization?.id;
+
+      let query = supabase
         .from('reclamations')
         .select('*, prestation:prestation_id(id, intitule, reference)')
         .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
+      if (orgId) {
+        query = query.eq('organization_id', orgId);
+      }
+
+      const { data, error: err } = await query;
       if (err) throw err;
       reclamations.value = data || [];
     } catch (err) {
@@ -241,6 +261,7 @@ export const useQualiteStore = defineStore('qualite', () => {
       const finalData = cleanPayload({
         ...reclamationData,
         statut: 'ouverte',
+        organization_id: auth.currentOrganization?.id,
         user_id: auth.user.id,
       });
 
@@ -300,13 +321,22 @@ export const useQualiteStore = defineStore('qualite', () => {
   // ═══════════════════════════════════
 
   const fetchSignaux = async () => {
+    if (!auth.currentOrganization?.id && !auth.isSuperAdmin) return;
+
     loading.value = true;
     try {
-      const { data, error: err } = await supabase
+      const orgId = auth.currentOrganization?.id;
+
+      let query = supabase
         .from('signaux_qualite')
         .select('*, prestation:prestation_id(id, intitule, reference, type)')
         .order('created_at', { ascending: false });
 
+      if (orgId) {
+        query = query.eq('organization_id', orgId);
+      }
+
+      const { data, error: err } = await query;
       if (err) throw err;
       signaux.value = data || [];
     } catch (err) {
@@ -324,6 +354,7 @@ export const useQualiteStore = defineStore('qualite', () => {
       const finalData = cleanPayload({
         ...signalData,
         statut: 'ouvert',
+        organization_id: auth.currentOrganization?.id,
         user_id: auth.user.id,
       });
 

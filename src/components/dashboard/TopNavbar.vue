@@ -84,9 +84,10 @@ const logout = async () => {
   window.location.href = '/';
 };
 
-// Close mobile menu on route change
+// Close mobile menu on route change + recalcul flèches
 watch(() => route.path, () => {
   closeMobileMenu();
+  nextTick(updateScrollArrows);
 });
 
 const handleClickOutside = (event) => {
@@ -95,13 +96,40 @@ const handleClickOutside = (event) => {
   }
 };
 
+// --- Scroll avec flèches ---
+const navScrollContainer = ref(null);
+const canScrollLeft = ref(false);
+const canScrollRight = ref(false);
+
+const updateScrollArrows = () => {
+  const el = navScrollContainer.value?.$el || navScrollContainer.value;
+  if (!el) return;
+  canScrollLeft.value = el.scrollLeft > 0;
+  canScrollRight.value = el.scrollLeft + el.clientWidth < el.scrollWidth - 1;
+};
+
+const scrollNav = (direction) => {
+  const el = navScrollContainer.value?.$el || navScrollContainer.value;
+  if (!el) return;
+  const amount = 200;
+  el.scrollBy({ left: direction === 'left' ? -amount : amount, behavior: 'smooth' });
+  setTimeout(updateScrollArrows, 350);
+};
+
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
+  nextTick(() => {
+    updateScrollArrows();
+    const el = navScrollContainer.value?.$el || navScrollContainer.value;
+    if (el) el.addEventListener('scroll', updateScrollArrows);
+  });
 });
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
   clearTimeout(dropdownTimeout.value);
+  const el = navScrollContainer.value?.$el || navScrollContainer.value;
+  if (el) el.removeEventListener('scroll', updateScrollArrows);
 });
 </script>
 
@@ -116,13 +144,23 @@ onUnmounted(() => {
         </h1>
       </div>
 
+      <!-- Flèche gauche -->
+      <button
+        v-show="canScrollLeft"
+        @click="scrollNav('left')"
+        class="hidden lg:flex items-center justify-center w-7 h-7 flex-shrink-0 rounded-md text-slate-400 hover:text-white hover:bg-slate-700 transition mr-1"
+      >
+        <i class="pi pi-chevron-left text-xs"></i>
+      </button>
+
       <!-- ========== Desktop Nav: Admin (draggable + rename) ========== -->
       <draggable
-        v-if="authStore.isAdmin"
+        v-if="authStore.isSuperAdmin"
+        ref="navScrollContainer"
         v-model="navItems"
         item-key="name"
         tag="nav"
-        class="hidden lg:flex items-center flex-1 space-x-1"
+        class="hidden lg:flex items-center flex-1 space-x-1 overflow-x-auto scrollbar-hide"
         handle=".nav-drag-handle"
         ghost-class="opacity-30"
         @end="onDragEnd"
@@ -142,12 +180,12 @@ onUnmounted(() => {
               :href="item.disabled ? undefined : item.href"
               :target="item.external ? '_blank' : undefined"
               :rel="item.external ? 'noopener noreferrer' : undefined"
-              class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+              class="topnav-link flex items-center gap-2 px-3 py-2 rounded-lg text-sm
                      transition-all duration-200 no-underline"
               :class="[
                 item.disabled
                   ? 'text-slate-500 cursor-not-allowed'
-                  : isCurrent(item.href)
+                  : (!item.external && isCurrent(item.href))
                     ? 'bg-primary text-white shadow-md cursor-pointer'
                     : 'text-slate-300 hover:bg-slate-800 hover:text-white cursor-pointer'
               ]"
@@ -221,7 +259,7 @@ onUnmounted(() => {
       </draggable>
 
       <!-- ========== Desktop Nav: Non-admin (static, identical to original) ========== -->
-      <nav v-else class="hidden lg:flex items-center flex-1 space-x-1">
+      <nav v-else ref="navScrollContainer" class="hidden lg:flex items-center flex-1 space-x-1 overflow-x-auto scrollbar-hide">
         <div
           v-for="item in topNavigation"
           :key="item.name"
@@ -233,12 +271,12 @@ onUnmounted(() => {
             :href="item.disabled ? undefined : item.href"
             :target="item.external ? '_blank' : undefined"
             :rel="item.external ? 'noopener noreferrer' : undefined"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+            class="topnav-link flex items-center gap-2 px-3 py-2 rounded-lg text-sm
                    transition-all duration-200 no-underline"
             :class="[
               item.disabled
                 ? 'text-slate-500 cursor-not-allowed'
-                : isCurrent(item.href)
+                : (!item.external && isCurrent(item.href))
                   ? 'bg-primary text-white shadow-md cursor-pointer'
                   : 'text-slate-300 hover:bg-slate-800 hover:text-white cursor-pointer'
             ]"
@@ -283,6 +321,15 @@ onUnmounted(() => {
           </transition>
         </div>
       </nav>
+
+      <!-- Flèche droite -->
+      <button
+        v-show="canScrollRight"
+        @click="scrollNav('right')"
+        class="hidden lg:flex items-center justify-center w-7 h-7 flex-shrink-0 rounded-md text-slate-400 hover:text-white hover:bg-slate-700 transition ml-1"
+      >
+        <i class="pi pi-chevron-right text-xs"></i>
+      </button>
 
       <!-- Right side: layout toggle + logout -->
       <div class="hidden lg:flex items-center gap-2 ml-auto">
@@ -381,6 +428,22 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+/* Forcer la couleur des liens visités dans la topnav */
+.topnav-link,
+.topnav-link:visited,
+.topnav-link:link {
+  color: inherit !important;
+}
+
+/* Masquer la scrollbar tout en gardant le scroll horizontal */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 .dropdown-fade-enter-active,
 .dropdown-fade-leave-active {
   transition: opacity 0.15s ease, transform 0.15s ease;

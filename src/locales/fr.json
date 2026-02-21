@@ -73,8 +73,15 @@
     "sidebar_qualite_reclamations": "Réclamations",
     "sidebar_qualite_indicateurs": "Indicateurs",
     "sidebar_qualite_audit_blanc": "Audit blanc",
+    "veille": "Veille",
+    "sidebar_veille_all": "Tous les articles",
     "sidebar_ia_historique": "Historique appels",
-    "sidebar_ia_stats": "Statistiques"
+    "sidebar_ia_stats": "Statistiques",
+    "bpf": "BPF",
+    "audit_blanc": "Audit blanc",
+    "elearning": "E-learning",
+    "parrainage": "Parrainage",
+    "gdpr_settings": "RGPD"
   },
   "manual": {
     "title": "Manuel Qualité & Outils",

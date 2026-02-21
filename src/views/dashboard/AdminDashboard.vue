@@ -48,6 +48,12 @@ const selectedUser = ref(null);
 const newRole = ref('');
 const isUpdating = ref(false);
 
+// ── State : Dialogue membres d'une organisation ──
+const showMembersDialog = ref(false);
+const selectedOrg = ref(null);
+const orgMembers = ref([]);
+const loadingMembers = ref(false);
+
 // ── Stats ──
 const stats = ref({
     totalUsers: 0,
@@ -227,6 +233,60 @@ const cancelRoleChange = () => {
     selectedUser.value = null;
 };
 
+// ── Voir les membres d'une organisation ──
+const viewOrgMembers = async (org) => {
+    selectedOrg.value = org;
+    showMembersDialog.value = true;
+    loadingMembers.value = true;
+    orgMembers.value = [];
+
+    try {
+        // Récupérer les membres de cette organisation
+        const { data: membersData, error: membersErr } = await supabase
+            .from('organization_members')
+            .select('id, user_id, role, joined_at')
+            .eq('organization_id', org.id)
+            .order('joined_at', { ascending: true });
+
+        if (membersErr) throw membersErr;
+
+        if (!membersData || membersData.length === 0) {
+            orgMembers.value = [];
+            return;
+        }
+
+        // Récupérer les profils correspondants
+        const userIds = membersData.map(m => m.user_id);
+        const { data: profilesData, error: profilesErr } = await supabase
+            .from('profiles')
+            .select('id, email, full_name, role')
+            .in('id', userIds);
+
+        if (profilesErr) throw profilesErr;
+
+        // Fusionner
+        orgMembers.value = membersData.map(m => ({
+            ...m,
+            profile: (profilesData || []).find(p => p.id === m.user_id) || null,
+        }));
+    } catch (err) {
+        console.error('[AdminDashboard] Erreur fetch org members:', err);
+        toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les membres', life: 5000 });
+    } finally {
+        loadingMembers.value = false;
+    }
+};
+
+const getOrgRoleLabel = (role) => {
+    const map = { owner: 'Propriétaire', admin: 'Administrateur', member: 'Membre' };
+    return map[role] || role;
+};
+
+const getOrgRoleSeverity = (role) => {
+    const map = { owner: 'danger', admin: 'warning', member: 'info' };
+    return map[role] || 'secondary';
+};
+
 // ── Actions organisations ──
 const toggleOrgActive = async (org) => {
     try {
@@ -362,16 +422,26 @@ onMounted(() => {
                             </template>
                         </Column>
 
-                        <Column header="Actions" style="width: 25%">
+                        <Column header="Actions" style="width: 30%">
                             <template #body="{ data }">
-                                <Button
-                                    :label="data.is_active ? 'Désactiver' : 'Activer'"
-                                    :icon="data.is_active ? 'pi pi-ban' : 'pi pi-check'"
-                                    :severity="data.is_active ? 'danger' : 'success'"
-                                    size="small"
-                                    outlined
-                                    @click="toggleOrgActive(data)"
-                                />
+                                <div class="flex gap-2">
+                                    <Button
+                                        label="Membres"
+                                        icon="pi pi-users"
+                                        severity="info"
+                                        size="small"
+                                        outlined
+                                        @click="viewOrgMembers(data)"
+                                    />
+                                    <Button
+                                        :label="data.is_active ? 'Désactiver' : 'Activer'"
+                                        :icon="data.is_active ? 'pi pi-ban' : 'pi pi-check'"
+                                        :severity="data.is_active ? 'danger' : 'success'"
+                                        size="small"
+                                        outlined
+                                        @click="toggleOrgActive(data)"
+                                    />
+                                </div>
                             </template>
                         </Column>
                     </DataTable>
@@ -581,6 +651,57 @@ onMounted(() => {
                             :severity="newRole === 'super_admin' ? 'warning' : 'secondary'"
                             @click="confirmRoleChange" :disabled="isUpdating" />
                 </div>
+            </template>
+        </Dialog>
+
+        <!-- Dialogue membres d'une organisation -->
+        <Dialog v-model:visible="showMembersDialog"
+                :header="'Membres de ' + (selectedOrg?.name || '')"
+                :modal="true"
+                :style="{ width: '700px' }">
+            <DataTable :value="orgMembers" :loading="loadingMembers" dataKey="id" stripedRows>
+                <template #empty>
+                    <div class="text-center py-6 text-gray-500">
+                        <i class="pi pi-users text-3xl mb-2 block"></i>
+                        <p>Aucun membre dans cette organisation</p>
+                    </div>
+                </template>
+
+                <Column header="Utilisateur" style="width: 40%">
+                    <template #body="{ data }">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                <i class="pi pi-user text-primary text-sm"></i>
+                            </div>
+                            <div>
+                                <span class="font-medium">{{ data.profile?.full_name || '-' }}</span>
+                                <span class="block text-xs text-gray-400">{{ data.profile?.email }}</span>
+                            </div>
+                        </div>
+                    </template>
+                </Column>
+
+                <Column field="role" header="Rôle organisation" style="width: 25%">
+                    <template #body="{ data }">
+                        <Tag :value="getOrgRoleLabel(data.role)" :severity="getOrgRoleSeverity(data.role)" />
+                    </template>
+                </Column>
+
+                <Column field="profile.role" header="Rôle plateforme" style="width: 20%">
+                    <template #body="{ data }">
+                        <Tag :value="getRoleLabel(data.profile?.role)" :severity="getRoleSeverity(data.profile?.role)" />
+                    </template>
+                </Column>
+
+                <Column field="joined_at" header="Membre depuis" style="width: 15%">
+                    <template #body="{ data }">
+                        <span class="text-sm text-gray-500">{{ formatDate(data.joined_at) }}</span>
+                    </template>
+                </Column>
+            </DataTable>
+
+            <template #footer>
+                <Button label="Fermer" severity="secondary" @click="showMembersDialog = false" />
             </template>
         </Dialog>
     </div>

@@ -1,3 +1,8 @@
+// ── Polyfill structuredClone pour Safari < 15.4 ──
+if (typeof globalThis.structuredClone === 'undefined') {
+  globalThis.structuredClone = (obj) => JSON.parse(JSON.stringify(obj));
+}
+
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate';

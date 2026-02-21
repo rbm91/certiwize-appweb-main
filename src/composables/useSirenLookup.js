@@ -1,6 +1,16 @@
 import { ref } from 'vue';
 
 /**
+ * Créer un signal d'abandon avec timeout compatible Safari < 16
+ * (AbortSignal.timeout n'existe pas avant Safari 16)
+ */
+const createTimeoutSignal = (ms) => {
+  const controller = new AbortController();
+  setTimeout(() => controller.abort(), ms);
+  return controller.signal;
+};
+
+/**
  * Composable pour l'auto-complétion SIREN/SIRET via l'API entreprise.data.gouv.fr
  * Fallback silencieux si l'API est indisponible (ne bloque jamais le formulaire).
  */
@@ -35,7 +45,7 @@ export const useSirenLookup = () => {
         `https://entreprise.data.gouv.fr/api/sirene/v3/unites_legales/${cleanSiren}`,
         {
           headers: { 'Accept': 'application/json' },
-          signal: AbortSignal.timeout(5000), // 5s timeout
+          signal: createTimeoutSignal(5000), // 5s timeout — compatible Safari
         }
       );
 
@@ -99,7 +109,7 @@ export const useSirenLookup = () => {
         `https://entreprise.data.gouv.fr/api/sirene/v1/full_text/${encodeURIComponent(query)}?per_page=5`,
         {
           headers: { 'Accept': 'application/json' },
-          signal: AbortSignal.timeout(5000),
+          signal: createTimeoutSignal(5000), // 5s timeout — compatible Safari
         }
       );
 

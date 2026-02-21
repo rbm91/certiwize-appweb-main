@@ -1,8 +1,6 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
-import { Features } from 'lightningcss'
-
 export default defineConfig({
   plugins: [
     vue(),
@@ -14,7 +12,9 @@ export default defineConfig({
   },
   css: {
     // Utiliser Lightning CSS pour convertir les fonctions CSS modernes
-    // (oklch → rgb, nesting → sélecteurs plats, etc.)
+    // (oklch → rgb pour Safari < 15.4)
+    // Note : color-mix() avec var() ne peut pas être converti statiquement
+    // (limitation Tailwind v4 — dégradation visuelle mineure sur très anciens Safari)
     transformer: 'lightningcss',
     lightningcss: {
       // Safari 14.0 = (14 << 16) | (0 << 8) = 917504

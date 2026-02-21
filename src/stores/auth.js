@@ -44,13 +44,13 @@ export const useAuthStore = defineStore('auth', () => {
         .from('profiles')
         .select('role')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('[AuthStore] Error fetching user role:', error);
         userRole.value = 'user';
       } else {
-        userRole.value = data.role || 'user';
+        userRole.value = data?.role || 'user';
       }
     } catch (err) {
       console.error('[AuthStore] Exception fetching user role:', err);
@@ -331,7 +331,7 @@ export const useAuthStore = defineStore('auth', () => {
         .eq('token', inviteToken)
         .is('accepted_at', null)
         .gt('expires_at', new Date().toISOString())
-        .single();
+        .maybeSingle();
 
       if (inviteErr || !invitation) {
         throw new Error('Invitation invalide ou expirée');

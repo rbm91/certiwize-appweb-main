@@ -155,9 +155,9 @@ export const useAnalysisSettingsStore = defineStore('analysisSettings', () => {
         .eq('key', 'webhook_url')
         .eq('organization_id', orgId)
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error) throw error;
       if (data) webhookUrl.value = data.value;
     } catch (err) {
       console.error('[AnalysisSettings] Error fetching webhook URL:', err);
@@ -176,9 +176,9 @@ export const useAnalysisSettingsStore = defineStore('analysisSettings', () => {
         .eq('organization_id', orgId)
         .order('updated_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error) throw error;
 
       if (data) {
         systemPrompt.value = data.value;
@@ -243,9 +243,9 @@ export const useAnalysisSettingsStore = defineStore('analysisSettings', () => {
         .eq('is_default', true)
         .eq('organization_id', orgId)
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error) throw error;
 
       if (data) {
         systemPrompt.value = data.value;

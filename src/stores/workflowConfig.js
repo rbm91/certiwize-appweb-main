@@ -243,9 +243,9 @@ export const useWorkflowConfigStore = defineStore('workflowConfig', () => {
         .eq('organization_id', orgId)
         .order('updated_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error) throw error;
 
       config.value = data?.config || structuredClone(DEFAULT_WORKFLOW);
     } catch (err) {
@@ -307,9 +307,9 @@ export const useWorkflowConfigStore = defineStore('workflowConfig', () => {
         .eq('is_default', true)
         .eq('organization_id', orgId)
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error) throw error;
 
       config.value = data?.config || structuredClone(DEFAULT_WORKFLOW);
       return { success: true };

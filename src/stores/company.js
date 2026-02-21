@@ -128,9 +128,9 @@ export const useCompanyStore = defineStore('company', () => {
         .from('companies')
         .select('*')
         .eq('organization_id', orgId)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error) throw error;
 
       if (data) {
         // Merger avec les défauts pour les nouveaux champs CDC

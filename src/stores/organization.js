@@ -22,7 +22,7 @@ export const useOrganizationStore = defineStore('organization', () => {
     try {
       const { data, error: err } = await supabase
         .from('organization_members')
-        .select('*, profiles:user_id(id, email, role, created_at)')
+        .select('*, profiles:user_id(id, email, full_name, role)')
         .eq('organization_id', orgId)
         .order('joined_at', { ascending: true });
 

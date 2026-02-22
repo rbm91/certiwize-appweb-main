@@ -428,6 +428,14 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
 
+  // Détecter les liens d'invitation Supabase (#access_token=...&type=invite)
+  // et rediriger vers la page de création de mot de passe
+  const hash = window.location.hash;
+  if (hash && hash.includes('type=invite') && to.path !== '/update-password') {
+    next('/update-password');
+    return;
+  }
+
   // Attendre que l'authentification soit initialisée avant de vérifier
   if (!authStore.initialized && to.meta.requiresAuth) {
     try {

@@ -8,6 +8,13 @@
   </head>
   <body>
     <div id="app"></div>
+    <script>
+      // Redirection immédiate pour les invitations Supabase
+      // S'exécute AVANT le chargement de Vite/Vue
+      if (window.location.hash.includes('type=invite') && window.location.pathname !== '/update-password') {
+        window.location.replace('/update-password' + window.location.hash);
+      }
+    </script>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

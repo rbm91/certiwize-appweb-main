@@ -1,10 +1,3 @@
-// ── Redirection immédiate pour les invitations Supabase ──
-// Supabase envoie #access_token=...&type=invite — on redirige vers /update-password
-// AVANT que Vue démarre pour éviter la redirection vers /login
-if (window.location.hash.includes('type=invite')) {
-  window.location.replace('/update-password' + window.location.hash);
-}
-
 // ── Polyfill structuredClone pour Safari < 15.4 ──
 if (typeof globalThis.structuredClone === 'undefined') {
   globalThis.structuredClone = (obj) => JSON.parse(JSON.stringify(obj));

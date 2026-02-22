@@ -135,10 +135,14 @@ export const useDataStore = defineStore('data', () => {
 
     const deleteTier = async (id) => {
         try {
+            const orgId = auth.currentOrganization?.id;
+            if (!orgId) throw new Error('Aucune organisation sélectionnée');
+
             const { error: err } = await supabase
                 .from('tiers')
                 .delete()
-                .eq('id', id);
+                .eq('id', id)
+                .eq('organization_id', orgId);
 
             if (err) throw err;
 
@@ -154,10 +158,14 @@ export const useDataStore = defineStore('data', () => {
         if (local) return local;
 
         try {
+            const orgId = auth.currentOrganization?.id;
+            if (!orgId) throw new Error('Aucune organisation sélectionnée');
+
             const { data, error: err } = await supabase
                 .from('tiers')
                 .select('*')
                 .eq('id', id)
+                .eq('organization_id', orgId)
                 .single();
 
             if (err) throw err;
@@ -170,10 +178,14 @@ export const useDataStore = defineStore('data', () => {
     const updateTier = async (id, updates) => {
         loading.value = true;
         try {
+            const orgId = auth.currentOrganization?.id;
+            if (!orgId) throw new Error('Aucune organisation sélectionnée');
+
             const { data, error: err } = await supabase
                 .from('tiers')
                 .update(cleanPayload(updates))
                 .eq('id', id)
+                .eq('organization_id', orgId)
                 .select()
                 .single();
 

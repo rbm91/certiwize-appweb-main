@@ -46,10 +46,14 @@ export const useQuizStore = defineStore('quiz', () => {
   const fetchQuiz = async (id) => {
     loading.value = true;
     try {
+      const orgId = auth.currentOrganization?.id;
+      if (!orgId) throw new Error('Aucune organisation sélectionnée');
+
       const { data, error } = await supabase
         .from('quizzes')
         .select('*, formations(title)')
         .eq('id', id)
+        .eq('organization_id', orgId)
         .single();
 
       if (error) throw error;
@@ -138,10 +142,14 @@ export const useQuizStore = defineStore('quiz', () => {
         updated_at: new Date().toISOString(),
       };
 
+      const orgId = auth.currentOrganization?.id;
+      if (!orgId) throw new Error('Aucune organisation sélectionnée');
+
       const { data, error } = await supabase
         .from('quizzes')
         .update(payload)
         .eq('id', id)
+        .eq('organization_id', orgId)
         .select()
         .single();
 
@@ -161,10 +169,14 @@ export const useQuizStore = defineStore('quiz', () => {
 
   const deleteQuiz = async (id) => {
     try {
+      const orgId = auth.currentOrganization?.id;
+      if (!orgId) throw new Error('Aucune organisation sélectionnée');
+
       const { error } = await supabase
         .from('quizzes')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('organization_id', orgId);
 
       if (error) throw error;
 
@@ -177,10 +189,14 @@ export const useQuizStore = defineStore('quiz', () => {
 
   const toggleQuizActive = async (id, isActive) => {
     try {
+      const orgId = auth.currentOrganization?.id;
+      if (!orgId) throw new Error('Aucune organisation sélectionnée');
+
       const { error } = await supabase
         .from('quizzes')
         .update({ is_active: isActive, updated_at: new Date().toISOString() })
-        .eq('id', id);
+        .eq('id', id)
+        .eq('organization_id', orgId);
 
       if (error) throw error;
 
@@ -213,6 +229,19 @@ export const useQuizStore = defineStore('quiz', () => {
 
   const fetchResponses = async (quizId) => {
     try {
+      // Vérifier que le quiz appartient à l'organisation courante
+      const orgId = auth.currentOrganization?.id;
+      if (orgId) {
+        const { data: quizCheck } = await supabase
+          .from('quizzes')
+          .select('id')
+          .eq('id', quizId)
+          .eq('organization_id', orgId)
+          .maybeSingle();
+
+        if (!quizCheck) throw new Error('Quiz introuvable dans cette organisation');
+      }
+
       const { data, error } = await supabase
         .from('quiz_responses')
         .select('*')

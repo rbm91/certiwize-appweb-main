@@ -15,8 +15,12 @@ export const useProjectStore = defineStore('project', () => {
         try {
             const user = auth.user;
 
+            const orgId = auth.currentOrganization?.id;
+            if (!orgId) throw new Error('Aucune organisation sélectionnée');
+
             const payload = {
                 user_id: user.id,
+                organization_id: orgId,
                 name: projectData.name || 'Nouveau Projet',
                 step_progress: step,
                 form_data: projectData.form_data, // Le JSON avec vos balises
@@ -27,10 +31,11 @@ export const useProjectStore = defineStore('project', () => {
             let query = supabase.from('projects');
 
             if (projectData.id) {
-                // Mise à jour
+                // Mise à jour — filtre par organisation pour éviter les fuites cross-tenant
                 const { data, error } = await query
                     .update(payload)
                     .eq('id', projectData.id)
+                    .eq('organization_id', orgId)
                     .select()
                     .single();
                 if (error) throw error;
@@ -53,14 +58,18 @@ export const useProjectStore = defineStore('project', () => {
         }
     };
 
-    // Récupérer un projet par ID
+    // Récupérer un projet par ID — filtré par organisation
     const fetchProject = async (id) => {
         loading.value = true;
         try {
+            const orgId = auth.currentOrganization?.id;
+            if (!orgId) throw new Error('Aucune organisation sélectionnée');
+
             const { data, error } = await supabase
                 .from('projects')
                 .select('*')
                 .eq('id', id)
+                .eq('organization_id', orgId)
                 .single();
 
             if (error) throw error;
@@ -129,10 +138,12 @@ export const useProjectStore = defineStore('project', () => {
                 updated_at: new Date()
             };
 
+            const orgId = auth.currentOrganization?.id;
             const { data: updatedProject, error: updateError } = await supabase
                 .from('projects')
                 .update(updatePayload)
                 .eq('id', currentProject.value.id)
+                .eq('organization_id', orgId)
                 .select()
                 .single();
 
@@ -150,13 +161,17 @@ export const useProjectStore = defineStore('project', () => {
         }
     };
 
-    // Changer le statut du projet
+    // Changer le statut du projet — filtré par organisation
     const updateStatus = async (newStatus) => {
         try {
+            const orgId = auth.currentOrganization?.id;
+            if (!orgId) throw new Error('Aucune organisation sélectionnée');
+
             const { error } = await supabase
                 .from('projects')
                 .update({ status: newStatus })
-                .eq('id', currentProject.value.id);
+                .eq('id', currentProject.value.id)
+                .eq('organization_id', orgId);
 
             if (error) throw error;
 

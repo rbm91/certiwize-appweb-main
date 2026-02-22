@@ -104,6 +104,9 @@ export const useEvaluationsStore = defineStore('evaluations', () => {
    */
   const envoyerEvaluation = async (executionId, destinataires = []) => {
     try {
+      const orgId = auth.currentOrganization?.id;
+      if (!orgId) throw new Error('Aucune organisation sélectionnée');
+
       const { data, error: err } = await supabase
         .from('evaluation_executions')
         .update({
@@ -112,6 +115,7 @@ export const useEvaluationsStore = defineStore('evaluations', () => {
           resultats: { destinataires, reponses: [] },
         })
         .eq('id', executionId)
+        .eq('organization_id', orgId)
         .select()
         .single();
 
@@ -135,10 +139,14 @@ export const useEvaluationsStore = defineStore('evaluations', () => {
    */
   const relancerEvaluation = async (executionId) => {
     try {
+      const orgId = auth.currentOrganization?.id;
+      if (!orgId) throw new Error('Aucune organisation sélectionnée');
+
       const { data, error: err } = await supabase
         .from('evaluation_executions')
         .update({ date_relance: new Date().toISOString() })
         .eq('id', executionId)
+        .eq('organization_id', orgId)
         .select()
         .single();
 
@@ -162,11 +170,15 @@ export const useEvaluationsStore = defineStore('evaluations', () => {
       const execution = executions.value.find(e => e.id === executionId);
       if (!execution) throw new Error('Exécution introuvable');
 
-      // Mettre à jour le statut
+      // Mettre à jour le statut — filtré par organisation
+      const orgId = auth.currentOrganization?.id;
+      if (!orgId) throw new Error('Aucune organisation sélectionnée');
+
       const { data, error: err } = await supabase
         .from('evaluation_executions')
         .update({ statut: 'cloture' })
         .eq('id', executionId)
+        .eq('organization_id', orgId)
         .select()
         .single();
 

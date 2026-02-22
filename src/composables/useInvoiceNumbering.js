@@ -1,13 +1,16 @@
 import { supabase } from '../supabase';
+import { useAuthStore } from '../stores/auth';
 
 /**
  * Composable pour la numérotation séquentielle des factures.
  * Règles CDC :
- * - Numérotation unique et continue obligatoire
+ * - Numérotation unique et continue obligatoire par organisation
  * - Format : FA-YYYY-NNNNN (ex: FA-2026-00001)
  * - Aucun trou dans la séquence
+ * - Filtré par organization_id pour le cloisonnement multi-tenant
  */
 export const useInvoiceNumbering = () => {
+  const authStore = useAuthStore();
 
   /**
    * Génère le prochain numéro de facture
@@ -19,13 +22,19 @@ export const useInvoiceNumbering = () => {
     const yearPrefix = `${prefix}-${year}-`;
 
     try {
-      // Chercher le dernier numéro émis pour cette année
-      const { data, error } = await supabase
+      const orgId = authStore.currentOrganization?.id;
+      if (!orgId) throw new Error('Aucune organisation sélectionnée');
+
+      // Chercher le dernier numéro émis pour cette année et cette organisation
+      let query = supabase
         .from('factures')
         .select('numero')
+        .eq('organization_id', orgId)
         .like('numero', `${yearPrefix}%`)
         .order('numero', { ascending: false })
         .limit(1);
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
@@ -62,9 +71,13 @@ export const useInvoiceNumbering = () => {
    */
   const isNumberAvailable = async (numero) => {
     try {
+      const orgId = authStore.currentOrganization?.id;
+      if (!orgId) throw new Error('Aucune organisation sélectionnée');
+
       const { data, error } = await supabase
         .from('factures')
         .select('id')
+        .eq('organization_id', orgId)
         .eq('numero', numero)
         .limit(1);
 

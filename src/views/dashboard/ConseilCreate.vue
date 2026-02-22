@@ -61,7 +61,7 @@ const typeMissionOptions = [
   { label: 'Audit', value: 'audit' },
   { label: 'Diagnostic', value: 'diagnostic' },
   { label: 'Accompagnement', value: 'accompagnement' },
-  { label: 'Conseil strategique', value: 'conseil_strategique' },
+  { label: 'Conseil stratégique', value: 'conseil_strategique' },
 ];
 
 // -- Tiers options --
@@ -140,8 +140,8 @@ const handleSave = async () => {
     if (result.success) {
       toast.add({
         severity: 'success',
-        summary: isEdit.value ? 'Mission mise a jour' : 'Mission creee',
-        detail: `La mission "${form.value.intitule}" a ete ${isEdit.value ? 'mise a jour' : 'creee'} avec succes.`,
+        summary: isEdit.value ? 'Mission mise à jour' : 'Mission créée',
+        detail: `La mission "${form.value.intitule}" a été ${isEdit.value ? 'mise à jour' : 'créée'} avec succès.`,
         life: 3000,
       });
       router.push({ name: 'dashboard-conseil-view', params: { id: result.data?.id || editId.value } });
@@ -211,7 +211,7 @@ onMounted(async () => {
           <h1 class="text-2xl font-bold text-surface-900 dark:text-surface-0">
             {{ isEdit ? 'Modifier la mission conseil' : 'Nouvelle mission conseil' }}
           </h1>
-          <p class="text-surface-500 mt-1">Etape {{ currentStep }} sur {{ totalSteps }}</p>
+          <p class="text-surface-500 mt-1">Étape {{ currentStep }} sur {{ totalSteps }}</p>
         </div>
         <Button label="Retour" icon="pi pi-arrow-left" severity="secondary" outlined @click="goBack" />
       </div>
@@ -231,7 +231,7 @@ onMounted(async () => {
           </h2>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="flex flex-col gap-2 md:col-span-2">
-              <label class="text-sm font-medium">Intitule de la mission *</label>
+              <label class="text-sm font-medium">Intitulé de la mission *</label>
               <InputText v-model="form.intitule" placeholder="Ex: Audit organisationnel" class="w-full" :invalid="!!errors.intitule" @input="clearError('intitule')" />
             </div>
             <div class="flex flex-col gap-2">
@@ -241,7 +241,7 @@ onMounted(async () => {
                 :options="clientOptions"
                 optionLabel="label"
                 optionValue="value"
-                placeholder="Selectionner un client"
+                placeholder="Sélectionner un client"
                 filter
                 class="w-full"
                 :invalid="!!errors.client_id"
@@ -255,7 +255,7 @@ onMounted(async () => {
                 :options="financeurOptions"
                 optionLabel="label"
                 optionValue="value"
-                placeholder="Selectionner un financeur"
+                placeholder="Sélectionner un financeur"
                 filter
                 showClear
                 class="w-full"
@@ -268,7 +268,7 @@ onMounted(async () => {
                 :options="consultantOptions"
                 optionLabel="label"
                 optionValue="value"
-                placeholder="Selectionner un consultant"
+                placeholder="Sélectionner un consultant"
                 filter
                 showClear
                 class="w-full"
@@ -281,13 +281,13 @@ onMounted(async () => {
                 :options="typeMissionOptions"
                 optionLabel="label"
                 optionValue="value"
-                placeholder="Selectionner un type"
+                placeholder="Sélectionner un type"
                 showClear
                 class="w-full"
               />
             </div>
             <div class="flex flex-col gap-2">
-              <label class="text-sm font-medium">Date de debut</label>
+              <label class="text-sm font-medium">Date de début</label>
               <Calendar v-model="form.date_debut" dateFormat="dd/mm/yy" showIcon class="w-full" />
             </div>
             <div class="flex flex-col gap-2">
@@ -309,19 +309,19 @@ onMounted(async () => {
           <div class="grid grid-cols-1 gap-6">
             <div class="flex flex-col gap-2">
               <label class="text-sm font-medium">Contexte de la mission</label>
-              <Textarea v-model="form.contexte" rows="3" placeholder="Decrivez le contexte et les enjeux de la mission..." class="w-full" />
+              <Textarea v-model="form.contexte" rows="3" placeholder="Décrivez le contexte et les enjeux de la mission..." class="w-full" />
             </div>
             <div class="flex flex-col gap-2">
               <label class="text-sm font-medium">Objectifs de la mission</label>
-              <Textarea v-model="form.objectifs" rows="3" placeholder="Listez les objectifs vises par la mission..." class="w-full" />
+              <Textarea v-model="form.objectifs" rows="3" placeholder="Listez les objectifs visés par la mission..." class="w-full" />
             </div>
             <div class="flex flex-col gap-2">
               <label class="text-sm font-medium">Livrables attendus</label>
-              <Textarea v-model="form.livrables" rows="3" placeholder="Decrivez les livrables attendus (rapports, recommandations, plans d'action...)" class="w-full" />
+              <Textarea v-model="form.livrables" rows="3" placeholder="Décrivez les livrables attendus (rapports, recommandations, plans d'action...)" class="w-full" />
             </div>
             <div class="flex flex-col gap-2">
-              <label class="text-sm font-medium">Planning previsionnel</label>
-              <Textarea v-model="form.planning" rows="3" placeholder="Decrivez le planning et les jalons de la mission..." class="w-full" />
+              <label class="text-sm font-medium">Planning prévisionnel</label>
+              <Textarea v-model="form.planning" rows="3" placeholder="Décrivez le planning et les jalons de la mission..." class="w-full" />
             </div>
           </div>
         </div>
@@ -329,17 +329,17 @@ onMounted(async () => {
         <!-- ====== STEP 3 : Realisation ====== -->
         <div v-else-if="currentStep === 3">
           <h2 class="text-lg font-semibold text-primary border-b pb-2 mb-6">
-            <i class="pi pi-play mr-2"></i>Realisation
+            <i class="pi pi-play mr-2"></i>Réalisation
           </h2>
           <div class="flex flex-col items-center justify-center py-12 text-surface-500">
             <i class="pi pi-play text-5xl mb-4 text-primary"></i>
-            <p class="text-lg font-medium mb-2">Suivi de la realisation</p>
+            <p class="text-lg font-medium mb-2">Suivi de la réalisation</p>
             <p class="text-sm text-center max-w-md">
-              Suivez l'avancement de la mission : reunions, ateliers,
-              entretiens, production des livrables et points d'etape.
+              Suivez l'avancement de la mission : réunions, ateliers,
+              entretiens, production des livrables et points d'étape.
             </p>
             <Message severity="info" :closable="false" class="mt-4">
-              Fonctionnalite disponible prochainement.
+              Fonctionnalité disponible prochainement.
             </Message>
           </div>
         </div>
@@ -353,33 +353,33 @@ onMounted(async () => {
             <i class="pi pi-wallet text-5xl mb-4 text-primary"></i>
             <p class="text-lg font-medium mb-2">Facturation de la mission</p>
             <p class="text-sm text-center max-w-md">
-              Gerez la facturation de la mission : acomptes, factures intermediaires
+              Gérez la facturation de la mission : acomptes, factures intermédiaires
               et facture de solde.
             </p>
             <Message severity="info" :closable="false" class="mt-4">
-              Fonctionnalite disponible prochainement.
+              Fonctionnalité disponible prochainement.
             </Message>
           </div>
         </div>
 
-        <!-- ====== STEP 5 : Cloture ====== -->
+        <!-- ====== STEP 5 : Clôture ====== -->
         <div v-else-if="currentStep === 5">
           <h2 class="text-lg font-semibold text-primary border-b pb-2 mb-6">
-            <i class="pi pi-lock mr-2"></i>Cloture
+            <i class="pi pi-lock mr-2"></i>Clôture
           </h2>
           <div class="flex flex-col items-center justify-center py-12 text-surface-500">
             <i class="pi pi-lock text-5xl mb-4 text-primary"></i>
-            <p class="text-lg font-medium mb-2">Cloture de la mission</p>
+            <p class="text-lg font-medium mb-2">Clôture de la mission</p>
             <p class="text-sm text-center max-w-md">
-              Verifiez que tous les livrables ont ete remis et que la facturation
-              est complete avant de cloturer la mission.
+              Vérifiez que tous les livrables ont été remis et que la facturation
+              est complète avant de clôturer la mission.
             </p>
             <Message severity="warn" :closable="false" class="mt-4">
-              Attention : la cloture est bloquee si un signal qualite est ouvert
-              sur cette mission (incident, reclamation non traite).
+              Attention : la clôture est bloquée si un signal qualité est ouvert
+              sur cette mission (incident, réclamation non traitée).
             </Message>
             <Message severity="info" :closable="false" class="mt-2">
-              Fonctionnalite disponible prochainement.
+              Fonctionnalité disponible prochainement.
             </Message>
           </div>
         </div>
@@ -388,7 +388,7 @@ onMounted(async () => {
       <!-- Navigation Buttons -->
       <div class="flex justify-between items-center mt-6">
         <Button
-          label="Precedent"
+          label="Précédent"
           icon="pi pi-chevron-left"
           severity="secondary"
           outlined

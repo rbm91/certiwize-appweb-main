@@ -6,8 +6,8 @@ const router = useRouter();
 
 const sections = [
   {
-    titre: 'Manuel qualite',
-    description: 'Gerez vos procedures qualite, le referentiel Qualiopi et le suivi documentaire.',
+    titre: 'Manuel qualité',
+    description: 'Gérez vos procédures qualité, le référentiel Qualiopi et le suivi documentaire.',
     icon: 'pi pi-book',
     color: 'purple',
     route: '/dashboard/qualite/manuel',
@@ -17,8 +17,8 @@ const sections = [
     hoverClass: 'hover:border-purple-400 dark:hover:border-purple-600',
   },
   {
-    titre: 'Boite a outils',
-    description: 'Modeles de documents types a telecharger et adapter a votre organisme.',
+    titre: 'Boîte à outils',
+    description: 'Modèles de documents types à télécharger et adapter à votre organisme.',
     icon: 'pi pi-box',
     color: 'blue',
     route: '/dashboard/qualite/boite-outils',
@@ -28,8 +28,8 @@ const sections = [
     hoverClass: 'hover:border-blue-400 dark:hover:border-blue-600',
   },
   {
-    titre: 'Bibliotheque evaluations',
-    description: 'Quiz de positionnement, validation des acquis et enquetes de satisfaction.',
+    titre: 'Bibliothèque évaluations',
+    description: 'Quiz de positionnement, validation des acquis et enquêtes de satisfaction.',
     icon: 'pi pi-list-check',
     color: 'green',
     route: '/dashboard/qualite/evaluations',
@@ -50,8 +50,8 @@ const sections = [
     hoverClass: 'hover:border-orange-400 dark:hover:border-orange-600',
   },
   {
-    titre: 'Reclamations',
-    description: 'Suivi des reclamations stagiaires, formateurs et financeurs.',
+    titre: 'Réclamations',
+    description: 'Suivi des réclamations stagiaires, formateurs et financeurs.',
     icon: 'pi pi-exclamation-triangle',
     color: 'red',
     route: '/dashboard/qualite/reclamations',
@@ -61,8 +61,8 @@ const sections = [
     hoverClass: 'hover:border-red-400 dark:hover:border-red-600',
   },
   {
-    titre: 'Enquetes & indicateurs',
-    description: 'Indicateurs consolides, taux de satisfaction et signaux qualite.',
+    titre: 'Enquêtes & indicateurs',
+    description: 'Indicateurs consolidés, taux de satisfaction et signaux qualité.',
     icon: 'pi pi-chart-bar',
     color: 'indigo',
     route: '/dashboard/qualite/indicateurs',
@@ -80,11 +80,11 @@ const navigateTo = (route) => {
 
 <template>
   <div class="space-y-8">
-    <!-- En-tete -->
+    <!-- En-tête -->
     <div>
-      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Qualite</h1>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Qualité</h1>
       <p class="text-gray-500 dark:text-gray-400 mt-1">
-        Pilotez votre demarche qualite et votre conformite Qualiopi.
+        Pilotez votre démarche qualité et votre conformité Qualiopi.
       </p>
     </div>
 
@@ -97,7 +97,7 @@ const navigateTo = (route) => {
         :class="[section.borderClass, section.hoverClass]"
         @click="navigateTo(section.route)"
       >
-        <!-- Icone -->
+        <!-- Icône -->
         <div
           class="w-14 h-14 rounded-xl flex items-center justify-center mb-4"
           :class="section.bgClass"
@@ -115,7 +115,7 @@ const navigateTo = (route) => {
 
         <!-- Lien discret -->
         <div class="mt-4 flex items-center gap-1 text-sm font-medium" :class="section.iconClass">
-          <span>Acceder</span>
+          <span>Accéder</span>
           <i class="pi pi-arrow-right text-xs"></i>
         </div>
       </div>

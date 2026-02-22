@@ -17,9 +17,9 @@ import ProgressBar from 'primevue/progressbar';
 import { useConfirm } from 'primevue/useconfirm';
 import { useFormValidation } from '../../composables/useFormValidation';
 
-// Options pour le dropdown modalites
+// Options pour le dropdown modalités
 const modalitesOptions = [
-    { label: 'Presentiel', value: 'presentiel' },
+    { label: 'Présentiel', value: 'presentiel' },
     { label: 'Distanciel', value: 'distanciel' },
     { label: 'Mixte', value: 'mixte' }
 ];
@@ -477,36 +477,36 @@ const goBack = () => {
                     <h2 class="text-lg font-bold text-blue-700 dark:text-blue-300 mb-2">Cahier des charges (CDC)</h2>
 
                     <div>
-                        <label class="font-semibold block mb-2">Public vise</label>
-                        <Textarea v-model="form.public_cible" rows="3" class="w-full" placeholder="Decrivez le public cible de la formation" />
+                        <label class="font-semibold block mb-2">Public visé</label>
+                        <Textarea v-model="form.public_cible" rows="3" class="w-full" placeholder="Décrivez le public cible de la formation" />
                     </div>
                     <div>
-                        <label class="font-semibold block mb-2">Prerequis</label>
-                        <Textarea v-model="form.prerequis" rows="3" class="w-full" placeholder="Prerequis necessaires pour suivre la formation" />
+                        <label class="font-semibold block mb-2">Prérequis</label>
+                        <Textarea v-model="form.prerequis" rows="3" class="w-full" placeholder="Prérequis nécessaires pour suivre la formation" />
                     </div>
                     <div>
-                        <label class="font-semibold block mb-2">Objectifs pedagogiques</label>
-                        <Textarea v-model="form.objectifs_pedagogiques" rows="4" class="w-full" placeholder="Listez les objectifs pedagogiques" />
+                        <label class="font-semibold block mb-2">Objectifs pédagogiques</label>
+                        <Textarea v-model="form.objectifs_pedagogiques" rows="4" class="w-full" placeholder="Listez les objectifs pédagogiques" />
                     </div>
                     <div>
-                        <label class="font-semibold block mb-2">Programme detaille</label>
-                        <Textarea v-model="form.programme" rows="6" class="w-full" placeholder="Decrivez le programme detaille de la formation" />
+                        <label class="font-semibold block mb-2">Programme détaillé</label>
+                        <Textarea v-model="form.programme" rows="6" class="w-full" placeholder="Décrivez le programme détaillé de la formation" />
                     </div>
                     <div>
-                        <label class="font-semibold block mb-2">Moyens pedagogiques et techniques</label>
-                        <Textarea v-model="form.moyens_pedagogiques" rows="3" class="w-full" placeholder="Moyens pedagogiques et techniques mis en oeuvre" />
+                        <label class="font-semibold block mb-2">Moyens pédagogiques et techniques</label>
+                        <Textarea v-model="form.moyens_pedagogiques" rows="3" class="w-full" placeholder="Moyens pédagogiques et techniques mis en oeuvre" />
                     </div>
                     <div>
-                        <label class="font-semibold block mb-2">Modalites d'evaluation</label>
-                        <Textarea v-model="form.modalites_evaluation" rows="3" class="w-full" placeholder="Decrivez les modalites d'evaluation" />
+                        <label class="font-semibold block mb-2">Modalités d'évaluation</label>
+                        <Textarea v-model="form.modalites_evaluation" rows="3" class="w-full" placeholder="Décrivez les modalités d'évaluation" />
                     </div>
                     <div>
-                        <label class="font-semibold block mb-2">Accessibilite aux personnes en situation de handicap</label>
-                        <Textarea v-model="form.accessibilite" rows="3" class="w-full" placeholder="Indiquez les dispositions d'accessibilite" />
+                        <label class="font-semibold block mb-2">Accessibilité aux personnes en situation de handicap</label>
+                        <Textarea v-model="form.accessibilite" rows="3" class="w-full" placeholder="Indiquez les dispositions d'accessibilité" />
                     </div>
                     <div class="max-w-sm">
-                        <label class="font-semibold block mb-2">Modalites</label>
-                        <Dropdown v-model="form.modalites" :options="modalitesOptions" optionLabel="label" optionValue="value" placeholder="Choisir une modalite" class="w-full" />
+                        <label class="font-semibold block mb-2">Modalités</label>
+                        <Dropdown v-model="form.modalites" :options="modalitesOptions" optionLabel="label" optionValue="value" placeholder="Choisir une modalité" class="w-full" />
                     </div>
                 </div>
 

@@ -162,7 +162,7 @@ const goToEdit = (prestation) => {
         <template #header>
           <div class="flex items-center gap-2">
             <span class="w-3 h-3 rounded-full" :style="{ backgroundColor: PRESTATION_COLORS.formation }"></span>
-            <span>Formations</span>
+            <span>Formation</span>
             <Tag :value="String(filteredFormations.length)" severity="info" class="text-xs ml-1" rounded />
           </div>
         </template>
@@ -193,18 +193,18 @@ const goToEdit = (prestation) => {
             <div class="flex flex-col items-center justify-center py-10 text-surface-500">
               <i class="pi pi-book text-4xl mb-3" />
               <p class="text-lg font-medium">Aucune formation</p>
-              <p class="text-sm mt-1">Creez votre premiere session de formation.</p>
+              <p class="text-sm mt-1">Créez votre première session de formation.</p>
             </div>
           </template>
 
-          <Column field="reference" header="Reference" sortable style="min-width: 10rem">
+          <Column field="reference" header="Référence" sortable style="min-width: 10rem">
             <template #body="{ data }">
               <span class="font-mono text-sm font-semibold" :style="{ color: PRESTATION_COLORS.formation }">
                 {{ data.reference || '-' }}
               </span>
             </template>
           </Column>
-          <Column field="intitule" header="Intitule" sortable style="min-width: 16rem">
+          <Column field="intitule" header="Intitulé" sortable style="min-width: 16rem">
             <template #body="{ data }">
               <span class="font-semibold text-surface-900 dark:text-surface-0">{{ data.intitule || '-' }}</span>
             </template>
@@ -219,7 +219,7 @@ const goToEdit = (prestation) => {
               <Tag :value="getStatutLabel(data.statut)" :severity="getStatutSeverity(data.statut)" />
             </template>
           </Column>
-          <Column field="date_debut" header="Debut" sortable style="min-width: 8rem">
+          <Column field="date_debut" header="Début" sortable style="min-width: 8rem">
             <template #body="{ data }">
               <span class="text-sm">{{ formatDate(data.date_debut) }}</span>
             </template>
@@ -281,18 +281,18 @@ const goToEdit = (prestation) => {
             <div class="flex flex-col items-center justify-center py-10 text-surface-500">
               <i class="pi pi-comments text-4xl mb-3" />
               <p class="text-lg font-medium">Aucun coaching</p>
-              <p class="text-sm mt-1">Creez votre premier accompagnement coaching.</p>
+              <p class="text-sm mt-1">Créez votre premier accompagnement coaching.</p>
             </div>
           </template>
 
-          <Column field="reference" header="Reference" sortable style="min-width: 10rem">
+          <Column field="reference" header="Référence" sortable style="min-width: 10rem">
             <template #body="{ data }">
               <span class="font-mono text-sm font-semibold" :style="{ color: PRESTATION_COLORS.coaching }">
                 {{ data.reference || '-' }}
               </span>
             </template>
           </Column>
-          <Column field="intitule" header="Intitule" sortable style="min-width: 16rem">
+          <Column field="intitule" header="Intitulé" sortable style="min-width: 16rem">
             <template #body="{ data }">
               <span class="font-semibold text-surface-900 dark:text-surface-0">{{ data.intitule || '-' }}</span>
             </template>
@@ -307,7 +307,7 @@ const goToEdit = (prestation) => {
               <Tag :value="getStatutLabel(data.statut)" :severity="getStatutSeverity(data.statut)" />
             </template>
           </Column>
-          <Column field="date_debut" header="Debut" sortable style="min-width: 8rem">
+          <Column field="date_debut" header="Début" sortable style="min-width: 8rem">
             <template #body="{ data }">
               <span class="text-sm">{{ formatDate(data.date_debut) }}</span>
             </template>
@@ -369,18 +369,18 @@ const goToEdit = (prestation) => {
             <div class="flex flex-col items-center justify-center py-10 text-surface-500">
               <i class="pi pi-chart-line text-4xl mb-3" />
               <p class="text-lg font-medium">Aucune mission conseil</p>
-              <p class="text-sm mt-1">Creez votre premiere mission de conseil.</p>
+              <p class="text-sm mt-1">Créez votre première mission de conseil.</p>
             </div>
           </template>
 
-          <Column field="reference" header="Reference" sortable style="min-width: 10rem">
+          <Column field="reference" header="Référence" sortable style="min-width: 10rem">
             <template #body="{ data }">
               <span class="font-mono text-sm font-semibold" :style="{ color: PRESTATION_COLORS.conseil }">
                 {{ data.reference || '-' }}
               </span>
             </template>
           </Column>
-          <Column field="intitule" header="Intitule" sortable style="min-width: 16rem">
+          <Column field="intitule" header="Intitulé" sortable style="min-width: 16rem">
             <template #body="{ data }">
               <span class="font-semibold text-surface-900 dark:text-surface-0">{{ data.intitule || '-' }}</span>
             </template>
@@ -395,7 +395,7 @@ const goToEdit = (prestation) => {
               <Tag :value="getStatutLabel(data.statut)" :severity="getStatutSeverity(data.statut)" />
             </template>
           </Column>
-          <Column field="date_debut" header="Debut" sortable style="min-width: 8rem">
+          <Column field="date_debut" header="Début" sortable style="min-width: 8rem">
             <template #body="{ data }">
               <span class="text-sm">{{ formatDate(data.date_debut) }}</span>
             </template>

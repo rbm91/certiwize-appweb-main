@@ -34,7 +34,7 @@ const paiementFacture = ref(null);
 const paiementMontant = ref(0);
 const paiementMode = ref('virement');
 
-// Computed : liste filtree
+// Computed : liste filtrée
 const filteredFactures = computed(() => {
   let result = store.activeFactures;
 
@@ -123,7 +123,7 @@ const goToView = (facture) => {
 const handleEmettre = async (facture) => {
   const res = await store.emettreFacture(facture.id);
   if (res.success) {
-    toast.add({ severity: 'success', summary: 'Facture emise', life: 3000 });
+    toast.add({ severity: 'success', summary: 'Facture émise', life: 3000 });
   } else {
     toast.add({ severity: 'error', summary: 'Erreur', detail: res.error, life: 5000 });
   }
@@ -132,7 +132,7 @@ const handleEmettre = async (facture) => {
 const handleEnvoyer = async (facture) => {
   const res = await store.envoyerFacture(facture.id);
   if (res.success) {
-    toast.add({ severity: 'success', summary: 'Facture envoyee', life: 3000 });
+    toast.add({ severity: 'success', summary: 'Facture envoyée', life: 3000 });
   } else {
     toast.add({ severity: 'error', summary: 'Erreur', detail: res.error, life: 5000 });
   }
@@ -154,7 +154,7 @@ const handleEnregistrerPaiement = async () => {
     paiementMode.value,
   );
   if (res.success) {
-    toast.add({ severity: 'success', summary: 'Paiement enregistre', life: 3000 });
+    toast.add({ severity: 'success', summary: 'Paiement enregistré', life: 3000 });
     paiementDialog.value = false;
   } else {
     toast.add({ severity: 'error', summary: 'Erreur', detail: res.error, life: 5000 });
@@ -164,7 +164,7 @@ const handleEnregistrerPaiement = async () => {
 const handleCreerAvoir = async (facture) => {
   const res = await store.creerAvoir(facture.id);
   if (res.success) {
-    toast.add({ severity: 'success', summary: 'Avoir cree', life: 3000 });
+    toast.add({ severity: 'success', summary: 'Avoir créé', life: 3000 });
   } else {
     toast.add({ severity: 'error', summary: 'Erreur', detail: res.error, life: 5000 });
   }
@@ -190,7 +190,7 @@ onMounted(() => {
       />
     </div>
 
-    <!-- Cartes de synthese -->
+    <!-- Cartes de synthèse -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-surface-200 dark:border-surface-700">
         <div class="flex items-center gap-3">
@@ -256,8 +256,8 @@ onMounted(() => {
       <template #empty>
         <div class="flex flex-col items-center justify-center py-10 text-surface-500">
           <i class="pi pi-file text-4xl mb-3" />
-          <p class="text-lg font-medium">Aucune facture trouvee</p>
-          <p class="text-sm mt-1">Ajustez vos filtres ou creez une nouvelle facture.</p>
+          <p class="text-lg font-medium">Aucune facture trouvée</p>
+          <p class="text-sm mt-1">Ajustez vos filtres ou créez une nouvelle facture.</p>
         </div>
       </template>
 
@@ -268,8 +268,8 @@ onMounted(() => {
         </div>
       </template>
 
-      <!-- Numero -->
-      <Column field="numero" header="Numero" sortable style="min-width: 10rem">
+      <!-- Numéro -->
+      <Column field="numero" header="Numéro" sortable style="min-width: 10rem">
         <template #body="{ data }">
           <span class="font-semibold text-surface-900 dark:text-surface-0">
             {{ data.numero || '-' }}
@@ -320,8 +320,8 @@ onMounted(() => {
         </template>
       </Column>
 
-      <!-- Echeance -->
-      <Column field="date_echeance" header="Echeance" sortable style="min-width: 9rem">
+      <!-- Échéance -->
+      <Column field="date_echeance" header="Échéance" sortable style="min-width: 9rem">
         <template #body="{ data }">
           <span class="text-sm" :class="{ 'text-red-500 font-semibold': data.statut === 'en_retard' }">
             {{ formatDate(data.date_echeance) }}
@@ -347,7 +347,7 @@ onMounted(() => {
               text
               rounded
               severity="success"
-              v-tooltip.top="'Emettre'"
+              v-tooltip.top="'Émettre'"
               @click="handleEmettre(data)"
             />
             <Button
@@ -374,7 +374,7 @@ onMounted(() => {
               text
               rounded
               severity="danger"
-              v-tooltip.top="'Creer avoir'"
+              v-tooltip.top="'Créer avoir'"
               @click="handleCreerAvoir(data)"
             />
           </div>
@@ -392,7 +392,7 @@ onMounted(() => {
       <div class="flex flex-col gap-4 pt-2">
         <p class="text-sm text-surface-500">
           Facture <strong>{{ paiementFacture?.numero }}</strong> —
-          Restant du : <strong>{{ formatEur((paiementFacture?.montant_ttc || 0) - (paiementFacture?.montant_paye || 0)) }}</strong>
+          Restant dû : <strong>{{ formatEur((paiementFacture?.montant_ttc || 0) - (paiementFacture?.montant_paye || 0)) }}</strong>
         </p>
         <div class="flex flex-col gap-2">
           <label class="font-semibold">Montant</label>

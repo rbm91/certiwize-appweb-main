@@ -67,7 +67,7 @@ onMounted(async () => {
 
 <template>
   <div class="space-y-8">
-    <!-- En-tete -->
+    <!-- En-tête -->
     <div>
       <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
         Bonjour, {{ authStore.user?.user_metadata?.full_name || 'Utilisateur' }}
@@ -104,7 +104,7 @@ onMounted(async () => {
             <span class="text-2xl font-bold text-blue-600">{{ missionsEnCours }}</span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="text-sm text-gray-500 dark:text-gray-400">Evaluations a envoyer</span>
+            <span class="text-sm text-gray-500 dark:text-gray-400">Évaluations à envoyer</span>
             <span class="text-2xl font-bold text-blue-600">{{ evaluationsAEnvoyer }}</span>
           </div>
         </div>
@@ -166,13 +166,13 @@ onMounted(async () => {
         </div>
       </div>
 
-      <!-- ═══ Zone 3 — Qualite (violet) ═══ -->
+      <!-- ═══ Zone 3 — Qualité (violet) ═══ -->
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border-l-4 border-purple-500 p-6">
         <div class="flex items-center gap-3 mb-5">
           <div class="w-10 h-10 bg-purple-500/10 rounded-full flex items-center justify-center">
             <i class="pi pi-shield text-purple-500 text-lg"></i>
           </div>
-          <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Qualite</h2>
+          <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Qualité</h2>
         </div>
 
         <div v-if="loading" class="space-y-3">
@@ -192,13 +192,13 @@ onMounted(async () => {
             <span class="text-2xl font-bold text-purple-600">{{ signauxEnAnalyse }}</span>
           </div>
           <div v-if="hasOpenSignals" class="bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 text-xs px-3 py-2 rounded-lg">
-            Des sessions peuvent etre bloquees tant que des signaux restent ouverts.
+            Des sessions peuvent être bloquées tant que des signaux restent ouverts.
           </div>
         </div>
 
         <div class="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700">
           <Button
-            label="Voir qualite"
+            label="Voir qualité"
             icon="pi pi-arrow-right"
             iconPos="right"
             text
@@ -220,7 +220,7 @@ onMounted(async () => {
 
         <div class="space-y-4">
           <div class="flex justify-between items-center">
-            <span class="text-sm text-gray-500 dark:text-gray-400">Appels a traiter</span>
+            <span class="text-sm text-gray-500 dark:text-gray-400">Appels à traiter</span>
             <span class="text-2xl font-bold text-orange-600">{{ appelsATraiter }}</span>
           </div>
           <p class="text-xs text-gray-400 dark:text-gray-500 italic">
@@ -238,6 +238,71 @@ onMounted(async () => {
             size="small"
             @click="router.push('/dashboard/assistant-ia')"
           />
+        </div>
+      </div>
+
+      <!-- ═══ Zone 5 — Générer votre BPF (indigo) ═══ -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border-l-4 border-indigo-500 p-6">
+        <div class="flex items-center gap-3 mb-5">
+          <div class="w-10 h-10 bg-indigo-500/10 rounded-full flex items-center justify-center">
+            <i class="pi pi-file-export text-indigo-500 text-lg"></i>
+          </div>
+          <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Bilan pédagogique et Financier</h2>
+        </div>
+
+        <div class="space-y-4">
+          <p class="text-sm text-gray-500 dark:text-gray-400">
+            Générez automatiquement votre BPF annuel à partir des données de vos prestations, sessions et factures enregistrées dans CertiWize.
+          </p>
+          <div class="bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 text-xs px-3 py-2 rounded-lg flex items-center gap-2">
+            <i class="pi pi-info-circle"></i>
+            Obligation annuelle pour tout organisme de formation déclaré.
+          </div>
+        </div>
+
+        <div class="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700">
+          <Button
+            label="Générer votre BPF"
+            icon="pi pi-file-export"
+            iconPos="right"
+            text
+            size="small"
+            class="!text-indigo-600"
+            @click="router.push('/dashboard/bpf')"
+          />
+        </div>
+      </div>
+
+      <!-- ═══ Zone 6 — Audit blanc (rose) ═══ -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border-l-4 border-pink-500 p-6">
+        <div class="flex items-center gap-3 mb-5">
+          <div class="w-10 h-10 bg-pink-500/10 rounded-full flex items-center justify-center">
+            <i class="pi pi-search text-pink-500 text-lg"></i>
+          </div>
+          <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Audit blanc Qualiopi</h2>
+        </div>
+
+        <div class="space-y-4">
+          <p class="text-sm text-gray-500 dark:text-gray-400">
+            Préparez votre audit Qualiopi grâce à notre outil de modélisation. Identifiez les écarts et anticipez les points de vigilance avant le jour J.
+          </p>
+          <div class="bg-pink-50 dark:bg-pink-900/20 text-pink-700 dark:text-pink-300 text-xs px-3 py-2 rounded-lg flex items-center gap-2">
+            <i class="pi pi-external-link"></i>
+            Outil externe — s'ouvre dans un nouvel onglet.
+          </div>
+        </div>
+
+        <div class="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700">
+          <a href="https://qualiopi.genedoc.fr/" target="_blank" rel="noopener noreferrer">
+            <Button
+              label="Lancer l'audit blanc"
+              icon="pi pi-external-link"
+              iconPos="right"
+              text
+              size="small"
+              class="!text-pink-600"
+            />
+          </a>
         </div>
       </div>
 

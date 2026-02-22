@@ -21,6 +21,10 @@ const toast = useToast();
 // Filtres
 const selectedType = ref(null);
 
+// Dialog création
+const createDialog = ref(false);
+const newEval = ref({ prestation_id: null, type_evaluation: null });
+
 // Dialog envoi
 const envoiDialog = ref(false);
 const envoiExecution = ref(null);
@@ -37,11 +41,11 @@ const countAEnvoyer = computed(() => evaluationsStore.executionsAEnvoyer.length)
 
 const countEnCours = computed(() => evaluationsStore.executionsEnCours.length);
 
-const countCloturees = computed(() =>
+const countClôturées = computed(() =>
   evaluationsStore.executions.filter(e => e.statut === 'cloture').length
 );
 
-// Computed: liste filtree
+// Computed: liste filtrée
 const filteredExecutions = computed(() => {
   let result = evaluationsStore.executions;
   if (selectedType.value) {
@@ -99,7 +103,34 @@ const getTauxReponse = (execution) => {
   return Math.round((reponses.length / destinataires.length) * 100);
 };
 
+// Options prestations pour le dropdown de création
+const prestationOptions = computed(() =>
+  prestationsStore.activePrestations.map(p => ({
+    label: `${p.reference || ''} — ${p.intitule || 'Sans titre'}`,
+    value: p.id,
+  }))
+);
+
 // Actions
+const openCreateDialog = () => {
+  newEval.value = { prestation_id: null, type_evaluation: null };
+  createDialog.value = true;
+};
+
+const handleCreateEval = async () => {
+  if (!newEval.value.prestation_id || !newEval.value.type_evaluation) {
+    toast.add({ severity: 'warn', summary: 'Attention', detail: 'Veuillez sélectionner une prestation et un type d\'évaluation.', life: 3000 });
+    return;
+  }
+  const res = await evaluationsStore.createExecution(newEval.value.prestation_id, null, newEval.value.type_evaluation);
+  if (res.success) {
+    toast.add({ severity: 'success', summary: 'Évaluation créée', life: 3000 });
+    createDialog.value = false;
+  } else {
+    toast.add({ severity: 'error', summary: 'Erreur', detail: res.error, life: 5000 });
+  }
+};
+
 const openEnvoiDialog = (execution) => {
   envoiExecution.value = execution;
   destinatairesText.value = '';
@@ -121,7 +152,7 @@ const handleEnvoyer = async () => {
 
   const res = await evaluationsStore.envoyerEvaluation(envoiExecution.value.id, destinataires);
   if (res.success) {
-    toast.add({ severity: 'success', summary: 'Evaluation envoyee', detail: `Envoyee a ${destinataires.length} destinataire(s).`, life: 3000 });
+    toast.add({ severity: 'success', summary: 'Évaluation envoyée', detail: `Envoyée à ${destinataires.length} destinataire(s).`, life: 3000 });
     envoiDialog.value = false;
   } else {
     toast.add({ severity: 'error', summary: 'Erreur', detail: res.error, life: 5000 });
@@ -131,7 +162,7 @@ const handleEnvoyer = async () => {
 const handleRelancer = async (execution) => {
   const res = await evaluationsStore.relancerEvaluation(execution.id);
   if (res.success) {
-    toast.add({ severity: 'success', summary: 'Relance envoyee', life: 3000 });
+    toast.add({ severity: 'success', summary: 'Relance envoyée', life: 3000 });
   } else {
     toast.add({ severity: 'error', summary: 'Erreur', detail: res.error, life: 5000 });
   }
@@ -141,8 +172,8 @@ const handleCloturer = async (execution) => {
   const res = await evaluationsStore.clotureEvaluation(execution.id);
   if (res.success) {
     const nbSignaux = res.signaux?.length || 0;
-    const detail = nbSignaux > 0 ? `${nbSignaux} signal(s) qualite cree(s).` : 'Aucun signal qualite genere.';
-    toast.add({ severity: 'success', summary: 'Evaluation cloturee', detail, life: 4000 });
+    const detail = nbSignaux > 0 ? `${nbSignaux} signal(s) qualité créé(s).` : 'Aucun signal qualité généré.';
+    toast.add({ severity: 'success', summary: 'Évaluation clôturée', detail, life: 4000 });
   } else {
     toast.add({ severity: 'error', summary: 'Erreur', detail: res.error, life: 5000 });
   }
@@ -153,7 +184,7 @@ const openResultatsDialog = (execution) => {
   resultatsDialog.value = true;
 };
 
-const getResultatsReponses = computed(() => {
+const getResultatsRéponses = computed(() => {
   if (!resultatsExecution.value) return [];
   return resultatsExecution.value.resultats?.reponses || [];
 });
@@ -164,7 +195,7 @@ const getResultatsDestinataires = computed(() => {
 });
 
 const getResultatsMoyenne = computed(() => {
-  const reponses = getResultatsReponses.value;
+  const reponses = getResultatsRéponses.value;
   if (reponses.length === 0) return 0;
   const total = reponses.reduce((sum, r) => sum + (r.score || 0), 0);
   return Math.round((total / reponses.length) * 100) / 100;
@@ -181,11 +212,16 @@ onMounted(async () => {
 
 <template>
   <div class="p-6">
-    <!-- En-tete -->
+    <!-- En-tête -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
       <h1 class="text-2xl font-bold text-surface-900 dark:text-surface-0">
-        Bibliotheque Evaluations
+        Bibliothèque Évaluations
       </h1>
+      <Button
+        label="Créer une évaluation"
+        icon="pi pi-plus"
+        @click="openCreateDialog"
+      />
     </div>
 
     <!-- Cartes KPI -->
@@ -197,20 +233,20 @@ onMounted(async () => {
             <i class="pi pi-list-check text-blue-500 text-lg" />
           </div>
           <div>
-            <p class="text-sm text-surface-500">Total evaluations</p>
+            <p class="text-sm text-surface-500">Total évaluations</p>
             <p class="text-xl font-bold text-surface-900 dark:text-surface-0">{{ totalEvaluations }}</p>
           </div>
         </div>
       </div>
 
-      <!-- A envoyer -->
+      <!-- À envoyer -->
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-surface-200 dark:border-surface-700">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
             <i class="pi pi-send text-orange-500 text-lg" />
           </div>
           <div>
-            <p class="text-sm text-surface-500">A envoyer</p>
+            <p class="text-sm text-surface-500">À envoyer</p>
             <p class="text-xl font-bold text-orange-600">{{ countAEnvoyer }}</p>
           </div>
         </div>
@@ -229,15 +265,15 @@ onMounted(async () => {
         </div>
       </div>
 
-      <!-- Cloturees -->
+      <!-- Clôturées -->
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-surface-200 dark:border-surface-700">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
             <i class="pi pi-check-circle text-green-500 text-lg" />
           </div>
           <div>
-            <p class="text-sm text-surface-500">Cloturees</p>
-            <p class="text-xl font-bold text-green-600">{{ countCloturees }}</p>
+            <p class="text-sm text-surface-500">Clôturées</p>
+            <p class="text-xl font-bold text-green-600">{{ countClôturées }}</p>
           </div>
         </div>
       </div>
@@ -272,15 +308,15 @@ onMounted(async () => {
       <template #empty>
         <div class="flex flex-col items-center justify-center py-10 text-surface-500">
           <i class="pi pi-list-check text-4xl mb-3" />
-          <p class="text-lg font-medium">Aucune evaluation trouvee</p>
-          <p class="text-sm mt-1">Ajustez vos filtres ou creez une evaluation depuis une prestation.</p>
+          <p class="text-lg font-medium">Aucune évaluation trouvée</p>
+          <p class="text-sm mt-1">Ajustez vos filtres ou créez une évaluation depuis une prestation.</p>
         </div>
       </template>
 
       <template #loading>
         <div class="flex items-center justify-center py-10 text-surface-500">
           <i class="pi pi-spin pi-spinner text-2xl mr-3" />
-          Chargement des evaluations...
+          Chargement des évaluations...
         </div>
       </template>
 
@@ -316,8 +352,8 @@ onMounted(async () => {
         </template>
       </Column>
 
-      <!-- Taux reponse -->
-      <Column header="Taux reponse" style="min-width: 10rem">
+      <!-- Taux réponse -->
+      <Column header="Taux réponse" style="min-width: 10rem">
         <template #body="{ data }">
           <template v-if="getTauxReponse(data) !== null">
             <div class="flex items-center gap-2">
@@ -369,7 +405,7 @@ onMounted(async () => {
               text
               rounded
               severity="success"
-              v-tooltip.top="'Cloturer'"
+              v-tooltip.top="'Clôturer'"
               @click="handleCloturer(data)"
             />
             <Button
@@ -377,7 +413,7 @@ onMounted(async () => {
               text
               rounded
               severity="info"
-              v-tooltip.top="'Voir resultats'"
+              v-tooltip.top="'Voir résultats'"
               @click="openResultatsDialog(data)"
             />
           </div>
@@ -385,16 +421,56 @@ onMounted(async () => {
       </Column>
     </DataTable>
 
+    <!-- Dialog création -->
+    <Dialog
+      v-model:visible="createDialog"
+      header="Créer une évaluation"
+      :modal="true"
+      :style="{ width: '32rem' }"
+    >
+      <div class="flex flex-col gap-4 pt-2">
+        <div class="flex flex-col gap-2">
+          <label class="font-semibold text-surface-700 dark:text-surface-300">Prestation *</label>
+          <Dropdown
+            v-model="newEval.prestation_id"
+            :options="prestationOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Sélectionner une prestation"
+            class="w-full"
+            filter
+          />
+        </div>
+        <div class="flex flex-col gap-2">
+          <label class="font-semibold text-surface-700 dark:text-surface-300">Type d'évaluation *</label>
+          <Dropdown
+            v-model="newEval.type_evaluation"
+            :options="EVALUATION_TYPES"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Sélectionner un type"
+            class="w-full"
+          />
+        </div>
+      </div>
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <Button label="Annuler" severity="secondary" text @click="createDialog = false" />
+          <Button label="Créer" icon="pi pi-check" @click="handleCreateEval" />
+        </div>
+      </template>
+    </Dialog>
+
     <!-- Dialog envoi -->
     <Dialog
       v-model:visible="envoiDialog"
-      header="Envoyer l'evaluation"
+      header="Envoyer l'évaluation"
       :modal="true"
       :style="{ width: '32rem' }"
     >
       <div class="flex flex-col gap-4 pt-2">
         <p class="text-sm text-surface-500">
-          Evaluation : <strong>{{ getTypeLabel(envoiExecution?.type_evaluation) }}</strong>
+          Évaluation : <strong>{{ getTypeLabel(envoiExecution?.type_evaluation) }}</strong>
         </p>
         <p class="text-sm text-surface-500">
           Prestation : <strong>{{ getPrestationLabel(envoiExecution || {}) }}</strong>
@@ -406,7 +482,7 @@ onMounted(async () => {
           <Textarea
             v-model="destinatairesText"
             rows="4"
-            placeholder="Saisissez les emails, separes par des virgules, points-virgules ou retours a la ligne"
+            placeholder="Saisissez les emails, séparés par des virgules, points-virgules ou retours à la ligne"
             class="w-full"
           />
           <p class="text-xs text-surface-400">
@@ -422,15 +498,15 @@ onMounted(async () => {
       </template>
     </Dialog>
 
-    <!-- Dialog resultats -->
+    <!-- Dialog résultats -->
     <Dialog
       v-model:visible="resultatsDialog"
-      header="Resultats de l'evaluation"
+      header="Résultats de l'évaluation"
       :modal="true"
       :style="{ width: '36rem' }"
     >
       <div v-if="resultatsExecution" class="flex flex-col gap-5 pt-2">
-        <!-- Infos generales -->
+        <!-- Infos générales -->
         <div class="grid grid-cols-2 gap-4">
           <div>
             <p class="text-xs text-surface-400 mb-1">Type</p>
@@ -466,9 +542,9 @@ onMounted(async () => {
             </div>
             <div class="text-center">
               <p class="text-2xl font-bold text-surface-900 dark:text-surface-0">
-                {{ getResultatsReponses.length }}
+                {{ getResultatsRéponses.length }}
               </p>
-              <p class="text-xs text-surface-500">Reponses</p>
+              <p class="text-xs text-surface-500">Réponses</p>
             </div>
             <div class="text-center">
               <p
@@ -487,23 +563,23 @@ onMounted(async () => {
           </div>
         </div>
 
-        <!-- Taux de reponse -->
+        <!-- Taux de réponse -->
         <div v-if="getResultatsDestinataires.length > 0">
-          <p class="text-sm text-surface-600 dark:text-surface-400 mb-2">Taux de reponse</p>
+          <p class="text-sm text-surface-600 dark:text-surface-400 mb-2">Taux de réponse</p>
           <div class="flex items-center gap-3">
             <div class="flex-1 bg-surface-200 dark:bg-surface-700 rounded-full h-3">
               <div
                 class="h-3 rounded-full transition-all"
                 :class="{
-                  'bg-green-500': (getResultatsReponses.length / getResultatsDestinataires.length) * 100 >= 80,
-                  'bg-orange-500': (getResultatsReponses.length / getResultatsDestinataires.length) * 100 >= 50 && (getResultatsReponses.length / getResultatsDestinataires.length) * 100 < 80,
-                  'bg-red-500': (getResultatsReponses.length / getResultatsDestinataires.length) * 100 < 50,
+                  'bg-green-500': (getResultatsRéponses.length / getResultatsDestinataires.length) * 100 >= 80,
+                  'bg-orange-500': (getResultatsRéponses.length / getResultatsDestinataires.length) * 100 >= 50 && (getResultatsRéponses.length / getResultatsDestinataires.length) * 100 < 80,
+                  'bg-red-500': (getResultatsRéponses.length / getResultatsDestinataires.length) * 100 < 50,
                 }"
-                :style="{ width: Math.round((getResultatsReponses.length / getResultatsDestinataires.length) * 100) + '%' }"
+                :style="{ width: Math.round((getResultatsRéponses.length / getResultatsDestinataires.length) * 100) + '%' }"
               />
             </div>
             <span class="text-sm font-semibold text-surface-700 dark:text-surface-300">
-              {{ Math.round((getResultatsReponses.length / getResultatsDestinataires.length) * 100) }}%
+              {{ Math.round((getResultatsRéponses.length / getResultatsDestinataires.length) * 100) }}%
             </span>
           </div>
         </div>

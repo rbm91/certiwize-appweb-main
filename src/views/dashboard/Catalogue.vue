@@ -39,8 +39,20 @@ const missionsLoading = ref(false);
 // -----------------------------------------------------------
 // Navigation helpers
 // -----------------------------------------------------------
-const goToCreateFormation = () => {
-  router.push('/dashboard/catalogue/create');
+// --- Dialog choix type de formation ---
+const showNewFormationDialog = ref(false);
+
+const openNewFormationDialog = () => {
+  showNewFormationDialog.value = true;
+};
+
+const goToCreateFormation = (type) => {
+  showNewFormationDialog.value = false;
+  if (type === 'catalogue') {
+    router.push('/dashboard/catalogue/create?type=catalogue');
+  } else {
+    router.push('/dashboard/catalogue/create?type=sur-mesure');
+  }
 };
 
 const goToCreateMission = () => {
@@ -121,11 +133,11 @@ onMounted(async () => {
 
     <TabView v-model:activeIndex="activeTab">
       <!-- ============================================ -->
-      <!-- TAB 1 : Bibliotheque formations              -->
+      <!-- TAB 1 : Bibliothèque formations              -->
       <!-- ============================================ -->
-      <TabPanel header="Bibliotheque formations">
+      <TabPanel header="Bibliothèque formations">
         <div class="flex justify-end mb-4">
-          <Button label="Nouveau modele" icon="pi pi-plus" severity="primary" @click="goToCreateFormation" />
+          <Button label="Nouveau modèle" icon="pi pi-plus" severity="primary" @click="openNewFormationDialog" />
         </div>
 
         <DataTable
@@ -138,24 +150,24 @@ onMounted(async () => {
           dataKey="id"
           :globalFilterFields="['title']"
         >
-          <template #empty>Aucune formation trouvee.</template>
+          <template #empty>Aucune formation trouvée.</template>
           <template #loading>Chargement des formations...</template>
 
           <Column field="title" header="Titre" sortable style="width: 35%"></Column>
 
-          <Column v-if="authStore.isAdmin" header="Cree par" style="width: 15%">
+          <Column v-if="authStore.isAdmin" header="Créé par" style="width: 15%">
             <template #body="slotProps">
               <span class="text-sm text-gray-500">{{ slotProps.data.profiles?.email || 'N/A' }}</span>
             </template>
           </Column>
 
-          <Column field="updated_at" header="Mis a jour" sortable style="width: 20%">
+          <Column field="updated_at" header="Mis à jour" sortable style="width: 20%">
             <template #body="slotProps">
               {{ formatDate(slotProps.data.updated_at) }}
             </template>
           </Column>
 
-          <Column field="content.duree" header="Duree" style="width: 10%">
+          <Column field="content.duree" header="Durée" style="width: 10%">
             <template #body="slotProps">
               {{ slotProps.data.content?.duree || '-' }}
             </template>
@@ -182,11 +194,11 @@ onMounted(async () => {
       </TabPanel>
 
       <!-- ============================================ -->
-      <!-- TAB 2 : Bibliotheque missions                -->
+      <!-- TAB 2 : Bibliothèque missions                -->
       <!-- ============================================ -->
-      <TabPanel header="Bibliotheque missions">
+      <TabPanel header="Bibliothèque missions">
         <div class="flex justify-end mb-4">
-          <Button label="Nouveau modele mission" icon="pi pi-plus" severity="primary" @click="goToCreateMission" />
+          <Button label="Nouveau modèle mission" icon="pi pi-plus" severity="primary" @click="goToCreateMission" />
         </div>
 
         <DataTable
@@ -198,7 +210,7 @@ onMounted(async () => {
           tableStyle="min-width: 50rem"
           dataKey="id"
         >
-          <template #empty>Aucune mission trouvee.</template>
+          <template #empty>Aucune mission trouvée.</template>
           <template #loading>Chargement des missions...</template>
 
           <Column field="titre" header="Titre" sortable style="width: 25%"></Column>
@@ -209,7 +221,7 @@ onMounted(async () => {
             </template>
           </Column>
 
-          <Column field="duree_estimee" header="Duree" style="width: 15%">
+          <Column field="duree_estimee" header="Durée" style="width: 15%">
             <template #body="slotProps">
               {{ slotProps.data.duree_estimee ? `${slotProps.data.duree_estimee} ${slotProps.data.duree_unite || 'jours'}` : '-' }}
             </template>
@@ -233,6 +245,49 @@ onMounted(async () => {
       </TabPanel>
     </TabView>
   </div>
+
+  <!-- ====== DIALOG CHOIX TYPE FORMATION ====== -->
+  <Dialog
+    v-model:visible="showNewFormationDialog"
+    modal
+    header="Nouveau modèle de formation"
+    :style="{ width: '600px', maxWidth: '95vw' }"
+    :dismissableMask="true"
+  >
+    <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
+      Quel type de formation souhaitez-vous créer ?
+    </p>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <!-- Formation catalogue -->
+      <div
+        class="border-2 border-gray-200 dark:border-gray-600 rounded-xl p-5 cursor-pointer transition-all duration-200 hover:border-blue-500 hover:shadow-md hover:bg-blue-50 dark:hover:bg-blue-900/20 group"
+        @click="goToCreateFormation('catalogue')"
+      >
+        <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-200 dark:group-hover:bg-blue-800/40 transition-colors">
+          <i class="pi pi-book text-xl text-blue-600 dark:text-blue-400"></i>
+        </div>
+        <h3 class="font-semibold text-gray-900 dark:text-white mb-2">Formation catalogue</h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+          Choisissez parmi les formations inscrites à votre catalogue. Le programme, les objectifs et le contenu sont déjà définis.
+        </p>
+      </div>
+
+      <!-- Formation sur mesure -->
+      <div
+        class="border-2 border-gray-200 dark:border-gray-600 rounded-xl p-5 cursor-pointer transition-all duration-200 hover:border-orange-500 hover:shadow-md hover:bg-orange-50 dark:hover:bg-orange-900/20 group"
+        @click="goToCreateFormation('sur-mesure')"
+      >
+        <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center mb-4 group-hover:bg-orange-200 dark:group-hover:bg-orange-800/40 transition-colors">
+          <i class="pi pi-pencil text-xl text-orange-600 dark:text-orange-400"></i>
+        </div>
+        <h3 class="font-semibold text-gray-900 dark:text-white mb-2">Formation sur mesure</h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+          Créez un programme entièrement personnalisé adapté aux besoins spécifiques de votre client.
+        </p>
+      </div>
+    </div>
+  </Dialog>
 
   <!-- ====== DIALOG APERCU PDF ====== -->
   <Dialog

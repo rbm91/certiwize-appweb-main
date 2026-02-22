@@ -86,7 +86,7 @@ const saveQualification = async () => {
 
     if (error) throw error;
 
-    toast.add({ severity: 'success', summary: 'Appel qualifie', life: 3000 });
+    toast.add({ severity: 'success', summary: 'Appel qualifié', life: 3000 });
     qualifDialog.value = false;
     await fetchData();
   } catch (e) {
@@ -120,7 +120,7 @@ const archiverAppel = async (appel) => {
 
     if (error) throw error;
 
-    toast.add({ severity: 'success', summary: 'Appel archive', life: 3000 });
+    toast.add({ severity: 'success', summary: 'Appel archivé', life: 3000 });
     await fetchData();
   } catch (e) {
     console.error('[AssistantIA] Erreur archivage:', e);
@@ -195,7 +195,7 @@ onMounted(() => {
 
 <template>
   <div class="p-6 space-y-6">
-    <!-- En-tete -->
+    <!-- En-tête -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
       <div>
         <h1 class="text-2xl font-bold text-surface-900 dark:text-surface-0">
@@ -248,7 +248,7 @@ onMounted(() => {
             <i class="pi pi-exclamation-circle text-orange-500 text-lg" />
           </div>
           <div>
-            <p class="text-sm text-surface-500">A qualifier</p>
+            <p class="text-sm text-surface-500">À qualifier</p>
             <p class="text-xl font-bold text-orange-600">{{ aQualifierCount }}</p>
           </div>
         </div>
@@ -261,7 +261,7 @@ onMounted(() => {
             <i class="pi pi-check-circle text-green-500 text-lg" />
           </div>
           <div>
-            <p class="text-sm text-surface-500">Transformes</p>
+            <p class="text-sm text-surface-500">Transformés</p>
             <p class="text-xl font-bold text-green-600">{{ transformesCount }}</p>
           </div>
         </div>
@@ -274,7 +274,7 @@ onMounted(() => {
             <i class="pi pi-folder text-gray-500 text-lg" />
           </div>
           <div>
-            <p class="text-sm text-surface-500">Classes</p>
+            <p class="text-sm text-surface-500">Classés</p>
             <p class="text-xl font-bold text-surface-900 dark:text-surface-0">{{ classesCount }}</p>
           </div>
         </div>
@@ -285,7 +285,7 @@ onMounted(() => {
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0">
-          Appels recents
+          Appels récents
         </h2>
         <Button
           label="Voir tout"
@@ -310,8 +310,8 @@ onMounted(() => {
         <template #empty>
           <div class="flex flex-col items-center justify-center py-10 text-surface-500">
             <i class="pi pi-phone text-4xl mb-3" />
-            <p class="text-lg font-medium">Aucun appel enregistre</p>
-            <p class="text-sm mt-1">Les appels captures par l'assistant IA apparaitront ici.</p>
+            <p class="text-lg font-medium">Aucun appel enregistré</p>
+            <p class="text-sm mt-1">Les appels capturés par l'assistant IA apparaîtront ici.</p>
           </div>
         </template>
 
@@ -354,12 +354,12 @@ onMounted(() => {
               :value="getMotifLabel(data.motif)"
               severity="info"
             />
-            <span v-else class="text-surface-400 text-sm">Non defini</span>
+            <span v-else class="text-surface-400 text-sm">Non défini</span>
           </template>
         </Column>
 
         <!-- Resume IA -->
-        <Column field="resume_ia" header="Resume IA" style="min-width: 16rem">
+        <Column field="resume_ia" header="Résumé IA" style="min-width: 16rem">
           <template #body="{ data }">
             <span class="text-sm text-surface-600 dark:text-surface-300">
               {{ truncate(data.resume_ia) }}
@@ -423,7 +423,7 @@ onMounted(() => {
         </div>
         <div>
           <p class="font-semibold text-surface-900 dark:text-surface-0">Historique complet</p>
-          <p class="text-sm text-surface-500">Rechercher et filtrer tous les appels passes.</p>
+          <p class="text-sm text-surface-500">Rechercher et filtrer tous les appels passés.</p>
         </div>
         <i class="pi pi-arrow-right text-surface-400 ml-auto" />
       </div>
@@ -457,7 +457,7 @@ onMounted(() => {
         </p>
 
         <div v-if="qualifAppel?.resume_ia" class="bg-surface-50 dark:bg-surface-800 rounded-lg p-3">
-          <p class="text-xs font-semibold text-surface-500 mb-1">Resume IA</p>
+          <p class="text-xs font-semibold text-surface-500 mb-1">Résumé IA</p>
           <p class="text-sm text-surface-700 dark:text-surface-300">{{ qualifAppel.resume_ia }}</p>
         </div>
 
@@ -468,7 +468,7 @@ onMounted(() => {
             :options="APPEL_MOTIFS"
             optionLabel="label"
             optionValue="value"
-            placeholder="Selectionner un motif"
+            placeholder="Sélectionner un motif"
             class="w-full"
           />
         </div>
@@ -484,11 +484,11 @@ onMounted(() => {
         </div>
 
         <div class="flex flex-col gap-2">
-          <label class="font-semibold text-sm">Action a mener</label>
+          <label class="font-semibold text-sm">Action à mener</label>
           <Textarea
             v-model="qualifAction"
             rows="3"
-            placeholder="Decrire l'action a mener suite a cet appel..."
+            placeholder="Décrire l'action à mener suite à cet appel..."
             class="w-full"
           />
         </div>

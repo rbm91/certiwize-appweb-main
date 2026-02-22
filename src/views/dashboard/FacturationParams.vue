@@ -84,8 +84,8 @@ const handleSave = async () => {
   const res = await companyStore.savePartial(form.value);
 
   if (res.success) {
-    message.value = { severity: 'success', text: 'Parametres de facturation sauvegardes avec succes' };
-    toast.add({ severity: 'success', summary: 'Sauvegarde', detail: 'Parametres mis a jour', life: 3000 });
+    message.value = { severity: 'success', text: 'Paramètres de facturation sauvegardés avec succès' };
+    toast.add({ severity: 'success', summary: 'Sauvegarde', detail: 'Paramètres mis à jour', life: 3000 });
   } else {
     message.value = { severity: 'error', text: `Erreur : ${res.error}` };
     toast.add({ severity: 'error', summary: 'Erreur', detail: res.error, life: 5000 });
@@ -100,7 +100,7 @@ const handleSave = async () => {
     <!-- En-tete -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
       <h1 class="text-2xl font-bold text-surface-900 dark:text-surface-0">
-        Parametres Facturation
+        Paramètres Facturation
       </h1>
       <Button
         label="Enregistrer"
@@ -112,19 +112,19 @@ const handleSave = async () => {
 
     <Message v-if="message" :severity="message.severity" class="mb-4">{{ message.text }}</Message>
 
-    <!-- Section 1 : Numerotation -->
+    <!-- Section 1 : Numérotation -->
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-6">
       <h2 class="text-lg font-semibold text-primary border-b pb-2 mb-6">
-        <i class="pi pi-hashtag mr-2"></i>Numerotation
+        <i class="pi pi-hashtag mr-2"></i>Numérotation
       </h2>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="flex flex-col gap-2">
           <label class="font-semibold text-surface-700 dark:text-surface-300">Format factures</label>
           <div class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-            <p class="text-sm text-surface-500 mb-1">Prefixe : <strong>FA</strong></p>
+            <p class="text-sm text-surface-500 mb-1">Préfixe : <strong>FA</strong></p>
             <p class="text-sm text-surface-500 mb-1">Format : <strong>FA-AAAA-NNNNN</strong></p>
-            <p class="text-sm text-surface-500">Prochain numero :</p>
+            <p class="text-sm text-surface-500">Prochain numéro :</p>
             <p class="text-lg font-bold text-primary mt-1">{{ nextFactureNumber || '...' }}</p>
           </div>
         </div>
@@ -132,9 +132,9 @@ const handleSave = async () => {
         <div class="flex flex-col gap-2">
           <label class="font-semibold text-surface-700 dark:text-surface-300">Format avoirs</label>
           <div class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-            <p class="text-sm text-surface-500 mb-1">Prefixe : <strong>AV</strong></p>
+            <p class="text-sm text-surface-500 mb-1">Préfixe : <strong>AV</strong></p>
             <p class="text-sm text-surface-500 mb-1">Format : <strong>AV-AAAA-NNNNN</strong></p>
-            <p class="text-sm text-surface-500">Prochain numero :</p>
+            <p class="text-sm text-surface-500">Prochain numéro :</p>
             <p class="text-lg font-bold text-primary mt-1">{{ nextAvoirNumber || '...' }}</p>
           </div>
         </div>
@@ -144,7 +144,7 @@ const handleSave = async () => {
         <div class="flex items-center gap-2">
           <i class="pi pi-info-circle text-blue-500"></i>
           <span class="text-sm text-blue-700 dark:text-blue-300">
-            La numerotation est sequentielle et continue, conformement a la reglementation. Elle ne peut pas etre modifiee manuellement.
+            La numérotation est séquentielle et continue, conformément à la réglementation. Elle ne peut pas être modifiée manuellement.
           </span>
         </div>
       </div>
@@ -158,7 +158,7 @@ const handleSave = async () => {
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="flex flex-col gap-2">
-          <label class="font-semibold">Taux TVA par defaut (%)</label>
+          <label class="font-semibold">Taux TVA par défaut (%)</label>
           <InputNumber
             v-model="form.tva_taux_defaut"
             :min="0"
@@ -172,8 +172,8 @@ const handleSave = async () => {
         <div class="flex items-center gap-3 self-end pb-2">
           <ToggleSwitch v-model="isExonereTva" />
           <div>
-            <label class="font-semibold">Exonere de TVA</label>
-            <p class="text-sm text-surface-500">Desactive la TVA sur toutes les factures</p>
+            <label class="font-semibold">Exonéré de TVA</label>
+            <p class="text-sm text-surface-500">Désactive la TVA sur toutes les factures</p>
           </div>
         </div>
       </div>
@@ -182,7 +182,7 @@ const handleSave = async () => {
         <div class="flex items-center gap-2">
           <i class="pi pi-exclamation-triangle text-orange-500"></i>
           <span class="text-sm text-orange-700 dark:text-orange-300">
-            TVA exoneree active. La mention "TVA non applicable, article 293 B du CGI" sera ajoutee automatiquement sur les factures.
+            TVA exonérée active. La mention "TVA non applicable, article 293 B du CGI" sera ajoutée automatiquement sur les factures.
           </span>
         </div>
       </div>
@@ -196,34 +196,34 @@ const handleSave = async () => {
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="flex flex-col gap-2">
-          <label class="font-semibold">Conditions par defaut</label>
+          <label class="font-semibold">Conditions par défaut</label>
           <Dropdown
             v-model="form.conditions_paiement_defaut"
             :options="conditionsPaiementOptions"
             optionLabel="label"
             optionValue="value"
-            placeholder="Selectionner"
+            placeholder="Sélectionner"
           />
-          <small class="text-surface-500">Appliquees automatiquement lors de la creation d'une facture</small>
+          <small class="text-surface-500">Appliquées automatiquement lors de la création d'une facture</small>
         </div>
       </div>
     </div>
 
-    <!-- Section 4 : Mentions legales -->
+    <!-- Section 4 : Mentions légales -->
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-6">
       <h2 class="text-lg font-semibold text-primary border-b pb-2 mb-6">
-        <i class="pi pi-file-edit mr-2"></i>Mentions legales
+        <i class="pi pi-file-edit mr-2"></i>Mentions légales
       </h2>
 
       <div class="flex flex-col gap-6">
         <div class="flex flex-col gap-2">
-          <label class="font-semibold">Mentions legales par defaut sur les factures</label>
+          <label class="font-semibold">Mentions légales par défaut sur les factures</label>
           <Textarea
             v-model="form.mentions_legales_facture"
             rows="5"
-            placeholder="Saisir les mentions legales qui apparaitront en bas de chaque facture..."
+            placeholder="Saisir les mentions légales qui apparaîtront en bas de chaque facture..."
           />
-          <small class="text-surface-500">Ces mentions seront ajoutees automatiquement sur toutes les nouvelles factures</small>
+          <small class="text-surface-500">Ces mentions seront ajoutées automatiquement sur toutes les nouvelles factures</small>
         </div>
 
         <Divider />
@@ -234,8 +234,8 @@ const handleSave = async () => {
             <div>
               <label class="font-semibold">Afficher le NDA sur les factures</label>
               <p class="text-sm text-surface-500">
-                Numero de declaration d'activite actuel :
-                <strong>{{ form.nda_numero || 'Non renseigne' }}</strong>
+                Numéro de déclaration d'activité actuel :
+                <strong>{{ form.nda_numero || 'Non renseigné' }}</strong>
               </p>
             </div>
           </div>
@@ -243,10 +243,10 @@ const handleSave = async () => {
       </div>
     </div>
 
-    <!-- Section 5 : Coordonnees bancaires -->
+    <!-- Section 5 : Coordonnées bancaires -->
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-6">
       <h2 class="text-lg font-semibold text-primary border-b pb-2 mb-6">
-        <i class="pi pi-wallet mr-2"></i>Coordonnees bancaires
+        <i class="pi pi-wallet mr-2"></i>Coordonnées bancaires
       </h2>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -270,7 +270,7 @@ const handleSave = async () => {
         <div class="flex items-center gap-2">
           <i class="pi pi-info-circle text-blue-500"></i>
           <span class="text-sm text-blue-700 dark:text-blue-300">
-            Ces coordonnees bancaires apparaitront sur les factures pour permettre le reglement par virement.
+            Ces coordonnées bancaires apparaîtront sur les factures pour permettre le règlement par virement.
           </span>
         </div>
       </div>
@@ -279,7 +279,7 @@ const handleSave = async () => {
     <!-- Bouton save flottant en bas -->
     <div class="flex justify-end mt-6">
       <Button
-        label="Enregistrer les parametres"
+        label="Enregistrer les paramètres"
         icon="pi pi-save"
         :loading="saving"
         @click="handleSave"

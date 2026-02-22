@@ -4,6 +4,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 
 import { usePrestationsStore } from '../../stores/prestations';
+import { useTiersStore } from '../../stores/tiers';
 import WorkflowTimeline from '../../components/dashboard/WorkflowTimeline.vue';
 import {
   FORMATION_WORKFLOW_STEPS,
@@ -17,18 +18,22 @@ import Dialog from 'primevue/dialog';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Message from 'primevue/message';
+import MultiSelect from 'primevue/multiselect';
 
 const router = useRouter();
 const route = useRoute();
 const toast = useToast();
 const store = usePrestationsStore();
+const tiersStore = useTiersStore();
 
 // -- State --
 const loading = ref(true);
 const prestation = ref(null);
 const showCloseDialog = ref(false);
 const showArchiveDialog = ref(false);
+const showAddApprenantDialog = ref(false);
 const actionLoading = ref(false);
+const selectedNewApprenants = ref([]);
 
 // -- Computed --
 const prestationId = computed(() => route.params.id);
@@ -40,7 +45,7 @@ const displayReference = computed(() => {
 
 const displayIntitule = computed(() => {
   if (!prestation.value) return '';
-  return prestation.value.intitule || 'Sans intitule';
+  return prestation.value.intitule || 'Sans intitulé';
 });
 
 const statutLabel = computed(() => {
@@ -85,6 +90,20 @@ const documents = computed(() => {
   return prestation.value.prestation_documents;
 });
 
+// Options apprenants disponibles (exclure ceux déjà rattachés)
+const existingApprenantIds = computed(() =>
+  apprenants.value.map(pa => pa.apprenant_id)
+);
+
+const availableApprenantOptions = computed(() =>
+  tiersStore.tiersByRole('apprenant')
+    .filter(t => !existingApprenantIds.value.includes(t.id))
+    .map(t => ({
+      label: t.nom_affiche || t.email,
+      value: t.id,
+    }))
+);
+
 const analyseBesoin = computed(() => {
   if (!prestation.value?.workflow_data?.analyse_besoin) return null;
   return prestation.value.workflow_data.analyse_besoin;
@@ -115,8 +134,8 @@ const handleClose = async () => {
     if (result.success) {
       toast.add({
         severity: 'success',
-        summary: 'Session cloturee',
-        detail: 'La session a ete cloturee avec succes.',
+        summary: 'Session clôturée',
+        detail: 'La session a été clôturée avec succès.',
         life: 3000,
       });
       showCloseDialog.value = false;
@@ -124,7 +143,7 @@ const handleClose = async () => {
     } else {
       toast.add({
         severity: 'error',
-        summary: 'Cloture impossible',
+        summary: 'Clôture impossible',
         detail: result.error || 'Une erreur est survenue.',
         life: 5000,
       });
@@ -141,8 +160,8 @@ const handleArchive = async () => {
     if (result.success) {
       toast.add({
         severity: 'success',
-        summary: 'Session archivee',
-        detail: 'La session a ete archivee avec succes.',
+        summary: 'Session archivée',
+        detail: 'La session a été archivée avec succès.',
         life: 3000,
       });
       showArchiveDialog.value = false;
@@ -160,10 +179,72 @@ const handleArchive = async () => {
   }
 };
 
+// -- Gestion des apprenants --
+const handleAddApprenants = async () => {
+  if (selectedNewApprenants.value.length === 0) return;
+  actionLoading.value = true;
+  try {
+    for (const appId of selectedNewApprenants.value) {
+      await store.addApprenant(prestationId.value, appId);
+    }
+    toast.add({
+      severity: 'success',
+      summary: 'Apprenants ajoutés',
+      detail: `${selectedNewApprenants.value.length} apprenant(s) rattaché(s) à la session.`,
+      life: 3000,
+    });
+    selectedNewApprenants.value = [];
+    showAddApprenantDialog.value = false;
+    // Recharger la prestation pour mettre à jour la liste
+    prestation.value = await store.fetchPrestationById(prestationId.value);
+  } catch (err) {
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: err.message || 'Impossible d\'ajouter les apprenants.',
+      life: 5000,
+    });
+  } finally {
+    actionLoading.value = false;
+  }
+};
+
+const handleRemoveApprenant = async (apprenantId) => {
+  actionLoading.value = true;
+  try {
+    const result = await store.removeApprenant(prestationId.value, apprenantId);
+    if (result.success) {
+      toast.add({
+        severity: 'success',
+        summary: 'Apprenant retiré',
+        detail: 'L\'apprenant a été retiré de la session.',
+        life: 3000,
+      });
+      // Recharger la prestation
+      prestation.value = await store.fetchPrestationById(prestationId.value);
+    } else {
+      throw new Error(result.error);
+    }
+  } catch (err) {
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: err.message || 'Impossible de retirer l\'apprenant.',
+      life: 5000,
+    });
+  } finally {
+    actionLoading.value = false;
+  }
+};
+
 // -- Init --
 onMounted(async () => {
   loading.value = true;
   try {
+    // Charger les tiers pour les options d'apprenants
+    if (tiersStore.activeTiers.length === 0) {
+      await tiersStore.fetchTiers();
+    }
     const data = await store.fetchPrestationById(prestationId.value);
     prestation.value = data;
   } finally {
@@ -182,9 +263,9 @@ onMounted(async () => {
     <!-- Not found -->
     <div v-else-if="!prestation" class="text-center py-20">
       <Message severity="error" :closable="false">
-        Session introuvable. L'identifiant est peut-etre invalide ou la session a ete supprimee.
+        Session introuvable. L'identifiant est peut-être invalide ou la session a été supprimée.
       </Message>
-      <Button label="Retour a la liste" icon="pi pi-arrow-left" class="mt-4" @click="goBack" />
+      <Button label="Retour à la liste" icon="pi pi-arrow-left" class="mt-4" @click="goBack" />
     </div>
 
     <!-- Main content -->
@@ -220,7 +301,7 @@ onMounted(async () => {
       <!-- ====== INFORMATIONS GENERALES ====== -->
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-6">
         <h2 class="text-lg font-semibold text-primary border-b pb-2 mb-4">
-          <i class="pi pi-info-circle mr-2"></i>Informations generales
+          <i class="pi pi-info-circle mr-2"></i>Informations générales
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4">
           <div>
@@ -236,7 +317,7 @@ onMounted(async () => {
             <span class="font-medium">{{ formateurName }}</span>
           </div>
           <div>
-            <span class="text-sm text-gray-500 block">Date de debut</span>
+            <span class="text-sm text-gray-500 block">Date de début</span>
             <span class="font-medium">{{ formatDate(prestation.date_debut) }}</span>
           </div>
           <div>
@@ -244,7 +325,7 @@ onMounted(async () => {
             <span class="font-medium">{{ formatDate(prestation.date_fin) }}</span>
           </div>
           <div>
-            <span class="text-sm text-gray-500 block">Duree</span>
+            <span class="text-sm text-gray-500 block">Durée</span>
             <span class="font-medium">{{ prestation.duree_heures ? prestation.duree_heures + ' h' : '-' }}</span>
           </div>
           <div>
@@ -252,11 +333,11 @@ onMounted(async () => {
             <span class="font-medium">{{ formatEur(prestation.montant_ht) }}</span>
           </div>
           <div>
-            <span class="text-sm text-gray-500 block">Etape courante</span>
+            <span class="text-sm text-gray-500 block">Étape courante</span>
             <span class="font-medium">{{ prestation.etape_courante || 1 }} / {{ FORMATION_WORKFLOW_STEPS.length }}</span>
           </div>
           <div>
-            <span class="text-sm text-gray-500 block">Date de creation</span>
+            <span class="text-sm text-gray-500 block">Date de création</span>
             <span class="font-medium">{{ formatDate(prestation.created_at) }}</span>
           </div>
         </div>
@@ -264,10 +345,19 @@ onMounted(async () => {
 
       <!-- ====== APPRENANTS ====== -->
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-6">
-        <h2 class="text-lg font-semibold text-primary border-b pb-2 mb-4">
-          <i class="pi pi-users mr-2"></i>Apprenants
-          <Tag :value="String(apprenants.length)" severity="info" class="ml-2 text-xs" rounded />
-        </h2>
+        <div class="flex items-center justify-between border-b pb-2 mb-4">
+          <h2 class="text-lg font-semibold text-primary">
+            <i class="pi pi-users mr-2"></i>Apprenants
+            <Tag :value="String(apprenants.length)" severity="info" class="ml-2 text-xs" rounded />
+          </h2>
+          <Button
+            label="Ajouter"
+            icon="pi pi-plus"
+            severity="success"
+            size="small"
+            @click="showAddApprenantDialog = true"
+          />
+        </div>
         <DataTable
           :value="apprenants"
           :paginator="apprenants.length > 10"
@@ -277,7 +367,14 @@ onMounted(async () => {
           <template #empty>
             <div class="flex flex-col items-center justify-center py-8 text-surface-500">
               <i class="pi pi-users text-4xl mb-3"></i>
-              <p class="text-sm">Aucun apprenant rattache a cette session.</p>
+              <p class="text-sm">Aucun apprenant rattaché à cette session.</p>
+              <Button
+                label="Ajouter des apprenants"
+                icon="pi pi-plus"
+                severity="info"
+                class="mt-3"
+                @click="showAddApprenantDialog = true"
+              />
             </div>
           </template>
           <Column header="Nom" style="min-width: 14rem">
@@ -288,6 +385,19 @@ onMounted(async () => {
           <Column header="Email" style="min-width: 14rem">
             <template #body="{ data }">
               <span class="text-sm text-surface-500">{{ data.apprenant?.email || '-' }}</span>
+            </template>
+          </Column>
+          <Column header="" style="width: 4rem" bodyClass="text-center">
+            <template #body="{ data }">
+              <Button
+                icon="pi pi-times"
+                severity="danger"
+                text
+                rounded
+                size="small"
+                v-tooltip="'Retirer cet apprenant'"
+                @click="handleRemoveApprenant(data.apprenant_id)"
+              />
             </template>
           </Column>
         </DataTable>
@@ -308,7 +418,7 @@ onMounted(async () => {
           <template #empty>
             <div class="flex flex-col items-center justify-center py-8 text-surface-500">
               <i class="pi pi-file text-4xl mb-3"></i>
-              <p class="text-sm">Aucun document rattache a cette session.</p>
+              <p class="text-sm">Aucun document rattaché à cette session.</p>
             </div>
           </template>
           <Column field="nom_fichier" header="Nom du fichier" sortable style="min-width: 14rem">
@@ -348,15 +458,15 @@ onMounted(async () => {
             <p class="whitespace-pre-wrap text-gray-700 dark:text-gray-300">{{ analyseBesoin.contexte }}</p>
           </div>
           <div v-if="analyseBesoin.objectifs">
-            <span class="text-sm text-gray-500 block mb-1">Objectifs pedagogiques</span>
+            <span class="text-sm text-gray-500 block mb-1">Objectifs pédagogiques</span>
             <p class="whitespace-pre-wrap text-gray-700 dark:text-gray-300">{{ analyseBesoin.objectifs }}</p>
           </div>
           <div v-if="analyseBesoin.public_vise">
-            <span class="text-sm text-gray-500 block mb-1">Public vise</span>
+            <span class="text-sm text-gray-500 block mb-1">Public visé</span>
             <p class="whitespace-pre-wrap text-gray-700 dark:text-gray-300">{{ analyseBesoin.public_vise }}</p>
           </div>
           <div v-if="analyseBesoin.modalites">
-            <span class="text-sm text-gray-500 block mb-1">Modalites pedagogiques</span>
+            <span class="text-sm text-gray-500 block mb-1">Modalités pédagogiques</span>
             <p class="whitespace-pre-wrap text-gray-700 dark:text-gray-300">{{ analyseBesoin.modalites }}</p>
           </div>
           <div v-if="analyseBesoin.handicap_info">
@@ -367,11 +477,11 @@ onMounted(async () => {
             v-if="!analyseBesoin.contexte && !analyseBesoin.objectifs && !analyseBesoin.public_vise && !analyseBesoin.modalites && !analyseBesoin.handicap_info"
             class="text-surface-400 text-sm italic"
           >
-            Aucune donnee d'analyse du besoin renseignee.
+            Aucune donnée d'analyse du besoin renseignée.
           </div>
         </div>
         <div v-else class="text-surface-400 text-sm italic">
-          Aucune donnee d'analyse du besoin renseignee.
+          Aucune donnée d'analyse du besoin renseignée.
         </div>
       </div>
 
@@ -382,7 +492,7 @@ onMounted(async () => {
         </h2>
         <div class="flex flex-wrap gap-3">
           <Button
-            label="Cloturer la session"
+            label="Clôturer la session"
             icon="pi pi-lock"
             severity="success"
             :disabled="prestation.statut === 'terminee' || prestation.statut === 'annulee'"
@@ -401,24 +511,24 @@ onMounted(async () => {
       <!-- ====== DIALOG : Cloture ====== -->
       <Dialog
         v-model:visible="showCloseDialog"
-        header="Confirmer la cloture"
+        header="Confirmer la clôture"
         :modal="true"
         :style="{ width: '28rem' }"
       >
         <div class="flex flex-col gap-3 pt-2">
           <p class="text-surface-600 dark:text-surface-300">
-            Etes-vous sur de vouloir cloturer cette session ?
+            Êtes-vous sûr de vouloir clôturer cette session ?
           </p>
           <p class="text-sm text-surface-400">
-            La session passera au statut "Terminee". Cette action verifiera qu'aucun signal qualite
-            n'est ouvert avant de proceder.
+            La session passera au statut "Terminée". Cette action vérifiera qu'aucun signal qualité
+            n'est ouvert avant de procéder.
           </p>
         </div>
         <template #footer>
           <div class="flex justify-end gap-2">
             <Button label="Annuler" severity="secondary" text @click="showCloseDialog = false" />
             <Button
-              label="Cloturer"
+              label="Clôturer"
               icon="pi pi-lock"
               severity="success"
               :loading="actionLoading"
@@ -437,10 +547,10 @@ onMounted(async () => {
       >
         <div class="flex flex-col gap-3 pt-2">
           <p class="text-surface-600 dark:text-surface-300">
-            Etes-vous sur de vouloir archiver cette session ?
+            Êtes-vous sûr de vouloir archiver cette session ?
           </p>
           <p class="text-sm text-surface-400">
-            La session sera supprimee de la liste active. Vous pourrez la retrouver dans les archives.
+            La session sera supprimée de la liste active. Vous pourrez la retrouver dans les archives.
           </p>
         </div>
         <template #footer>
@@ -452,6 +562,48 @@ onMounted(async () => {
               severity="danger"
               :loading="actionLoading"
               @click="handleArchive"
+            />
+          </div>
+        </template>
+      </Dialog>
+
+      <!-- ====== DIALOG : Ajouter des apprenants ====== -->
+      <Dialog
+        v-model:visible="showAddApprenantDialog"
+        header="Ajouter des apprenants"
+        :modal="true"
+        :style="{ width: '32rem' }"
+      >
+        <div class="flex flex-col gap-4 pt-2">
+          <p class="text-sm text-surface-500">
+            Sélectionnez les apprenants à rattacher à cette session.
+          </p>
+          <MultiSelect
+            v-model="selectedNewApprenants"
+            :options="availableApprenantOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Sélectionner des apprenants"
+            filter
+            :maxSelectedLabels="5"
+            selectedItemsLabel="{0} apprenants sélectionnés"
+            class="w-full"
+          />
+          <div v-if="availableApprenantOptions.length === 0" class="text-sm text-orange-600">
+            <i class="pi pi-info-circle mr-1"></i>
+            Tous les apprenants sont déjà rattachés à cette session, ou aucun apprenant n'a été créé dans les tiers.
+          </div>
+        </div>
+        <template #footer>
+          <div class="flex justify-end gap-2">
+            <Button label="Annuler" severity="secondary" text @click="showAddApprenantDialog = false" />
+            <Button
+              label="Ajouter"
+              icon="pi pi-plus"
+              severity="success"
+              :loading="actionLoading"
+              :disabled="selectedNewApprenants.length === 0"
+              @click="handleAddApprenants"
             />
           </div>
         </template>

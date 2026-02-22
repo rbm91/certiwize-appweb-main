@@ -73,7 +73,7 @@ const displayReference = computed(() => {
 
 const displayIntitule = computed(() => {
   if (!prestation.value) return '';
-  return prestation.value.intitule || 'Sans intitule';
+  return prestation.value.intitule || 'Sans intitulé';
 });
 
 const statutLabel = computed(() => {
@@ -147,7 +147,7 @@ const getFrequenceLabel = (value) => {
     hebdomadaire: 'Hebdomadaire',
     bimensuelle: 'Bimensuelle',
     mensuelle: 'Mensuelle',
-    a_la_demande: 'A la demande',
+    a_la_demande: 'À la demande',
   };
   return map[value] || value || '-';
 };
@@ -157,7 +157,7 @@ const getTypeMissionLabel = (value) => {
     audit: 'Audit',
     diagnostic: 'Diagnostic',
     accompagnement: 'Accompagnement',
-    conseil_strategique: 'Conseil strategique',
+    conseil_strategique: 'Conseil stratégique',
   };
   return map[value] || value || '-';
 };
@@ -174,8 +174,8 @@ const handleClose = async () => {
     if (result.success) {
       toast.add({
         severity: 'success',
-        summary: `${typeConfig.value.label} cloture`,
-        detail: `Le ${typeConfig.value.labelShort} a ete cloture avec succes.`,
+        summary: `${typeConfig.value.label} clôturé`,
+        detail: `Le ${typeConfig.value.labelShort} a été clôturé avec succès.`,
         life: 3000,
       });
       showCloseDialog.value = false;
@@ -183,7 +183,7 @@ const handleClose = async () => {
     } else {
       toast.add({
         severity: 'error',
-        summary: 'Cloture impossible',
+        summary: 'Clôture impossible',
         detail: result.error || 'Une erreur est survenue.',
         life: 5000,
       });
@@ -200,8 +200,8 @@ const handleArchive = async () => {
     if (result.success) {
       toast.add({
         severity: 'success',
-        summary: `${typeConfig.value.label} archive`,
-        detail: `Le ${typeConfig.value.labelShort} a ete archive avec succes.`,
+        summary: `${typeConfig.value.label} archivé`,
+        detail: `Le ${typeConfig.value.labelShort} a été archivé avec succès.`,
         life: 3000,
       });
       showArchiveDialog.value = false;
@@ -241,9 +241,9 @@ onMounted(async () => {
     <!-- Not found -->
     <div v-else-if="!prestation" class="text-center py-20">
       <Message severity="error" :closable="false">
-        Prestation introuvable. L'identifiant est peut-etre invalide ou la prestation a ete supprimee.
+        Prestation introuvable. L'identifiant est peut-être invalide ou la prestation a été supprimée.
       </Message>
-      <Button label="Retour a la liste" icon="pi pi-arrow-left" class="mt-4" @click="goBack" />
+      <Button label="Retour à la liste" icon="pi pi-arrow-left" class="mt-4" @click="goBack" />
     </div>
 
     <!-- Main content -->
@@ -279,7 +279,7 @@ onMounted(async () => {
       <!-- ====== INFORMATIONS GENERALES ====== -->
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-6">
         <h2 class="text-lg font-semibold text-primary border-b pb-2 mb-4">
-          <i class="pi pi-info-circle mr-2"></i>Informations generales
+          <i class="pi pi-info-circle mr-2"></i>Informations générales
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4">
           <div>
@@ -295,7 +295,7 @@ onMounted(async () => {
             <span class="font-medium">{{ intervenantName }}</span>
           </div>
           <div>
-            <span class="text-sm text-gray-500 block">Date de debut</span>
+            <span class="text-sm text-gray-500 block">Date de début</span>
             <span class="font-medium">{{ formatDate(prestation.date_debut) }}</span>
           </div>
           <div>
@@ -303,7 +303,7 @@ onMounted(async () => {
             <span class="font-medium">{{ formatDate(prestation.date_fin) }}</span>
           </div>
           <div v-if="prestation.duree_heures">
-            <span class="text-sm text-gray-500 block">Duree</span>
+            <span class="text-sm text-gray-500 block">Durée</span>
             <span class="font-medium">{{ prestation.duree_heures }} h</span>
           </div>
           <div>
@@ -311,11 +311,11 @@ onMounted(async () => {
             <span class="font-medium">{{ formatEur(prestation.montant_ht) }}</span>
           </div>
           <div>
-            <span class="text-sm text-gray-500 block">Etape courante</span>
+            <span class="text-sm text-gray-500 block">Étape courante</span>
             <span class="font-medium">{{ prestation.etape_courante || 1 }} / {{ typeConfig.workflowSteps.length }}</span>
           </div>
           <div>
-            <span class="text-sm text-gray-500 block">Date de creation</span>
+            <span class="text-sm text-gray-500 block">Date de création</span>
             <span class="font-medium">{{ formatDate(prestation.created_at) }}</span>
           </div>
         </div>
@@ -331,11 +331,11 @@ onMounted(async () => {
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
           <div>
-            <span class="text-sm text-gray-500 block">Nombre de seances</span>
+            <span class="text-sm text-gray-500 block">Nombre de séances</span>
             <span class="font-medium">{{ cadrageData.nombre_seances || '-' }}</span>
           </div>
           <div>
-            <span class="text-sm text-gray-500 block">Frequence des seances</span>
+            <span class="text-sm text-gray-500 block">Fréquence des séances</span>
             <span class="font-medium">{{ getFrequenceLabel(cadrageData.frequence_seances) }}</span>
           </div>
         </div>
@@ -355,18 +355,18 @@ onMounted(async () => {
             <p class="whitespace-pre-wrap text-gray-700 dark:text-gray-300">{{ contractualisationData.objectifs_coaching }}</p>
           </div>
           <div v-if="contractualisationData.modalites">
-            <span class="text-sm text-gray-500 block mb-1">Modalites d'accompagnement</span>
+            <span class="text-sm text-gray-500 block mb-1">Modalités d'accompagnement</span>
             <p class="whitespace-pre-wrap text-gray-700 dark:text-gray-300">{{ contractualisationData.modalites }}</p>
           </div>
           <div v-if="contractualisationData.indicateurs_reussite">
-            <span class="text-sm text-gray-500 block mb-1">Indicateurs de reussite</span>
+            <span class="text-sm text-gray-500 block mb-1">Indicateurs de réussite</span>
             <p class="whitespace-pre-wrap text-gray-700 dark:text-gray-300">{{ contractualisationData.indicateurs_reussite }}</p>
           </div>
           <div
             v-if="!contractualisationData.objectifs_coaching && !contractualisationData.modalites && !contractualisationData.indicateurs_reussite"
             class="text-surface-400 text-sm italic"
           >
-            Aucune donnee de contractualisation renseignee.
+            Aucune donnée de contractualisation renseignée.
           </div>
         </div>
       </div>
@@ -409,14 +409,14 @@ onMounted(async () => {
             <p class="whitespace-pre-wrap text-gray-700 dark:text-gray-300">{{ propositionData.livrables }}</p>
           </div>
           <div v-if="propositionData.planning">
-            <span class="text-sm text-gray-500 block mb-1">Planning previsionnel</span>
+            <span class="text-sm text-gray-500 block mb-1">Planning prévisionnel</span>
             <p class="whitespace-pre-wrap text-gray-700 dark:text-gray-300">{{ propositionData.planning }}</p>
           </div>
           <div
             v-if="!propositionData.contexte && !propositionData.objectifs && !propositionData.livrables && !propositionData.planning"
             class="text-surface-400 text-sm italic"
           >
-            Aucune donnee de proposition renseignee.
+            Aucune donnée de proposition renseignée.
           </div>
         </div>
       </div>
@@ -436,7 +436,7 @@ onMounted(async () => {
           <template #empty>
             <div class="flex flex-col items-center justify-center py-8 text-surface-500">
               <i class="pi pi-file text-4xl mb-3"></i>
-              <p class="text-sm">Aucun document rattache a cette prestation.</p>
+              <p class="text-sm">Aucun document rattaché à cette prestation.</p>
             </div>
           </template>
           <Column field="nom_fichier" header="Nom du fichier" sortable style="min-width: 14rem">
@@ -472,7 +472,7 @@ onMounted(async () => {
         </h2>
         <div class="flex flex-wrap gap-3">
           <Button
-            :label="`Cloturer le ${typeConfig.labelShort}`"
+            :label="`Clôturer le ${typeConfig.labelShort}`"
             icon="pi pi-lock"
             severity="success"
             :disabled="prestation.statut === 'terminee' || prestation.statut === 'annulee'"
@@ -491,24 +491,24 @@ onMounted(async () => {
       <!-- ====== DIALOG : Cloture ====== -->
       <Dialog
         v-model:visible="showCloseDialog"
-        header="Confirmer la cloture"
+        header="Confirmer la clôture"
         :modal="true"
         :style="{ width: '28rem' }"
       >
         <div class="flex flex-col gap-3 pt-2">
           <p class="text-surface-600 dark:text-surface-300">
-            Etes-vous sur de vouloir cloturer ce {{ typeConfig.labelShort }} ?
+            Êtes-vous sûr de vouloir clôturer ce {{ typeConfig.labelShort }} ?
           </p>
           <p class="text-sm text-surface-400">
-            La prestation passera au statut "Terminee". Cette action verifiera qu'aucun signal qualite
-            n'est ouvert avant de proceder.
+            La prestation passera au statut "Terminée". Cette action vérifiera qu'aucun signal qualité
+            n'est ouvert avant de procéder.
           </p>
         </div>
         <template #footer>
           <div class="flex justify-end gap-2">
             <Button label="Annuler" severity="secondary" text @click="showCloseDialog = false" />
             <Button
-              label="Cloturer"
+              label="Clôturer"
               icon="pi pi-lock"
               severity="success"
               :loading="actionLoading"
@@ -527,10 +527,10 @@ onMounted(async () => {
       >
         <div class="flex flex-col gap-3 pt-2">
           <p class="text-surface-600 dark:text-surface-300">
-            Etes-vous sur de vouloir archiver ce {{ typeConfig.labelShort }} ?
+            Êtes-vous sûr de vouloir archiver ce {{ typeConfig.labelShort }} ?
           </p>
           <p class="text-sm text-surface-400">
-            La prestation sera supprimee de la liste active. Vous pourrez la retrouver dans les archives.
+            La prestation sera supprimée de la liste active. Vous pourrez la retrouver dans les archives.
           </p>
         </div>
         <template #footer>

@@ -134,7 +134,7 @@ onMounted(() => {
 
 <template>
   <div class="p-6 space-y-6">
-    <!-- En-tete -->
+    <!-- En-tête -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
       <div class="flex items-center gap-3">
         <Button
@@ -157,7 +157,7 @@ onMounted(() => {
         <i class="pi pi-search absolute top-1/2 -translate-y-1/2 left-3 text-surface-400" />
         <InputText
           v-model="globalSearch"
-          placeholder="Rechercher par nom, telephone ou resume..."
+          placeholder="Rechercher par nom, téléphone ou résumé..."
           class="w-full pl-10"
         />
       </div>
@@ -189,7 +189,7 @@ onMounted(() => {
         v-model="dateRange"
         selectionMode="range"
         dateFormat="dd/mm/yy"
-        placeholder="Periode"
+        placeholder="Période"
         class="w-full lg:w-64"
         showIcon
         showButtonBar
@@ -213,7 +213,7 @@ onMounted(() => {
       <template #empty>
         <div class="flex flex-col items-center justify-center py-10 text-surface-500">
           <i class="pi pi-phone text-4xl mb-3" />
-          <p class="text-lg font-medium">Aucun appel trouve</p>
+          <p class="text-lg font-medium">Aucun appel trouvé</p>
           <p class="text-sm mt-1">Ajustez vos filtres ou attendez de nouveaux appels.</p>
         </div>
       </template>
@@ -247,7 +247,7 @@ onMounted(() => {
       </Column>
 
       <!-- Telephone -->
-      <Column field="appelant_telephone" header="Telephone" sortable style="min-width: 10rem">
+      <Column field="appelant_telephone" header="Téléphone" sortable style="min-width: 10rem">
         <template #body="{ data }">
           <span class="text-sm text-surface-600 dark:text-surface-300">
             {{ data.appelant_telephone || '-' }}
@@ -277,7 +277,7 @@ onMounted(() => {
       </Column>
 
       <!-- Resume IA -->
-      <Column field="resume_ia" header="Resume IA" style="min-width: 16rem">
+      <Column field="resume_ia" header="Résumé IA" style="min-width: 16rem">
         <template #body="{ data }">
           <span class="text-sm text-surface-600 dark:text-surface-300">
             {{ truncate(data.resume_ia, 100) }}
@@ -304,7 +304,7 @@ onMounted(() => {
               text
               rounded
               severity="info"
-              v-tooltip.top="'Voir le detail'"
+              v-tooltip.top="'Voir le détail'"
               @click="openDetail(data)"
             />
           </div>
@@ -337,10 +337,10 @@ onMounted(() => {
               </div>
               <div>
                 <h3 class="text-sm font-semibold text-surface-900 dark:text-surface-0 mb-2">
-                  Action a mener
+                  Action à mener
                 </h3>
                 <div class="bg-surface-50 dark:bg-surface-800 rounded-lg p-4 text-sm text-surface-700 dark:text-surface-300">
-                  {{ data.action_a_mener || 'Aucune action definie.' }}
+                  {{ data.action_a_mener || 'Aucune action définie.' }}
                 </div>
               </div>
             </div>
@@ -352,7 +352,7 @@ onMounted(() => {
     <!-- Detail Dialog -->
     <Dialog
       v-model:visible="detailDialog"
-      header="Detail de l'appel"
+      header="Détail de l'appel"
       :modal="true"
       :style="{ width: '48rem' }"
     >
@@ -366,7 +366,7 @@ onMounted(() => {
             </p>
           </div>
           <div>
-            <p class="text-xs font-semibold text-surface-500 mb-1">Telephone</p>
+            <p class="text-xs font-semibold text-surface-500 mb-1">Téléphone</p>
             <p class="text-sm text-surface-700 dark:text-surface-300">
               {{ detailAppel.appelant_telephone || '-' }}
             </p>
@@ -394,7 +394,7 @@ onMounted(() => {
               :value="getMotifLabel(detailAppel.motif)"
               severity="info"
             />
-            <span v-else class="text-sm text-surface-400">Non defini</span>
+            <span v-else class="text-sm text-surface-400">Non défini</span>
           </div>
           <div>
             <p class="text-xs font-semibold text-surface-500 mb-1">Statut</p>
@@ -407,9 +407,9 @@ onMounted(() => {
 
         <!-- Resume IA -->
         <div>
-          <p class="text-xs font-semibold text-surface-500 mb-2">Resume IA</p>
+          <p class="text-xs font-semibold text-surface-500 mb-2">Résumé IA</p>
           <div class="bg-surface-50 dark:bg-surface-800 rounded-lg p-4 text-sm text-surface-700 dark:text-surface-300">
-            {{ detailAppel.resume_ia || 'Aucun resume disponible.' }}
+            {{ detailAppel.resume_ia || 'Aucun résumé disponible.' }}
           </div>
         </div>
 
@@ -429,11 +429,11 @@ onMounted(() => {
           </div>
         </div>
 
-        <!-- Action a mener -->
+        <!-- Action à mener -->
         <div>
-          <p class="text-xs font-semibold text-surface-500 mb-2">Action a mener</p>
+          <p class="text-xs font-semibold text-surface-500 mb-2">Action à mener</p>
           <div class="bg-surface-50 dark:bg-surface-800 rounded-lg p-4 text-sm text-surface-700 dark:text-surface-300">
-            {{ detailAppel.action_a_mener || 'Aucune action definie.' }}
+            {{ detailAppel.action_a_mener || 'Aucune action définie.' }}
           </div>
         </div>
       </div>

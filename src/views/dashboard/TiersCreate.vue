@@ -8,6 +8,7 @@ import { useFileUpload } from '../../composables/useFileUpload';
 import { useNotification } from '../../composables/useNotification';
 import { useFormValidation } from '../../composables/useFormValidation';
 import ScoreBadge from '../../components/dashboard/ScoreBadge.vue';
+import AddressAutocomplete from '../../components/common/AddressAutocomplete.vue';
 import {
   TIER_ROLE_OPTIONS, TIER_NATURES, TIER_STATUTS,
   STATUT_COMMERCIAL, FOURNISSEUR_TYPES, HANDICAP_OPTIONS,
@@ -16,6 +17,7 @@ import {
 
 // PrimeVue components
 import InputText from 'primevue/inputtext';
+import InputMask from 'primevue/inputmask';
 import Textarea from 'primevue/textarea';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
@@ -187,6 +189,13 @@ watch(
   }
 );
 
+// --- Address autocomplete handler ---
+const handleAddressSelected = (addressData) => {
+  if (addressData.street) form.value.address = addressData.street;
+  if (addressData.postcode) form.value.zip_code = addressData.postcode;
+  if (addressData.city) form.value.city = addressData.city;
+};
+
 // --- File upload handler ---
 const onFileUpload = async (event, field) => {
   const result = await uploadFile(event, field);
@@ -228,20 +237,20 @@ const handleSubmit = async () => {
           await store.removeRole(route.params.id, role);
         }
 
-        showSuccess('Tiers mis a jour', 'Les modifications ont ete enregistrees.');
+        showSuccess('Tiers mis à jour', 'Les modifications ont été enregistrées.');
         router.push(`/dashboard/tiers/${route.params.id}`);
       } else {
-        errorMsg.value = result.error || 'Erreur lors de la mise a jour.';
+        errorMsg.value = result.error || 'Erreur lors de la mise à jour.';
         showError('Erreur', errorMsg.value);
       }
     } else {
       const result = await store.createTier(form.value, selectedRoles.value);
 
       if (result.success) {
-        showSuccess('Tiers cree', 'Le tiers a ete cree avec succes.');
+        showSuccess('Tiers créé', 'Le tiers a été créé avec succès.');
         router.push('/dashboard/tiers');
       } else {
-        errorMsg.value = result.error || 'Erreur lors de la creation.';
+        errorMsg.value = result.error || 'Erreur lors de la création.';
         showError('Erreur', errorMsg.value);
       }
     }
@@ -274,7 +283,7 @@ onMounted(async () => {
       // Populate roles
       selectedRoles.value = (tier.tiers_roles || []).map(r => r.role);
     } else {
-      errorMsg.value = 'Impossible de charger les donnees du tiers.';
+      errorMsg.value = 'Impossible de charger les données du tiers.';
     }
   }
   // Pré-sélection via query param déjà gérée à l'initialisation (preselectedRole)
@@ -294,7 +303,7 @@ onMounted(async () => {
       <div class="flex gap-2">
         <Button label="Annuler" severity="secondary" outlined @click="goBack" />
         <Button
-          :label="isEditMode ? 'Enregistrer' : 'Creer le tiers'"
+          :label="isEditMode ? 'Enregistrer' : 'Créer le tiers'"
           icon="pi pi-check"
           :loading="submitting"
           @click="handleSubmit"
@@ -309,7 +318,7 @@ onMounted(async () => {
       <!-- Score details -->
       <div v-if="computedScore.missing.length > 0" class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-4">
         <p class="text-sm font-medium text-amber-800 dark:text-amber-200 mb-2">
-          <i class="pi pi-info-circle mr-1"></i> Informations manquantes pour la completude :
+          <i class="pi pi-info-circle mr-1"></i> Informations manquantes pour la complétude :
         </p>
         <ul class="list-disc list-inside text-sm text-amber-700 dark:text-amber-300 space-y-1">
           <li v-for="item in computedScore.missing" :key="item">{{ item }}</li>
@@ -334,7 +343,7 @@ onMounted(async () => {
             </div>
             <div class="text-left">
               <p class="font-semibold text-gray-900 dark:text-white">Personne physique</p>
-              <p class="text-sm text-gray-500">Individu, apprenant, formateur independant</p>
+              <p class="text-sm text-gray-500">Individu, apprenant, formateur indépendant</p>
             </div>
           </button>
 
@@ -366,7 +375,7 @@ onMounted(async () => {
 
       <!-- ====== ROLES SELECTOR ====== -->
       <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Roles</h2>
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Rôles</h2>
         <div class="flex flex-wrap gap-3">
           <label
             v-for="role in TIER_ROLE_OPTIONS"
@@ -392,7 +401,7 @@ onMounted(async () => {
         <div class="p-6">
           <div class="flex items-center gap-2 mb-5">
             <i class="pi pi-id-card text-blue-500"></i>
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Informations generales</h2>
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Informations générales</h2>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -400,8 +409,8 @@ onMounted(async () => {
             <!-- Personne physique fields -->
             <template v-if="isPersonne">
               <div class="flex flex-col gap-2">
-                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Prenom *</label>
-                <InputText v-model="form.prenom" placeholder="Prenom" :invalid="!!errors.prenom" @input="clearError('prenom')" />
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Prénom *</label>
+                <InputText v-model="form.prenom" placeholder="Prénom" :invalid="!!errors.prenom" @input="clearError('prenom')" />
               </div>
               <div class="flex flex-col gap-2">
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Nom de famille *</label>
@@ -450,12 +459,17 @@ onMounted(async () => {
               <InputText v-model="form.email" type="email" placeholder="contact@exemple.com" />
             </div>
             <div class="flex flex-col gap-2">
-              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Telephone</label>
-              <InputText v-model="form.telephone" placeholder="01 23 45 67 89" />
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Téléphone</label>
+              <InputMask v-model="form.telephone" mask="99-99-99-99-99" placeholder="01-12-12-12-12" slotChar="" />
             </div>
             <div class="flex flex-col gap-2 md:col-span-2">
               <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Adresse</label>
-              <InputText v-model="form.address" placeholder="Numero et rue" />
+              <AddressAutocomplete
+                v-model="form.address"
+                @address-selected="handleAddressSelected"
+                placeholder="Saisissez une adresse..."
+              />
+              <span class="text-xs text-gray-400"><i class="pi pi-info-circle mr-1"></i>Auto-complétion via adresse.data.gouv.fr</span>
             </div>
             <div class="flex flex-col gap-2">
               <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Code postal</label>
@@ -483,17 +497,17 @@ onMounted(async () => {
                 :options="TIER_STATUTS"
                 optionLabel="label"
                 optionValue="value"
-                placeholder="Selectionner un statut"
+                placeholder="Sélectionner un statut"
               />
             </div>
-            <div class="flex flex-col gap-2">
+            <div v-if="hasRole('client')" class="flex flex-col gap-2">
               <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Statut commercial</label>
               <Dropdown
                 v-model="form.statut_commercial"
                 :options="STATUT_COMMERCIAL"
                 optionLabel="label"
                 optionValue="value"
-                placeholder="Selectionner"
+                placeholder="Sélectionner"
               />
             </div>
             <div class="flex flex-col gap-2 md:col-span-2">
@@ -522,12 +536,12 @@ onMounted(async () => {
               <DatePicker v-model="form.date_naissance" dateFormat="dd/mm/yy" showIcon placeholder="jj/mm/aaaa" />
             </div>
             <div class="flex flex-col gap-2">
-              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Niveau d'entree</label>
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Niveau d'entrée</label>
               <InputText v-model="form.niveau_entree" placeholder="Ex : Bac+2, CAP..." />
             </div>
             <div class="flex flex-col gap-2 md:col-span-2">
               <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Objectif professionnel</label>
-              <Textarea v-model="form.objectif_professionnel" rows="3" autoResize placeholder="Decrivez l'objectif professionnel..." />
+              <Textarea v-model="form.objectif_professionnel" rows="3" autoResize placeholder="Décrivez l'objectif professionnel..." />
             </div>
             <div class="flex flex-col gap-2">
               <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Situation de handicap</label>
@@ -536,12 +550,12 @@ onMounted(async () => {
                 :options="HANDICAP_OPTIONS"
                 optionLabel="label"
                 optionValue="value"
-                placeholder="Selectionner"
+                placeholder="Sélectionner"
               />
             </div>
             <div v-if="form.situation_handicap === 'oui'" class="flex flex-col gap-2 md:col-span-2">
-              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Besoins d'amenagement</label>
-              <Textarea v-model="form.besoin_amenagement" rows="3" autoResize placeholder="Decrivez les besoins d'amenagement..." />
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Besoins d'aménagement</label>
+              <Textarea v-model="form.besoin_amenagement" rows="3" autoResize placeholder="Décrivez les besoins d'aménagement..." />
             </div>
           </div>
         </div>
@@ -560,7 +574,7 @@ onMounted(async () => {
             <div class="flex flex-col gap-3 md:col-span-2">
               <div class="flex items-center gap-3">
                 <ToggleSwitch v-model="form.nda_signe" />
-                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">NDA signe</label>
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">NDA signé</label>
               </div>
             </div>
             <div v-if="form.nda_signe" class="flex flex-col gap-2">
@@ -572,7 +586,7 @@ onMounted(async () => {
               <FileUpload
                 mode="basic"
                 accept=".pdf"
-                :maxFileSize="1048576"
+                :maxFileSize="10485760"
                 @select="(e) => onFileUpload(e, 'nda_document_url')"
                 chooseLabel="Joindre le NDA"
                 :disabled="fileUploading"
@@ -586,12 +600,12 @@ onMounted(async () => {
 
             <!-- Declaration -->
             <div class="flex flex-col gap-2">
-              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Declaration d'activite (NDA)</label>
-              <InputText v-model="form.declaration_activite" placeholder="Numero de declaration" />
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Déclaration d'activité (NDA)</label>
+              <InputText v-model="form.declaration_activite" placeholder="Numéro de déclaration" />
             </div>
             <div class="flex flex-col gap-2">
-              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Region de declaration</label>
-              <InputText v-model="form.declaration_region" placeholder="Ex : Ile-de-France" />
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Région de déclaration</label>
+              <InputText v-model="form.declaration_region" placeholder="Ex : Île-de-France" />
             </div>
 
             <Divider class="col-span-1 md:col-span-2" />
@@ -600,7 +614,7 @@ onMounted(async () => {
             <div class="flex flex-col gap-3 md:col-span-2">
               <div class="flex items-center gap-3">
                 <ToggleSwitch v-model="form.qualiopi_certifie" />
-                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Certifie Qualiopi</label>
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Certifié Qualiopi</label>
               </div>
             </div>
             <template v-if="form.qualiopi_certifie">
@@ -609,7 +623,7 @@ onMounted(async () => {
                 <InputText v-model="form.qualiopi_certificateur" placeholder="Nom du certificateur" />
               </div>
               <div class="flex flex-col gap-2">
-                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Date de validite</label>
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Date de fin de validité</label>
                 <DatePicker v-model="form.qualiopi_date_validite" dateFormat="dd/mm/yy" showIcon placeholder="jj/mm/aaaa" />
               </div>
               <div class="flex flex-col gap-2 md:col-span-2">
@@ -617,7 +631,7 @@ onMounted(async () => {
                 <FileUpload
                   mode="basic"
                   accept=".pdf,image/*"
-                  :maxFileSize="1048576"
+                  :maxFileSize="10485760"
                   @select="(e) => onFileUpload(e, 'qualiopi_certificat_url')"
                   chooseLabel="Joindre le certificat"
                   :disabled="fileUploading"
@@ -647,41 +661,19 @@ onMounted(async () => {
                 :options="FOURNISSEUR_TYPES"
                 optionLabel="label"
                 optionValue="value"
-                placeholder="Selectionner un type"
+                placeholder="Sélectionner un type"
               />
             </div>
             <div class="flex flex-col gap-3">
               <div class="flex items-center gap-3 mt-6">
                 <ToggleSwitch v-model="form.accord_cadre_signe" />
-                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Accord-cadre signe</label>
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Accord-cadre signé</label>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- ====== BLOC CLIENT ====== -->
-      <div v-if="hasRole('client')" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 border-l-4 border-l-indigo-500">
-        <div class="p-6">
-          <div class="flex items-center gap-2 mb-5">
-            <i class="pi pi-building text-indigo-500"></i>
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Informations client</h2>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div class="flex flex-col gap-2">
-              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Statut commercial</label>
-              <Dropdown
-                v-model="form.statut_commercial"
-                :options="STATUT_COMMERCIAL"
-                optionLabel="label"
-                optionValue="value"
-                placeholder="Selectionner"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
 
     </form>
   </div>

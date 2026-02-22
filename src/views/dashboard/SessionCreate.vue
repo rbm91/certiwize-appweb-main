@@ -5,6 +5,8 @@ import { useToast } from 'primevue/usetoast';
 
 import { usePrestationsStore } from '../../stores/prestations';
 import { useTiersStore } from '../../stores/tiers';
+import { useTrainingStore } from '../../stores/training';
+import { supabase } from '../../supabase';
 import WorkflowTimeline from '../../components/dashboard/WorkflowTimeline.vue';
 import { FORMATION_WORKFLOW_STEPS } from '../../config/constants';
 
@@ -22,12 +24,14 @@ const route = useRoute();
 const toast = useToast();
 const store = usePrestationsStore();
 const tiersStore = useTiersStore();
+const trainingStore = useTrainingStore();
 
 // -- Edit mode --
 const editId = computed(() => route.params.id || null);
 const isEdit = computed(() => !!editId.value);
 const loading = ref(false);
 const saving = ref(false);
+const savedPrestationId = ref(null); // ID de la session après première création (pour auto-save)
 
 // -- Workflow step --
 const currentStep = ref(1);
@@ -37,6 +41,7 @@ const totalSteps = FORMATION_WORKFLOW_STEPS.length;
 const form = ref({
   // Step 1 - Identification
   intitule: '',
+  formation_id: null,
   client_id: null,
   payeur_id: null,
   formateur_id: null,
@@ -88,6 +93,36 @@ const apprenantOptions = computed(() =>
   }))
 );
 
+// Options formations du catalogue
+const formationOptions = computed(() => {
+  const options = trainingStore.formations.map(f => ({
+    label: f.title,
+    value: f.id,
+  }));
+  // Ajouter l'option "Formation sur mesure" en premier
+  options.unshift({ label: '✏️ Formation sur mesure (saisie libre)', value: '__custom__' });
+  return options;
+});
+
+const selectedFormation = ref(null);
+const customIntitule = ref(false);
+
+const onFormationSelect = (event) => {
+  const val = event.value;
+  if (val === '__custom__') {
+    customIntitule.value = true;
+    form.value.intitule = '';
+    form.value.formation_id = null;
+  } else {
+    customIntitule.value = false;
+    const formation = trainingStore.formations.find(f => f.id === val);
+    if (formation) {
+      form.value.intitule = formation.title;
+      form.value.formation_id = formation.id;
+    }
+  }
+};
+
 // -- Navigation --
 const goBack = () => router.push({ name: 'dashboard-sessions' });
 
@@ -95,17 +130,57 @@ const prevStep = () => {
   if (currentStep.value > 1) currentStep.value--;
 };
 
-const nextStep = () => {
-  if (currentStep.value < totalSteps) currentStep.value++;
+const nextStep = async () => {
+  if (currentStep.value < totalSteps) {
+    // Auto-save avant de passer à l'étape suivante
+    await handleSave(false); // false = ne pas rediriger
+    currentStep.value++;
+  }
+};
+
+// -- Synchronisation des apprenants --
+// Compare la liste sélectionnée avec celle en base et ajoute/supprime les différences
+const syncApprenants = async (prestationId, newApprenantIds) => {
+  try {
+    // Récupérer les apprenants actuellement rattachés en base
+    const { data: existing, error: fetchErr } = await supabase
+      .from('prestation_apprenants')
+      .select('apprenant_id')
+      .eq('prestation_id', prestationId);
+
+    if (fetchErr) throw fetchErr;
+
+    const existingIds = (existing || []).map(pa => pa.apprenant_id);
+
+    // Apprenants à ajouter (dans la sélection mais pas en base)
+    const toAdd = newApprenantIds.filter(id => !existingIds.includes(id));
+    // Apprenants à supprimer (en base mais plus dans la sélection)
+    const toRemove = existingIds.filter(id => !newApprenantIds.includes(id));
+
+    for (const appId of toAdd) {
+      await store.addApprenant(prestationId, appId);
+    }
+    for (const appId of toRemove) {
+      await store.removeApprenant(prestationId, appId);
+    }
+
+    return { success: true, added: toAdd.length, removed: toRemove.length };
+  } catch (err) {
+    console.error('[SessionCreate] syncApprenants:', err.message);
+    return { success: false, error: err.message };
+  }
 };
 
 // -- Save --
-const handleSave = async () => {
+// redirect = true : redirige vers la vue session après sauvegarde
+// redirect = false : sauvegarde silencieuse (auto-save entre étapes)
+const handleSave = async (redirect = true) => {
   saving.value = true;
   try {
     const payload = {
       type: 'formation',
       intitule: form.value.intitule,
+      formation_id: form.value.formation_id,
       client_id: form.value.client_id,
       payeur_id: form.value.payeur_id,
       formateur_id: form.value.formateur_id,
@@ -127,28 +202,48 @@ const handleSave = async () => {
     };
 
     let result;
-    if (isEdit.value) {
-      result = await store.updatePrestation(editId.value, payload);
+    if (isEdit.value || savedPrestationId.value) {
+      // Si la session a déjà été créée (même dans cette même page), on fait un update
+      const idToUpdate = editId.value || savedPrestationId.value;
+      result = await store.updatePrestation(idToUpdate, payload);
+      // Garder la même data.id
+      if (result.success && !result.data?.id) {
+        result.data = { ...result.data, id: idToUpdate };
+      }
     } else {
       result = await store.createPrestation(payload);
+      // Stocker l'ID pour les sauvegardes suivantes (auto-save entre étapes)
+      if (result.success && result.data?.id) {
+        savedPrestationId.value = result.data.id;
+      }
     }
 
     if (result.success) {
-      toast.add({
-        severity: 'success',
-        summary: isEdit.value ? 'Session mise a jour' : 'Session creee',
-        detail: `La session "${form.value.intitule}" a ete ${isEdit.value ? 'mise a jour' : 'creee'} avec succes.`,
-        life: 3000,
-      });
+      const prestationId = result.data?.id || editId.value || savedPrestationId.value;
 
-      // Add apprenants if creation
-      if (!isEdit.value && result.data?.id && form.value.apprenants.length > 0) {
-        for (const appId of form.value.apprenants) {
-          await store.addApprenant(result.data.id, appId);
-        }
+      // Synchroniser les apprenants (création ET édition)
+      if (prestationId && form.value.apprenants.length > 0) {
+        await syncApprenants(prestationId, form.value.apprenants);
       }
 
-      router.push({ name: 'dashboard-session-view', params: { id: result.data?.id || editId.value } });
+      if (redirect) {
+        toast.add({
+          severity: 'success',
+          summary: isEdit.value ? 'Session mise à jour' : 'Session créée',
+          detail: `La session "${form.value.intitule}" a été ${isEdit.value ? 'mise à jour' : 'créée'} avec succès.`,
+          life: 3000,
+        });
+
+        router.push({ name: 'dashboard-session-view', params: { id: prestationId } });
+      } else {
+        // Auto-save silencieux — petit toast discret
+        toast.add({
+          severity: 'info',
+          summary: 'Sauvegarde automatique',
+          detail: 'Les données de l\'étape ont été enregistrées.',
+          life: 2000,
+        });
+      }
     } else {
       toast.add({
         severity: 'error',
@@ -169,11 +264,22 @@ onMounted(async () => {
     if (tiersStore.activeTiers.length === 0) {
       await tiersStore.fetchTiers();
     }
+    if (trainingStore.formations.length === 0) {
+      await trainingStore.fetchFormations();
+    }
 
     if (isEdit.value) {
       const data = await store.fetchPrestationById(editId.value);
       if (data) {
         form.value.intitule = data.intitule || '';
+        form.value.formation_id = data.formation_id || null;
+        // Restaurer la sélection du dropdown
+        if (data.formation_id) {
+          selectedFormation.value = data.formation_id;
+        } else if (data.intitule) {
+          selectedFormation.value = '__custom__';
+          customIntitule.value = true;
+        }
         form.value.client_id = data.client_id;
         form.value.payeur_id = data.payeur_id;
         form.value.formateur_id = data.formateur_id;
@@ -218,7 +324,7 @@ onMounted(async () => {
           <h1 class="text-2xl font-bold text-surface-900 dark:text-surface-0">
             {{ isEdit ? 'Modifier la session' : 'Nouvelle session de formation' }}
           </h1>
-          <p class="text-surface-500 mt-1">Etape {{ currentStep }} sur {{ totalSteps }}</p>
+          <p class="text-surface-500 mt-1">Étape {{ currentStep }} sur {{ totalSteps }}</p>
         </div>
         <Button label="Retour" icon="pi pi-arrow-left" severity="secondary" outlined @click="goBack" />
       </div>
@@ -238,8 +344,26 @@ onMounted(async () => {
           </h2>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="flex flex-col gap-2 md:col-span-2">
-              <label class="text-sm font-medium">Intitule de la formation *</label>
-              <InputText v-model="form.intitule" placeholder="Ex: Formation Vue.js avancee" class="w-full" />
+              <label class="text-sm font-medium">Intitulé de la formation *</label>
+              <Dropdown
+                v-model="selectedFormation"
+                :options="formationOptions"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Sélectionner une formation du catalogue"
+                filter
+                class="w-full"
+                @change="onFormationSelect"
+              />
+              <InputText
+                v-if="customIntitule"
+                v-model="form.intitule"
+                placeholder="Saisissez l'intitulé de la formation sur mesure"
+                class="w-full mt-2"
+              />
+              <small v-if="!customIntitule && form.intitule" class="text-green-600">
+                <i class="pi pi-check-circle mr-1"></i>{{ form.intitule }}
+              </small>
             </div>
             <div class="flex flex-col gap-2">
               <label class="text-sm font-medium">Client *</label>
@@ -248,7 +372,7 @@ onMounted(async () => {
                 :options="clientOptions"
                 optionLabel="label"
                 optionValue="value"
-                placeholder="Selectionner un client"
+                placeholder="Sélectionner un client"
                 filter
                 class="w-full"
               />
@@ -260,7 +384,7 @@ onMounted(async () => {
                 :options="financeurOptions"
                 optionLabel="label"
                 optionValue="value"
-                placeholder="Selectionner un financeur"
+                placeholder="Sélectionner un financeur"
                 filter
                 showClear
                 class="w-full"
@@ -273,7 +397,7 @@ onMounted(async () => {
                 :options="formateurOptions"
                 optionLabel="label"
                 optionValue="value"
-                placeholder="Selectionner un formateur"
+                placeholder="Sélectionner un formateur"
                 filter
                 showClear
                 class="w-full"
@@ -286,7 +410,7 @@ onMounted(async () => {
                 :options="apprenantOptions"
                 optionLabel="label"
                 optionValue="value"
-                placeholder="Selectionner les apprenants"
+                placeholder="Sélectionner les apprenants"
                 filter
                 :maxSelectedLabels="3"
                 selectedItemsLabel="{0} apprenants"
@@ -294,7 +418,7 @@ onMounted(async () => {
               />
             </div>
             <div class="flex flex-col gap-2">
-              <label class="text-sm font-medium">Date de debut</label>
+              <label class="text-sm font-medium">Date de début</label>
               <Calendar v-model="form.date_debut" dateFormat="dd/mm/yy" showIcon class="w-full" />
             </div>
             <div class="flex flex-col gap-2">
@@ -302,7 +426,7 @@ onMounted(async () => {
               <Calendar v-model="form.date_fin" dateFormat="dd/mm/yy" showIcon class="w-full" />
             </div>
             <div class="flex flex-col gap-2">
-              <label class="text-sm font-medium">Duree (heures)</label>
+              <label class="text-sm font-medium">Durée (heures)</label>
               <InputNumber v-model="form.duree_heures" :min="0" suffix=" h" class="w-full" />
             </div>
             <div class="flex flex-col gap-2">
@@ -320,23 +444,23 @@ onMounted(async () => {
           <div class="grid grid-cols-1 gap-6">
             <div class="flex flex-col gap-2">
               <label class="text-sm font-medium">Contexte de la demande</label>
-              <Textarea v-model="form.contexte" rows="3" placeholder="Decrivez le contexte de la demande de formation..." class="w-full" />
+              <Textarea v-model="form.contexte" rows="3" placeholder="Décrivez le contexte de la demande de formation..." class="w-full" />
             </div>
             <div class="flex flex-col gap-2">
-              <label class="text-sm font-medium">Objectifs pedagogiques</label>
-              <Textarea v-model="form.objectifs" rows="3" placeholder="Listez les objectifs vises par la formation..." class="w-full" />
+              <label class="text-sm font-medium">Objectifs pédagogiques</label>
+              <Textarea v-model="form.objectifs" rows="3" placeholder="Listez les objectifs visés par la formation..." class="w-full" />
             </div>
             <div class="flex flex-col gap-2">
-              <label class="text-sm font-medium">Public vise</label>
-              <Textarea v-model="form.public_vise" rows="2" placeholder="Decrivez le public cible et les prerequis..." class="w-full" />
+              <label class="text-sm font-medium">Public visé</label>
+              <Textarea v-model="form.public_vise" rows="2" placeholder="Décrivez le public cible et les prérequis..." class="w-full" />
             </div>
             <div class="flex flex-col gap-2">
-              <label class="text-sm font-medium">Modalites pedagogiques</label>
-              <Textarea v-model="form.modalites" rows="2" placeholder="Presentiel, distanciel, mixte, methodes..." class="w-full" />
+              <label class="text-sm font-medium">Modalités pédagogiques</label>
+              <Textarea v-model="form.modalites" rows="2" placeholder="Présentiel, distanciel, mixte, méthodes..." class="w-full" />
             </div>
             <div class="flex flex-col gap-2">
               <label class="text-sm font-medium">Prise en compte du handicap</label>
-              <Textarea v-model="form.handicap_info" rows="2" placeholder="Amenagements prevus, accessibilite, referent handicap..." class="w-full" />
+              <Textarea v-model="form.handicap_info" rows="2" placeholder="Aménagements prévus, accessibilité, référent handicap..." class="w-full" />
             </div>
           </div>
         </div>
@@ -348,13 +472,13 @@ onMounted(async () => {
           </h2>
           <div class="flex flex-col items-center justify-center py-12 text-surface-500">
             <i class="pi pi-file text-5xl mb-4 text-primary"></i>
-            <p class="text-lg font-medium mb-2">Generation automatique</p>
+            <p class="text-lg font-medium mb-2">Génération automatique</p>
             <p class="text-sm text-center max-w-md">
-              La convention de formation sera generee automatiquement a partir des informations
-              saisies lors des etapes precedentes. Vous pourrez la personnaliser et la telecharger.
+              La convention de formation sera générée automatiquement à partir des informations
+              saisies lors des étapes précédentes. Vous pourrez la personnaliser et la télécharger.
             </p>
             <Message severity="info" :closable="false" class="mt-4">
-              Fonctionnalite disponible prochainement.
+              Fonctionnalité disponible prochainement.
             </Message>
           </div>
         </div>
@@ -368,11 +492,11 @@ onMounted(async () => {
             <i class="pi pi-envelope text-5xl mb-4 text-primary"></i>
             <p class="text-lg font-medium mb-2">Convocation des apprenants</p>
             <p class="text-sm text-center max-w-md">
-              Les convocations seront envoyees automatiquement aux apprenants inscrits
+              Les convocations seront envoyées automatiquement aux apprenants inscrits
               avec les informations pratiques de la session.
             </p>
             <Message severity="info" :closable="false" class="mt-4">
-              Fonctionnalite disponible prochainement.
+              Fonctionnalité disponible prochainement.
             </Message>
           </div>
         </div>
@@ -380,17 +504,17 @@ onMounted(async () => {
         <!-- ====== STEP 5 : Realisation ====== -->
         <div v-else-if="currentStep === 5">
           <h2 class="text-lg font-semibold text-primary border-b pb-2 mb-6">
-            <i class="pi pi-play mr-2"></i>Realisation
+            <i class="pi pi-play mr-2"></i>Réalisation
           </h2>
           <div class="flex flex-col items-center justify-center py-12 text-surface-500">
             <i class="pi pi-play text-5xl mb-4 text-primary"></i>
-            <p class="text-lg font-medium mb-2">Suivi de la realisation</p>
+            <p class="text-lg font-medium mb-2">Suivi de la réalisation</p>
             <p class="text-sm text-center max-w-md">
-              Gerez les emargements, le suivi des presences et les evenements
+              Gérez les émargements, le suivi des présences et les événements
               survenus pendant la formation.
             </p>
             <Message severity="info" :closable="false" class="mt-4">
-              Fonctionnalite disponible prochainement.
+              Fonctionnalité disponible prochainement.
             </Message>
           </div>
         </div>
@@ -398,17 +522,17 @@ onMounted(async () => {
         <!-- ====== STEP 6 : Evaluation des acquis ====== -->
         <div v-else-if="currentStep === 6">
           <h2 class="text-lg font-semibold text-primary border-b pb-2 mb-6">
-            <i class="pi pi-check-circle mr-2"></i>Evaluation des acquis
+            <i class="pi pi-check-circle mr-2"></i>Évaluation des acquis
           </h2>
           <div class="flex flex-col items-center justify-center py-12 text-surface-500">
             <i class="pi pi-check-circle text-5xl mb-4 text-primary"></i>
-            <p class="text-lg font-medium mb-2">Evaluation des acquis</p>
+            <p class="text-lg font-medium mb-2">Évaluation des acquis</p>
             <p class="text-sm text-center max-w-md">
-              Configurez et envoyez les evaluations de validation des acquis
+              Configurez et envoyez les évaluations de validation des acquis
               aux apprenants (quiz, QCM, mise en situation).
             </p>
             <Message severity="info" :closable="false" class="mt-4">
-              Fonctionnalite disponible prochainement.
+              Fonctionnalité disponible prochainement.
             </Message>
           </div>
         </div>
@@ -420,35 +544,71 @@ onMounted(async () => {
           </h2>
           <div class="flex flex-col items-center justify-center py-12 text-surface-500">
             <i class="pi pi-star text-5xl mb-4 text-primary"></i>
-            <p class="text-lg font-medium mb-2">Enquetes de satisfaction</p>
+            <p class="text-lg font-medium mb-2">Enquêtes de satisfaction</p>
             <p class="text-sm text-center max-w-md">
               Envoyez les questionnaires de satisfaction aux stagiaires,
               au formateur et au financeur.
             </p>
             <Message severity="info" :closable="false" class="mt-4">
-              Fonctionnalite disponible prochainement.
+              Fonctionnalité disponible prochainement.
             </Message>
           </div>
         </div>
 
-        <!-- ====== STEP 8 : Cloture ====== -->
+        <!-- ====== STEP 8 : Facturation ====== -->
         <div v-else-if="currentStep === 8">
           <h2 class="text-lg font-semibold text-primary border-b pb-2 mb-6">
-            <i class="pi pi-lock mr-2"></i>Cloture
+            <i class="pi pi-wallet mr-2"></i>Facturation
+          </h2>
+          <div class="flex flex-col items-center justify-center py-12 text-surface-500">
+            <i class="pi pi-wallet text-5xl mb-4 text-primary"></i>
+            <p class="text-lg font-medium mb-2">Facturation de la session</p>
+            <p class="text-sm text-center max-w-md">
+              Générez les factures (acompte, solde) liées à cette session de formation.
+              Le suivi des paiements et relances sera disponible ici.
+            </p>
+            <Message severity="info" :closable="false" class="mt-4">
+              Fonctionnalité disponible prochainement.
+            </Message>
+          </div>
+        </div>
+
+        <!-- ====== STEP 9 : Clôture ====== -->
+        <div v-else-if="currentStep === 9">
+          <h2 class="text-lg font-semibold text-primary border-b pb-2 mb-6">
+            <i class="pi pi-lock mr-2"></i>Clôture
           </h2>
           <div class="flex flex-col items-center justify-center py-12 text-surface-500">
             <i class="pi pi-lock text-5xl mb-4 text-primary"></i>
-            <p class="text-lg font-medium mb-2">Cloture de la session</p>
+            <p class="text-lg font-medium mb-2">Clôture de la session</p>
             <p class="text-sm text-center max-w-md">
-              Verifiez que tous les documents sont complets et cloturez la session.
-              La cloture finalise le dossier de formation.
+              Vérifiez que tous les documents sont complets et clôturez la session.
+              La clôture finalise le dossier de formation.
             </p>
             <Message severity="warn" :closable="false" class="mt-4">
-              Attention : la cloture est bloquee si un signal qualite est ouvert
-              sur cette session (incident, reclamation non traite).
+              Attention : la clôture est bloquée si un signal qualité est ouvert
+              sur cette session (incident, réclamation non traité).
             </Message>
             <Message severity="info" :closable="false" class="mt-2">
-              Fonctionnalite disponible prochainement.
+              Fonctionnalité disponible prochainement.
+            </Message>
+          </div>
+        </div>
+
+        <!-- ====== STEP 10 : Archivé ====== -->
+        <div v-else-if="currentStep === 10">
+          <h2 class="text-lg font-semibold text-primary border-b pb-2 mb-6">
+            <i class="pi pi-box mr-2"></i>Archivé
+          </h2>
+          <div class="flex flex-col items-center justify-center py-12 text-surface-500">
+            <i class="pi pi-box text-5xl mb-4 text-primary"></i>
+            <p class="text-lg font-medium mb-2">Archivage de la session</p>
+            <p class="text-sm text-center max-w-md">
+              La session est terminée et archivée. Tous les documents sont conservés
+              conformément aux exigences Qualiopi (durée de conservation des preuves).
+            </p>
+            <Message severity="success" :closable="false" class="mt-4">
+              Session archivée avec succès.
             </Message>
           </div>
         </div>
@@ -457,7 +617,7 @@ onMounted(async () => {
       <!-- Navigation Buttons -->
       <div class="flex justify-between items-center mt-6">
         <Button
-          label="Precedent"
+          label="Précédent"
           icon="pi pi-chevron-left"
           severity="secondary"
           outlined

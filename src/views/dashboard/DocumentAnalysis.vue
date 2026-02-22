@@ -290,7 +290,7 @@ const scoreSeverity = computed(() => {
                 <div class="flex flex-col gap-6">
                     <!-- Sélection du type -->
                     <div class="flex flex-col gap-2">
-                        <label class="font-medium text-gray-700 dark:text-gray-300">{{ t('analysis.doc_type') }}</label>
+                        <label class="font-medium text-gray-700 dark:text-gray-300">{{ t('analysis.doc_type') }} <span class="text-red-500">*</span></label>
                         <Dropdown
                             v-model="selectedType"
                             :options="docTypes"
@@ -336,7 +336,7 @@ const scoreSeverity = computed(() => {
 
                     <!-- Upload Fichier (Drag & Drop) -->
                     <div class="flex flex-col gap-2">
-                        <label class="font-medium text-gray-700 dark:text-gray-300">{{ t('analysis.upload_label') }}</label>
+                        <label class="font-medium text-gray-700 dark:text-gray-300">{{ t('analysis.upload_label') }} <span class="text-red-500">*</span></label>
                         <FileUpload name="docs[]" url="/api/upload" @select="onFileSelect" :maxFileSize="10000000" accept=".pdf,.docx,.jpg,.jpeg,.png"
                             :auto="false" :customUpload="true" @uploader="() => {}"
                             :chooseLabel="t('analysis.choose_drop')" :cancelLabel="t('analysis.cancel')"
@@ -353,6 +353,14 @@ const scoreSeverity = computed(() => {
                     <!-- Bouton Envoyer -->
                     <Button :label="t('analysis.analyze_btn')" icon="pi pi-bolt" @click="sendDocument"
                         :loading="loading" :disabled="!canSend" severity="primary" size="large" />
+
+                    <!-- Message d'aide si le bouton est désactivé -->
+                    <small v-if="!canSend && !loading" class="text-orange-500 flex items-center gap-1">
+                      <i class="pi pi-info-circle"></i>
+                      <span v-if="!file">Veuillez sélectionner un fichier</span>
+                      <span v-else-if="isCustomType && !customTypeName.trim()">Veuillez saisir le nom du type de document</span>
+                      <span v-else-if="!selectedType && !isCustomType">Veuillez sélectionner un type de document</span>
+                    </small>
 
                     <!-- Messages -->
                     <Message v-if="success" severity="success" :closable="false">{{ t('analysis.success') }}</Message>

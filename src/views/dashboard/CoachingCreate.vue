@@ -62,7 +62,7 @@ const frequenceOptions = [
   { label: 'Hebdomadaire', value: 'hebdomadaire' },
   { label: 'Bimensuelle', value: 'bimensuelle' },
   { label: 'Mensuelle', value: 'mensuelle' },
-  { label: 'A la demande', value: 'a_la_demande' },
+  { label: 'À la demande', value: 'a_la_demande' },
 ];
 
 // -- Tiers options --
@@ -142,8 +142,8 @@ const handleSave = async () => {
     if (result.success) {
       toast.add({
         severity: 'success',
-        summary: isEdit.value ? 'Coaching mis a jour' : 'Coaching cree',
-        detail: `Le coaching "${form.value.intitule}" a ete ${isEdit.value ? 'mis a jour' : 'cree'} avec succes.`,
+        summary: isEdit.value ? 'Coaching mis à jour' : 'Coaching créé',
+        detail: `Le coaching "${form.value.intitule}" a été ${isEdit.value ? 'mis à jour' : 'créé'} avec succès.`,
         life: 3000,
       });
       router.push({ name: 'dashboard-coaching-view', params: { id: result.data?.id || editId.value } });
@@ -214,7 +214,7 @@ onMounted(async () => {
           <h1 class="text-2xl font-bold text-surface-900 dark:text-surface-0">
             {{ isEdit ? 'Modifier le coaching' : 'Nouveau coaching' }}
           </h1>
-          <p class="text-surface-500 mt-1">Etape {{ currentStep }} sur {{ totalSteps }}</p>
+          <p class="text-surface-500 mt-1">Étape {{ currentStep }} sur {{ totalSteps }}</p>
         </div>
         <Button label="Retour" icon="pi pi-arrow-left" severity="secondary" outlined @click="goBack" />
       </div>
@@ -234,7 +234,7 @@ onMounted(async () => {
           </h2>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="flex flex-col gap-2 md:col-span-2">
-              <label class="text-sm font-medium">Intitule du coaching *</label>
+              <label class="text-sm font-medium">Intitulé du coaching *</label>
               <InputText v-model="form.intitule" placeholder="Ex: Coaching leadership manager" class="w-full" :invalid="!!errors.intitule" @input="clearError('intitule')" />
             </div>
             <div class="flex flex-col gap-2">
@@ -244,7 +244,7 @@ onMounted(async () => {
                 :options="clientOptions"
                 optionLabel="label"
                 optionValue="value"
-                placeholder="Selectionner un client"
+                placeholder="Sélectionner un client"
                 filter
                 class="w-full"
                 :invalid="!!errors.client_id"
@@ -258,7 +258,7 @@ onMounted(async () => {
                 :options="financeurOptions"
                 optionLabel="label"
                 optionValue="value"
-                placeholder="Selectionner un financeur"
+                placeholder="Sélectionner un financeur"
                 filter
                 showClear
                 class="w-full"
@@ -271,14 +271,14 @@ onMounted(async () => {
                 :options="coachOptions"
                 optionLabel="label"
                 optionValue="value"
-                placeholder="Selectionner un coach"
+                placeholder="Sélectionner un coach"
                 filter
                 showClear
                 class="w-full"
               />
             </div>
             <div class="flex flex-col gap-2">
-              <label class="text-sm font-medium">Date de debut</label>
+              <label class="text-sm font-medium">Date de début</label>
               <Calendar v-model="form.date_debut" dateFormat="dd/mm/yy" showIcon class="w-full" />
             </div>
             <div class="flex flex-col gap-2">
@@ -286,7 +286,7 @@ onMounted(async () => {
               <Calendar v-model="form.date_fin" dateFormat="dd/mm/yy" showIcon class="w-full" />
             </div>
             <div class="flex flex-col gap-2">
-              <label class="text-sm font-medium">Duree totale (heures)</label>
+              <label class="text-sm font-medium">Durée totale (heures)</label>
               <InputNumber v-model="form.duree_heures" :min="0" suffix=" h" class="w-full" />
             </div>
             <div class="flex flex-col gap-2">
@@ -294,17 +294,17 @@ onMounted(async () => {
               <InputNumber v-model="form.montant_ht" :min="0" mode="currency" currency="EUR" locale="fr-FR" class="w-full" />
             </div>
             <div class="flex flex-col gap-2">
-              <label class="text-sm font-medium">Nombre de seances</label>
+              <label class="text-sm font-medium">Nombre de séances</label>
               <InputNumber v-model="form.nombre_seances" :min="1" class="w-full" />
             </div>
             <div class="flex flex-col gap-2">
-              <label class="text-sm font-medium">Frequence des seances</label>
+              <label class="text-sm font-medium">Fréquence des séances</label>
               <Dropdown
                 v-model="form.frequence_seances"
                 :options="frequenceOptions"
                 optionLabel="label"
                 optionValue="value"
-                placeholder="Selectionner une frequence"
+                placeholder="Sélectionner une fréquence"
                 showClear
                 class="w-full"
               />
@@ -320,15 +320,15 @@ onMounted(async () => {
           <div class="grid grid-cols-1 gap-6">
             <div class="flex flex-col gap-2">
               <label class="text-sm font-medium">Objectifs du coaching</label>
-              <Textarea v-model="form.objectifs_coaching" rows="3" placeholder="Decrivez les objectifs du coaching..." class="w-full" />
+              <Textarea v-model="form.objectifs_coaching" rows="3" placeholder="Décrivez les objectifs du coaching..." class="w-full" />
             </div>
             <div class="flex flex-col gap-2">
-              <label class="text-sm font-medium">Modalites d'accompagnement</label>
-              <Textarea v-model="form.modalites" rows="3" placeholder="Presentiel, distanciel, mixte, format des seances..." class="w-full" />
+              <label class="text-sm font-medium">Modalités d'accompagnement</label>
+              <Textarea v-model="form.modalites" rows="3" placeholder="Présentiel, distanciel, mixte, format des séances..." class="w-full" />
             </div>
             <div class="flex flex-col gap-2">
-              <label class="text-sm font-medium">Indicateurs de reussite</label>
-              <Textarea v-model="form.indicateurs_reussite" rows="3" placeholder="Comment sera mesuree la reussite du coaching..." class="w-full" />
+              <label class="text-sm font-medium">Indicateurs de réussite</label>
+              <Textarea v-model="form.indicateurs_reussite" rows="3" placeholder="Comment sera mesurée la réussite du coaching..." class="w-full" />
             </div>
           </div>
         </div>
@@ -342,11 +342,11 @@ onMounted(async () => {
             <i class="pi pi-map text-5xl mb-4 text-primary"></i>
             <p class="text-lg font-medium mb-2">Plan d'accompagnement</p>
             <p class="text-sm text-center max-w-md">
-              Definissez le plan d'accompagnement detaille avec les objectifs par seance,
-              les outils utilises et le calendrier previsionnel.
+              Définissez le plan d'accompagnement détaillé avec les objectifs par séance,
+              les outils utilisés et le calendrier prévisionnel.
             </p>
             <Message severity="info" :closable="false" class="mt-4">
-              Fonctionnalite disponible prochainement.
+              Fonctionnalité disponible prochainement.
             </Message>
           </div>
         </div>
@@ -354,17 +354,17 @@ onMounted(async () => {
         <!-- ====== STEP 4 : Seances ====== -->
         <div v-else-if="currentStep === 4">
           <h2 class="text-lg font-semibold text-primary border-b pb-2 mb-6">
-            <i class="pi pi-comments mr-2"></i>Seances
+            <i class="pi pi-comments mr-2"></i>Séances
           </h2>
           <div class="flex flex-col items-center justify-center py-12 text-surface-500">
             <i class="pi pi-comments text-5xl mb-4 text-primary"></i>
-            <p class="text-lg font-medium mb-2">Suivi des seances</p>
+            <p class="text-lg font-medium mb-2">Suivi des séances</p>
             <p class="text-sm text-center max-w-md">
-              Suivez chaque seance de coaching : date, duree, compte-rendu,
-              points abordes et actions definies.
+              Suivez chaque séance de coaching : date, durée, compte-rendu,
+              points abordés et actions définies.
             </p>
             <Message severity="info" :closable="false" class="mt-4">
-              Fonctionnalite disponible prochainement.
+              Fonctionnalité disponible prochainement.
             </Message>
           </div>
         </div>
@@ -378,33 +378,33 @@ onMounted(async () => {
             <i class="pi pi-chart-bar text-5xl mb-4 text-primary"></i>
             <p class="text-lg font-medium mb-2">Bilan du coaching</p>
             <p class="text-sm text-center max-w-md">
-              Evaluez l'atteinte des objectifs, les progres realises
+              Évaluez l'atteinte des objectifs, les progrès réalisés
               et les recommandations pour la suite.
             </p>
             <Message severity="info" :closable="false" class="mt-4">
-              Fonctionnalite disponible prochainement.
+              Fonctionnalité disponible prochainement.
             </Message>
           </div>
         </div>
 
-        <!-- ====== STEP 6 : Cloture ====== -->
+        <!-- ====== STEP 6 : Clôture ====== -->
         <div v-else-if="currentStep === 6">
           <h2 class="text-lg font-semibold text-primary border-b pb-2 mb-6">
-            <i class="pi pi-lock mr-2"></i>Cloture
+            <i class="pi pi-lock mr-2"></i>Clôture
           </h2>
           <div class="flex flex-col items-center justify-center py-12 text-surface-500">
             <i class="pi pi-lock text-5xl mb-4 text-primary"></i>
-            <p class="text-lg font-medium mb-2">Cloture du coaching</p>
+            <p class="text-lg font-medium mb-2">Clôture du coaching</p>
             <p class="text-sm text-center max-w-md">
-              Verifiez que tous les documents sont complets et cloturez le coaching.
-              La cloture finalise le dossier d'accompagnement.
+              Vérifiez que tous les documents sont complets et clôturez le coaching.
+              La clôture finalise le dossier d'accompagnement.
             </p>
             <Message severity="warn" :closable="false" class="mt-4">
-              Attention : la cloture est bloquee si un signal qualite est ouvert
-              sur ce coaching (incident, reclamation non traite).
+              Attention : la clôture est bloquée si un signal qualité est ouvert
+              sur ce coaching (incident, réclamation non traitée).
             </Message>
             <Message severity="info" :closable="false" class="mt-2">
-              Fonctionnalite disponible prochainement.
+              Fonctionnalité disponible prochainement.
             </Message>
           </div>
         </div>
@@ -413,7 +413,7 @@ onMounted(async () => {
       <!-- Navigation Buttons -->
       <div class="flex justify-between items-center mt-6">
         <Button
-          label="Precedent"
+          label="Précédent"
           icon="pi pi-chevron-left"
           severity="secondary"
           outlined

@@ -156,7 +156,7 @@ onMounted(() => {
         <i class="pi pi-search absolute top-1/2 -translate-y-1/2 left-3 text-surface-400" />
         <InputText
           v-model="globalSearch"
-          placeholder="Rechercher par nom, email, telephone..."
+          placeholder="Rechercher par nom, email, téléphone..."
           class="w-full pl-10"
         />
       </div>
@@ -167,10 +167,10 @@ onMounted(() => {
         :options="TIER_ROLE_OPTIONS"
         optionLabel="label"
         optionValue="value"
-        placeholder="Filtrer par role"
+        placeholder="Filtrer par rôle"
         class="w-full lg:w-64"
         :maxSelectedLabels="2"
-        selectedItemsLabel="{0} roles"
+        selectedItemsLabel="{0} rôles"
       />
 
       <!-- Filtre par nature -->
@@ -214,8 +214,8 @@ onMounted(() => {
       <template #empty>
         <div class="flex flex-col items-center justify-center py-10 text-surface-500">
           <i class="pi pi-users text-4xl mb-3" />
-          <p class="text-lg font-medium">Aucun tiers trouve</p>
-          <p class="text-sm mt-1">Ajustez vos filtres ou creez un nouveau tiers.</p>
+          <p class="text-lg font-medium">Aucun tiers trouvé</p>
+          <p class="text-sm mt-1">Ajustez vos filtres ou créez un nouveau tiers.</p>
         </div>
       </template>
 
@@ -246,7 +246,7 @@ onMounted(() => {
       </Column>
 
       <!-- Roles -->
-      <Column header="Roles" style="min-width: 14rem">
+      <Column header="Rôles" style="min-width: 14rem">
         <template #body="{ data }">
           <div class="flex gap-1 flex-wrap">
             <Tag
@@ -257,7 +257,7 @@ onMounted(() => {
               class="text-xs"
             />
             <span v-if="!data.tiers_roles || data.tiers_roles.length === 0" class="text-surface-400 text-sm">
-              Aucun role
+              Aucun rôle
             </span>
           </div>
         </template>
@@ -280,7 +280,7 @@ onMounted(() => {
       </Column>
 
       <!-- Telephone -->
-      <Column field="telephone" header="Telephone" sortable style="min-width: 10rem">
+      <Column field="telephone" header="Téléphone" sortable style="min-width: 10rem">
         <template #body="{ data }">
           <span class="text-sm text-surface-600 dark:text-surface-300">
             {{ data.telephone || '-' }}

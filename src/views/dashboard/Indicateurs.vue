@@ -14,7 +14,7 @@ const qualiteStore = useQualiteStore();
 const indicateurs = ref(null);
 const loadingIndicateurs = ref(true);
 
-// Chargement des indicateurs consolides
+// Chargement des indicateurs consolidés
 const loadIndicateurs = async () => {
   loadingIndicateurs.value = true;
   try {
@@ -55,7 +55,7 @@ const signauxOuvertsCount = computed(() =>
   indicateurs.value?.signaux?.ouverts || 0
 );
 
-// Liste des indicateurs de satisfaction pour la section detaillee
+// Liste des indicateurs de satisfaction pour la section détaillée
 const indicateursSatisfaction = computed(() => [
   {
     key: 'satisfaction_stagiaire',
@@ -125,8 +125,8 @@ const getSignalStatutSeverity = (statut) => {
 const getSignalTypeLabel = (type) => {
   const map = {
     satisfaction_basse: 'Satisfaction basse',
-    quiz_echec: 'Echec quiz',
-    taux_reponse_bas: 'Taux reponse bas',
+    quiz_echec: 'Échec quiz',
+    taux_reponse_bas: 'Taux réponse bas',
     question_critique: 'Question critique',
   };
   return map[type] || type || '-';
@@ -150,10 +150,10 @@ onMounted(async () => {
 
 <template>
   <div class="p-6">
-    <!-- En-tete -->
+    <!-- En-tête -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
       <h1 class="text-2xl font-bold text-surface-900 dark:text-surface-0">
-        Enquetes & Indicateurs
+        Enquêtes & Indicateurs
       </h1>
     </div>
 
@@ -216,14 +216,14 @@ onMounted(async () => {
           </div>
         </div>
 
-        <!-- Taux de reponse global -->
+        <!-- Taux de réponse global -->
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-surface-200 dark:border-surface-700">
           <div class="flex items-center gap-3 mb-3">
             <div class="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
               <i class="pi pi-percentage text-indigo-500 text-lg" />
             </div>
             <div>
-              <p class="text-sm text-surface-500">Taux de reponse global</p>
+              <p class="text-sm text-surface-500">Taux de réponse global</p>
               <p
                 class="text-xl font-bold"
                 :class="tauxReponseGlobal > 0 ? getProgressTextColor(tauxReponseGlobal) : 'text-surface-400'"
@@ -308,7 +308,7 @@ onMounted(async () => {
                 </h3>
               </div>
               <span class="text-xs text-surface-400">
-                {{ ind.data.nombre_evaluations }} evaluation(s)
+                {{ ind.data.nombre_evaluations }} évaluation(s)
               </span>
             </div>
 
@@ -331,7 +331,7 @@ onMounted(async () => {
               />
             </div>
 
-            <!-- Seuils de reference -->
+            <!-- Seuils de référence -->
             <div class="flex justify-between mt-2">
               <span class="text-xs text-red-400">0</span>
               <span class="text-xs text-orange-400">50%</span>
@@ -342,10 +342,10 @@ onMounted(async () => {
         </div>
       </div>
 
-      <!-- Section Signaux qualite -->
+      <!-- Section Signaux qualité -->
       <div>
         <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">
-          Signaux qualite
+          Signaux qualité
         </h2>
 
         <DataTable
@@ -363,8 +363,8 @@ onMounted(async () => {
           <template #empty>
             <div class="flex flex-col items-center justify-center py-10 text-surface-500">
               <i class="pi pi-check-circle text-4xl mb-3 text-green-400" />
-              <p class="text-lg font-medium">Aucun signal qualite</p>
-              <p class="text-sm mt-1">Aucun signal detecte. Tous les indicateurs sont conformes.</p>
+              <p class="text-lg font-medium">Aucun signal qualité</p>
+              <p class="text-sm mt-1">Aucun signal détecté. Tous les indicateurs sont conformes.</p>
             </div>
           </template>
 
@@ -427,8 +427,8 @@ onMounted(async () => {
             </template>
           </Column>
 
-          <!-- Date creation -->
-          <Column field="created_at" header="Date creation" sortable style="min-width: 10rem">
+          <!-- Date création -->
+          <Column field="created_at" header="Date création" sortable style="min-width: 10rem">
             <template #body="{ data }">
               <span class="text-sm text-surface-600 dark:text-surface-400">
                 {{ formatDate(data.created_at) }}

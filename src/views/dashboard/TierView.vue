@@ -146,10 +146,10 @@ const getAuditSeverity = (type) => {
 
 const getAuditLabel = (type) => {
   const map = {
-    creation: 'Creation',
+    creation: 'Création',
     modification: 'Modification',
-    ajout_role: 'Ajout role',
-    suppression_role: 'Suppression role',
+    ajout_role: 'Ajout rôle',
+    suppression_role: 'Suppression rôle',
     ajout_document: 'Ajout document',
     suppression_document: 'Suppression document',
     ajout_relation: 'Ajout contact',
@@ -175,9 +175,9 @@ const formatAuditChanges = (entry) => {
   if (entry.nouvelle_valeur) {
     try {
       const val = JSON.parse(entry.nouvelle_valeur);
-      parts.push(`Apres : ${typeof val === 'object' ? JSON.stringify(val) : val}`);
+      parts.push(`Après : ${typeof val === 'object' ? JSON.stringify(val) : val}`);
     } catch {
-      parts.push(`Apres : ${entry.nouvelle_valeur}`);
+      parts.push(`Après : ${entry.nouvelle_valeur}`);
     }
   }
   return parts.join(' | ') || '-';
@@ -319,9 +319,9 @@ onMounted(async () => {
     <!-- Not found -->
     <div v-else-if="!tier" class="text-center py-20">
       <Message severity="error" :closable="false">
-        Tiers introuvable. L'identifiant est peut-etre invalide ou le tiers a ete supprime.
+        Tiers introuvable. L'identifiant est peut-être invalide ou le tiers a été supprimé.
       </Message>
-      <Button label="Retour a la liste" icon="pi pi-arrow-left" class="mt-4" @click="goBack" />
+      <Button label="Retour à la liste" icon="pi pi-arrow-left" class="mt-4" @click="goBack" />
     </div>
 
     <!-- Main content -->
@@ -383,14 +383,14 @@ onMounted(async () => {
           <div class="space-y-6 p-2">
             <!-- Section : General -->
             <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-6">
-              <h3 class="text-lg font-semibold text-primary border-b pb-2 mb-4">Informations generales</h3>
+              <h3 class="text-lg font-semibold text-primary border-b pb-2 mb-4">Informations générales</h3>
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4">
                 <div>
                   <span class="text-sm text-gray-500 block">Nature</span>
                   <span class="font-medium">{{ natureLabel || '-' }}</span>
                 </div>
                 <div>
-                  <span class="text-sm text-gray-500 block">Nom affiche</span>
+                  <span class="text-sm text-gray-500 block">Nom affiché</span>
                   <span class="font-medium">{{ tier.nom_affiche || '-' }}</span>
                 </div>
                 <div>
@@ -398,45 +398,45 @@ onMounted(async () => {
                   <span class="font-medium">{{ tier.raison_sociale || '-' }}</span>
                 </div>
                 <div>
-                  <span class="text-sm text-gray-500 block">Prenom</span>
+                  <span class="text-sm text-gray-500 block">Prénom</span>
                   <span :class="tier.prenom ? 'font-medium' : 'text-gray-300 italic'">
-                    {{ tier.prenom || 'Non renseigne' }}
+                    {{ tier.prenom || 'Non renseigné' }}
                   </span>
                 </div>
                 <div>
                   <span class="text-sm text-gray-500 block">Nom de famille</span>
                   <span :class="tier.nom_famille ? 'font-medium' : 'text-gray-300 italic'">
-                    {{ tier.nom_famille || 'Non renseigne' }}
+                    {{ tier.nom_famille || 'Non renseigné' }}
                   </span>
                 </div>
                 <div>
                   <span class="text-sm text-gray-500 block">Email</span>
                   <span :class="tier.email ? 'font-medium' : 'text-gray-300 italic'">
-                    {{ tier.email || 'Non renseigne' }}
+                    {{ tier.email || 'Non renseigné' }}
                   </span>
                 </div>
                 <div>
-                  <span class="text-sm text-gray-500 block">Telephone</span>
+                  <span class="text-sm text-gray-500 block">Téléphone</span>
                   <span :class="tier.telephone ? 'font-medium' : 'text-gray-300 italic'">
-                    {{ tier.telephone || 'Non renseigne' }}
+                    {{ tier.telephone || 'Non renseigné' }}
                   </span>
                 </div>
                 <div>
                   <span class="text-sm text-gray-500 block">Adresse</span>
                   <span :class="tier.address ? 'font-medium' : 'text-gray-300 italic'">
-                    {{ tier.address || 'Non renseigne' }}
+                    {{ tier.address || 'Non renseigné' }}
                   </span>
                 </div>
                 <div>
                   <span class="text-sm text-gray-500 block">Ville</span>
                   <span :class="tier.city ? 'font-medium' : 'text-gray-300 italic'">
-                    {{ tier.city || 'Non renseigne' }}
+                    {{ tier.city || 'Non renseigné' }}
                   </span>
                 </div>
                 <div>
                   <span class="text-sm text-gray-500 block">Code postal</span>
                   <span :class="tier.cp ? 'font-medium' : 'text-gray-300 italic'">
-                    {{ tier.cp || 'Non renseigne' }}
+                    {{ tier.cp || 'Non renseigné' }}
                   </span>
                 </div>
               </div>
@@ -452,25 +452,25 @@ onMounted(async () => {
                 <div>
                   <span class="text-sm text-gray-500 block">SIREN</span>
                   <span :class="tier.siren ? 'font-medium' : 'text-gray-300 italic'">
-                    {{ tier.siren || 'Non renseigne' }}
+                    {{ tier.siren || 'Non renseigné' }}
                   </span>
                 </div>
                 <div>
                   <span class="text-sm text-gray-500 block">SIRET</span>
                   <span :class="tier.siret ? 'font-medium' : 'text-gray-300 italic'">
-                    {{ tier.siret || 'Non renseigne' }}
+                    {{ tier.siret || 'Non renseigné' }}
                   </span>
                 </div>
                 <div>
                   <span class="text-sm text-gray-500 block">Code NAF/APE</span>
                   <span :class="tier.naf_ape ? 'font-medium' : 'text-gray-300 italic'">
-                    {{ tier.naf_ape || 'Non renseigne' }}
+                    {{ tier.naf_ape || 'Non renseigné' }}
                   </span>
                 </div>
                 <div>
                   <span class="text-sm text-gray-500 block">TVA intracommunautaire</span>
                   <span :class="tier.tva_intracom ? 'font-medium' : 'text-gray-300 italic'">
-                    {{ tier.tva_intracom || 'Non renseigne' }}
+                    {{ tier.tva_intracom || 'Non renseigné' }}
                   </span>
                 </div>
                 <div>
@@ -478,7 +478,7 @@ onMounted(async () => {
                   <span v-if="tier.site_web" class="font-medium">
                     <a :href="tier.site_web" target="_blank" class="text-primary underline">{{ tier.site_web }}</a>
                   </span>
-                  <span v-else class="text-gray-300 italic">Non renseigne</span>
+                  <span v-else class="text-gray-300 italic">Non renseigné</span>
                 </div>
               </div>
             </div>
@@ -493,31 +493,31 @@ onMounted(async () => {
                 <div>
                   <span class="text-sm text-gray-500 block">Date de naissance</span>
                   <span :class="tier.date_naissance ? 'font-medium' : 'text-gray-300 italic'">
-                    {{ tier.date_naissance ? formatDateShort(tier.date_naissance) : 'Non renseigne' }}
+                    {{ tier.date_naissance ? formatDateShort(tier.date_naissance) : 'Non renseigné' }}
                   </span>
                 </div>
                 <div>
-                  <span class="text-sm text-gray-500 block">Niveau d'entree</span>
+                  <span class="text-sm text-gray-500 block">Niveau d'entrée</span>
                   <span :class="tier.niveau_entree ? 'font-medium' : 'text-gray-300 italic'">
-                    {{ tier.niveau_entree || 'Non renseigne' }}
+                    {{ tier.niveau_entree || 'Non renseigné' }}
                   </span>
                 </div>
                 <div>
                   <span class="text-sm text-gray-500 block">Objectif professionnel</span>
                   <span :class="tier.objectif_professionnel ? 'font-medium' : 'text-gray-300 italic'">
-                    {{ tier.objectif_professionnel || 'Non renseigne' }}
+                    {{ tier.objectif_professionnel || 'Non renseigné' }}
                   </span>
                 </div>
                 <div>
                   <span class="text-sm text-gray-500 block">Situation handicap</span>
                   <span :class="tier.situation_handicap ? 'font-medium' : 'text-gray-300 italic'">
-                    {{ displayValue(tier.situation_handicap) || 'Non renseigne' }}
+                    {{ displayValue(tier.situation_handicap) || 'Non renseigné' }}
                   </span>
                 </div>
                 <div>
-                  <span class="text-sm text-gray-500 block">Besoin amenagement</span>
+                  <span class="text-sm text-gray-500 block">Besoin aménagement</span>
                   <span :class="tier.besoin_amenagement ? 'font-medium' : 'text-gray-300 italic'">
-                    {{ tier.besoin_amenagement || 'Non renseigne' }}
+                    {{ tier.besoin_amenagement || 'Non renseigné' }}
                   </span>
                 </div>
               </div>
@@ -531,33 +531,33 @@ onMounted(async () => {
               <h3 class="text-lg font-semibold text-primary border-b pb-2 mb-4">Informations formateur</h3>
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4">
                 <div>
-                  <span class="text-sm text-gray-500 block">NDA signe</span>
+                  <span class="text-sm text-gray-500 block">NDA signé</span>
                   <span :class="tier.nda_signe !== null && tier.nda_signe !== undefined ? 'font-medium' : 'text-gray-300 italic'">
-                    {{ displayValue(tier.nda_signe) ?? 'Non renseigne' }}
+                    {{ displayValue(tier.nda_signe) ?? 'Non renseigné' }}
                   </span>
                 </div>
                 <div>
                   <span class="text-sm text-gray-500 block">Date signature NDA</span>
                   <span :class="tier.nda_date_signature ? 'font-medium' : 'text-gray-300 italic'">
-                    {{ tier.nda_date_signature ? formatDateShort(tier.nda_date_signature) : 'Non renseigne' }}
+                    {{ tier.nda_date_signature ? formatDateShort(tier.nda_date_signature) : 'Non renseigné' }}
                   </span>
                 </div>
                 <div>
-                  <span class="text-sm text-gray-500 block">Declaration d'activite</span>
+                  <span class="text-sm text-gray-500 block">Déclaration d'activité</span>
                   <span :class="tier.declaration_activite ? 'font-medium' : 'text-gray-300 italic'">
-                    {{ tier.declaration_activite || 'Non renseigne' }}
+                    {{ tier.declaration_activite || 'Non renseigné' }}
                   </span>
                 </div>
                 <div>
-                  <span class="text-sm text-gray-500 block">Certifie Qualiopi</span>
+                  <span class="text-sm text-gray-500 block">Certifié Qualiopi</span>
                   <span :class="tier.qualiopi_certifie !== null && tier.qualiopi_certifie !== undefined ? 'font-medium' : 'text-gray-300 italic'">
-                    {{ displayValue(tier.qualiopi_certifie) ?? 'Non renseigne' }}
+                    {{ displayValue(tier.qualiopi_certifie) ?? 'Non renseigné' }}
                   </span>
                 </div>
                 <div>
                   <span class="text-sm text-gray-500 block">Certificateur Qualiopi</span>
                   <span :class="tier.qualiopi_certificateur ? 'font-medium' : 'text-gray-300 italic'">
-                    {{ tier.qualiopi_certificateur || 'Non renseigne' }}
+                    {{ tier.qualiopi_certificateur || 'Non renseigné' }}
                   </span>
                 </div>
               </div>
@@ -573,13 +573,13 @@ onMounted(async () => {
                 <div>
                   <span class="text-sm text-gray-500 block">Type de fournisseur</span>
                   <span :class="tier.fournisseur_type ? 'font-medium' : 'text-gray-300 italic'">
-                    {{ tier.fournisseur_type || 'Non renseigne' }}
+                    {{ tier.fournisseur_type || 'Non renseigné' }}
                   </span>
                 </div>
                 <div>
-                  <span class="text-sm text-gray-500 block">Accord cadre signe</span>
+                  <span class="text-sm text-gray-500 block">Accord cadre signé</span>
                   <span :class="tier.accord_cadre_signe !== null && tier.accord_cadre_signe !== undefined ? 'font-medium' : 'text-gray-300 italic'">
-                    {{ displayValue(tier.accord_cadre_signe) ?? 'Non renseigne' }}
+                    {{ displayValue(tier.accord_cadre_signe) ?? 'Non renseigné' }}
                   </span>
                 </div>
               </div>
@@ -644,7 +644,7 @@ onMounted(async () => {
                 :paginator="documents.length > 10"
                 :rows="10"
                 dataKey="id"
-                :emptyMessage="'Aucun document rattache a ce tiers.'"
+                :emptyMessage="'Aucun document rattaché à ce tiers.'"
               >
                 <Column field="nom_fichier" header="Nom du fichier" sortable style="min-width: 14rem">
                   <template #body="{ data }">
@@ -669,7 +669,7 @@ onMounted(async () => {
                         :href="data.url_stockage"
                         target="_blank"
                         class="p-button p-button-text p-button-rounded p-button-sm"
-                        title="Telecharger"
+                        title="Télécharger"
                       >
                         <i class="pi pi-download"></i>
                       </a>
@@ -709,7 +709,7 @@ onMounted(async () => {
                 dataKey="id"
                 :emptyMessage="'Aucun contact pour ce tiers.'"
               >
-                <Column header="Tiers lie" style="min-width: 14rem">
+                <Column header="Tiers lié" style="min-width: 14rem">
                   <template #body="{ data }">
                     <div class="flex flex-col">
                       <span class="font-medium">{{ getRelationDisplayName(data) }}</span>
@@ -803,7 +803,7 @@ onMounted(async () => {
             <div class="py-12">
               <i class="pi pi-briefcase text-5xl text-gray-300 mb-4 block"></i>
               <Message severity="info" :closable="false" class="inline-block">
-                Les prestations liees a ce tiers seront affichees ici.
+                Les prestations liées à ce tiers seront affichées ici.
               </Message>
             </div>
           </div>
@@ -818,7 +818,7 @@ onMounted(async () => {
                 :paginator="auditLog.length > 10"
                 :rows="10"
                 dataKey="id"
-                :emptyMessage="'Aucun evenement enregistre.'"
+                :emptyMessage="'Aucun événement enregistré.'"
                 :sortField="'created_at'"
                 :sortOrder="-1"
               >

@@ -41,7 +41,7 @@ const form = ref({
   mentions_legales: '',
 });
 
-// Donnees de lecture seule pour le client auto-rempli
+// Données de lecture seule pour le client auto-rempli
 const clientName = ref('');
 
 // Options prestations pour le dropdown
@@ -68,7 +68,7 @@ const montantTtc = computed(() => {
   return Math.round((ht + montantTva.value) * 100) / 100;
 });
 
-// Formattage EUR
+// Formatage EUR
 const formatEur = (value) => {
   const num = parseFloat(value) || 0;
   return num.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
@@ -125,7 +125,7 @@ const handleSave = async () => {
   const res = await factStore.createFacture(payload);
 
   if (res.success) {
-    toast.add({ severity: 'success', summary: 'Facture creee', life: 3000 });
+    toast.add({ severity: 'success', summary: 'Facture créée', life: 3000 });
     router.push('/dashboard/factures');
   } else {
     toast.add({ severity: 'error', summary: 'Erreur', detail: res.error, life: 5000 });
@@ -145,31 +145,50 @@ onMounted(async () => {
     companyStore.fetchCompany(),
   ]);
 
-  // Appliquer les valeurs par defaut de l'entreprise
+  // Appliquer les valeurs par défaut de l'entreprise
   form.value.taux_tva = companyStore.tauxTvaDefaut;
   form.value.conditions_paiement = companyStore.company?.conditions_paiement_defaut || '30_jours';
 
-  // Auto-injecter les mentions legales depuis les parametres entreprise
+  // Auto-injecter les mentions légales depuis les paramètres entreprise
+  const c = companyStore.company;
   const mentions = [];
-  if (companyStore.company?.name) {
-    mentions.push(companyStore.company.name);
+  if (c?.name) {
+    // Nom + forme juridique
+    const nom = c.forme_juridique ? `${c.name} (${c.forme_juridique})` : c.name;
+    mentions.push(nom);
   }
-  if (companyStore.company?.address) {
-    mentions.push(companyStore.company.address);
+  // Adresse complète : rue, CP ville, pays
+  const adresseParts = [];
+  if (c?.address) adresseParts.push(c.address);
+  const cpVille = [c?.zip_code, c?.city].filter(Boolean).join(' ');
+  if (cpVille) adresseParts.push(cpVille);
+  if (c?.country && c.country !== 'France') adresseParts.push(c.country);
+  if (adresseParts.length > 0) mentions.push(adresseParts.join(', '));
+  // Téléphone & email
+  if (c?.phone) mentions.push(`Tél. : ${c.phone}`);
+  if (c?.email) mentions.push(`Email : ${c.email}`);
+  // SIRET / SIREN
+  if (c?.siret) mentions.push(`SIRET : ${c.siret}`);
+  else if (c?.siren) mentions.push(`SIREN : ${c.siren}`);
+  // TVA
+  if (c?.tva_assujetti === false) {
+    mentions.push('TVA non applicable, art. 293 B du CGI');
   }
-  if (companyStore.company?.nda_numero && companyStore.company?.nda_afficher_factures) {
-    mentions.push(`N. de declaration d'activite : ${companyStore.company.nda_numero}`);
+  // NDA
+  if (c?.nda_numero && c?.nda_afficher_factures) {
+    mentions.push(`N° de déclaration d'activité : ${c.nda_numero}`);
+    if (c?.nda_region) mentions.push(`Enregistré auprès du préfet de la région ${c.nda_region}`);
   }
   if (mentions.length > 0) {
     form.value.mentions_legales = mentions.join('\n');
   }
 
-  // Mode edition
+  // Mode édition
   if (isEditMode.value) {
     await factStore.fetchFactures();
     const facture = factStore.factures.find((f) => f.id === route.params.id);
     if (facture) {
-      // Verifier si verrouillee (emise ou au-dela)
+      // Vérifier si verrouillée (émise ou au-delà)
       const lockedStatuts = ['emise', 'envoyee', 'payee', 'en_retard', 'annulee'];
       if (lockedStatuts.includes(facture.statut)) {
         isLocked.value = true;
@@ -195,7 +214,7 @@ onMounted(async () => {
 
 <template>
   <div class="p-6 max-w-4xl mx-auto">
-    <!-- En-tete -->
+    <!-- En-tête -->
     <div class="flex items-center gap-3 mb-6">
       <Button
         icon="pi pi-arrow-left"
@@ -209,10 +228,10 @@ onMounted(async () => {
       </h1>
     </div>
 
-    <!-- Message verrouillage -->
+    <!-- Message de verrouillage -->
     <Message v-if="isLocked" severity="warn" class="mb-6">
       <i class="pi pi-lock mr-2" />
-      Facture verrouillee — Cette facture a ete emise et ne peut plus etre modifiee.
+      Facture verrouillée — Cette facture a été émise et ne peut plus être modifiée.
     </Message>
 
     <!-- Formulaire -->
@@ -226,7 +245,7 @@ onMounted(async () => {
             :options="prestationOptions"
             optionLabel="label"
             optionValue="value"
-            placeholder="Selectionner une prestation"
+            placeholder="Sélectionner une prestation"
             :disabled="isLocked"
             filter
             class="w-full"
@@ -241,9 +260,9 @@ onMounted(async () => {
           <InputText
             :modelValue="clientName"
             disabled
-            placeholder="Auto-rempli depuis la prestation"
+            placeholder="Auto-rempli depuis la prestation sélectionnée"
           />
-          <small class="text-surface-400">Rempli automatiquement depuis la prestation selectionnee</small>
+          <small class="text-surface-400">Rempli automatiquement depuis la prestation sélectionnée</small>
         </div>
 
         <!-- Type de facture -->
@@ -290,7 +309,7 @@ onMounted(async () => {
 
         <!-- Montant TVA (calcule) -->
         <div class="flex flex-col gap-2">
-          <label class="font-semibold text-surface-500">Montant TVA (calcule)</label>
+          <label class="font-semibold text-surface-500">Montant TVA (calculé)</label>
           <div class="p-3 bg-surface-50 dark:bg-surface-800 rounded-lg border border-surface-200 dark:border-surface-600 font-semibold text-lg">
             {{ formatEur(montantTva) }}
           </div>
@@ -298,7 +317,7 @@ onMounted(async () => {
 
         <!-- Montant TTC (calcule) -->
         <div class="flex flex-col gap-2">
-          <label class="font-semibold text-surface-500">Montant TTC (calcule)</label>
+          <label class="font-semibold text-surface-500">Montant TTC (calculé)</label>
           <div class="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800 font-bold text-lg text-green-700 dark:text-green-400">
             {{ formatEur(montantTtc) }}
           </div>
@@ -306,9 +325,9 @@ onMounted(async () => {
 
         <Divider class="md:col-span-2" />
 
-        <!-- Date echeance -->
+        <!-- Date échéance -->
         <div class="flex flex-col gap-2">
-          <label class="font-semibold">Date d'echeance</label>
+          <label class="font-semibold">Date d'échéance</label>
           <DatePicker
             v-model="form.date_echeance"
             dateFormat="dd/mm/yy"
@@ -329,17 +348,17 @@ onMounted(async () => {
           />
         </div>
 
-        <!-- Mentions legales -->
+        <!-- Mentions légales -->
         <div class="md:col-span-2 flex flex-col gap-2">
-          <label class="font-semibold">Mentions legales</label>
+          <label class="font-semibold">Mentions légales</label>
           <Textarea
             v-model="form.mentions_legales"
             rows="4"
             :disabled="isLocked"
-            placeholder="Mentions legales ajoutees automatiquement depuis les parametres entreprise"
+            placeholder="Mentions légales ajoutées automatiquement depuis les paramètres entreprise"
           />
           <small class="text-surface-400">
-            Injectees automatiquement depuis Parametres > Financier. Vous pouvez les modifier ici pour cette facture.
+            Injectées automatiquement depuis Paramètres > Financier. Vous pouvez les modifier ici pour cette facture.
           </small>
         </div>
       </div>

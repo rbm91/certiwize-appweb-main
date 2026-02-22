@@ -131,7 +131,7 @@ const openCreateDialog = () => {
 
 const handleCreate = async () => {
   if (!newReclamation.value.type_reclamation || !newReclamation.value.motif || !newReclamation.value.gravite || !newReclamation.value.description) {
-    toast.add({ severity: 'warn', summary: 'Attention', detail: 'Veuillez remplir le type, le motif, la gravite et la description.', life: 3000 });
+    toast.add({ severity: 'warn', summary: 'Attention', detail: 'Veuillez remplir le type, le motif, la gravité et la description.', life: 3000 });
     return;
   }
 
@@ -141,7 +141,7 @@ const handleCreate = async () => {
 
   const res = await qualiteStore.createReclamation(payload);
   if (res.success) {
-    toast.add({ severity: 'success', summary: 'Reclamation creee', life: 3000 });
+    toast.add({ severity: 'success', summary: 'Réclamation créée', life: 3000 });
     createDialog.value = false;
   } else {
     toast.add({ severity: 'error', summary: 'Erreur', detail: res.error, life: 5000 });
@@ -151,7 +151,7 @@ const handleCreate = async () => {
 const handleTraiter = async (reclamation) => {
   const res = await qualiteStore.updateReclamation(reclamation.id, { statut: 'en_cours' });
   if (res.success) {
-    toast.add({ severity: 'success', summary: 'Reclamation en cours de traitement', life: 3000 });
+    toast.add({ severity: 'success', summary: 'Réclamation en cours de traitement', life: 3000 });
   } else {
     toast.add({ severity: 'error', summary: 'Erreur', detail: res.error, life: 5000 });
   }
@@ -168,7 +168,7 @@ const handleCloturer = async () => {
   if (!clotureReclamation.value) return;
 
   if (!actionCorrective.value.trim()) {
-    toast.add({ severity: 'warn', summary: 'Attention', detail: 'Veuillez decrire l\'action corrective avant de cloturer.', life: 3000 });
+    toast.add({ severity: 'warn', summary: 'Attention', detail: 'Veuillez décrire l\'action corrective avant de clôturer.', life: 3000 });
     return;
   }
 
@@ -187,7 +187,7 @@ const handleCloturer = async () => {
     : dateCloture.value;
   const res = await qualiteStore.closeReclamation(clotureReclamation.value.id, isoDate);
   if (res.success) {
-    toast.add({ severity: 'success', summary: 'Reclamation cloturee', life: 3000 });
+    toast.add({ severity: 'success', summary: 'Réclamation clôturée', life: 3000 });
     clotureDialog.value = false;
   } else {
     toast.add({ severity: 'error', summary: 'Erreur', detail: res.error, life: 5000 });
@@ -210,10 +210,10 @@ onMounted(async () => {
 
 <template>
   <div class="p-6">
-    <!-- En-tete -->
+    <!-- En-tête -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
       <h1 class="text-2xl font-bold text-surface-900 dark:text-surface-0">
-        Reclamations
+        Réclamations
       </h1>
       <Button
         label="Nouveau ticket"
@@ -263,14 +263,14 @@ onMounted(async () => {
         </div>
       </div>
 
-      <!-- Cloturees -->
+      <!-- Clôturées -->
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-surface-200 dark:border-surface-700">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
             <i class="pi pi-check-circle text-green-500 text-lg" />
           </div>
           <div>
-            <p class="text-sm text-surface-500">Cloturees</p>
+            <p class="text-sm text-surface-500">Clôturées</p>
             <p class="text-xl font-bold text-green-600">{{ clotureesCount }}</p>
           </div>
         </div>
@@ -293,15 +293,15 @@ onMounted(async () => {
       <template #empty>
         <div class="flex flex-col items-center justify-center py-10 text-surface-500">
           <i class="pi pi-exclamation-triangle text-4xl mb-3" />
-          <p class="text-lg font-medium">Aucune reclamation</p>
-          <p class="text-sm mt-1">Aucune reclamation enregistree pour le moment.</p>
+          <p class="text-lg font-medium">Aucune réclamation</p>
+          <p class="text-sm mt-1">Aucune réclamation enregistrée pour le moment.</p>
         </div>
       </template>
 
       <template #loading>
         <div class="flex items-center justify-center py-10 text-surface-500">
           <i class="pi pi-spin pi-spinner text-2xl mr-3" />
-          Chargement des reclamations...
+          Chargement des réclamations...
         </div>
       </template>
 
@@ -329,7 +329,7 @@ onMounted(async () => {
       </Column>
 
       <!-- Gravite -->
-      <Column field="gravite" header="Gravite" sortable style="min-width: 9rem">
+      <Column field="gravite" header="Gravité" sortable style="min-width: 9rem">
         <template #body="{ data }">
           <Tag :value="getGraviteLabel(data.gravite)" :severity="getGraviteSeverity(data.gravite)" />
         </template>
@@ -387,7 +387,7 @@ onMounted(async () => {
               text
               rounded
               severity="success"
-              v-tooltip.top="'Cloturer'"
+              v-tooltip.top="'Clôturer'"
               @click="openClotureDialog(data)"
             />
           </div>
@@ -404,13 +404,13 @@ onMounted(async () => {
     >
       <div class="flex flex-col gap-4 pt-2">
         <div class="flex flex-col gap-2">
-          <label class="font-semibold text-surface-700 dark:text-surface-300">Type de reclamation *</label>
+          <label class="font-semibold text-surface-700 dark:text-surface-300">Type de réclamation *</label>
           <Dropdown
             v-model="newReclamation.type_reclamation"
             :options="RECLAMATION_TYPES"
             optionLabel="label"
             optionValue="value"
-            placeholder="Selectionner un type"
+            placeholder="Sélectionner un type"
             class="w-full"
           />
         </div>
@@ -422,19 +422,19 @@ onMounted(async () => {
             :options="RECLAMATION_MOTIFS"
             optionLabel="label"
             optionValue="value"
-            placeholder="Selectionner un motif"
+            placeholder="Sélectionner un motif"
             class="w-full"
           />
         </div>
 
         <div class="flex flex-col gap-2">
-          <label class="font-semibold text-surface-700 dark:text-surface-300">Gravite *</label>
+          <label class="font-semibold text-surface-700 dark:text-surface-300">Gravité *</label>
           <Dropdown
             v-model="newReclamation.gravite"
             :options="RECLAMATION_GRAVITE"
             optionLabel="label"
             optionValue="value"
-            placeholder="Selectionner la gravite"
+            placeholder="Sélectionner la gravité"
             class="w-full"
           />
         </div>
@@ -446,7 +446,7 @@ onMounted(async () => {
             :options="prestationOptions"
             optionLabel="label"
             optionValue="value"
-            placeholder="Associer a une prestation"
+            placeholder="Associer à une prestation"
             class="w-full"
             showClear
           />
@@ -457,7 +457,7 @@ onMounted(async () => {
           <Textarea
             v-model="newReclamation.description"
             rows="4"
-            placeholder="Decrivez la reclamation..."
+            placeholder="Décrivez la réclamation..."
             class="w-full"
           />
         </div>
@@ -466,7 +466,7 @@ onMounted(async () => {
           <label class="font-semibold text-surface-700 dark:text-surface-300">Origine</label>
           <InputText
             v-model="newReclamation.origine"
-            placeholder="Source de la reclamation (email, telephone, courrier...)"
+            placeholder="Source de la réclamation (email, téléphone, courrier...)"
             class="w-full"
           />
         </div>
@@ -474,7 +474,7 @@ onMounted(async () => {
       <template #footer>
         <div class="flex justify-end gap-2">
           <Button label="Annuler" severity="secondary" text @click="createDialog = false" />
-          <Button label="Creer" icon="pi pi-check" @click="handleCreate" />
+          <Button label="Créer" icon="pi pi-check" @click="handleCreate" />
         </div>
       </template>
     </Dialog>
@@ -482,7 +482,7 @@ onMounted(async () => {
     <!-- Dialog detail -->
     <Dialog
       v-model:visible="detailDialog"
-      header="Detail de la reclamation"
+      header="Détail de la réclamation"
       :modal="true"
       :style="{ width: '36rem' }"
     >
@@ -503,7 +503,7 @@ onMounted(async () => {
             <Tag :value="getMotifLabel(selectedReclamation.motif)" :severity="getMotifSeverity(selectedReclamation.motif)" />
           </div>
           <div>
-            <p class="text-xs text-surface-400 mb-1">Gravite</p>
+            <p class="text-xs text-surface-400 mb-1">Gravité</p>
             <Tag :value="getGraviteLabel(selectedReclamation.gravite)" :severity="getGraviteSeverity(selectedReclamation.gravite)" />
           </div>
           <div>
@@ -543,7 +543,7 @@ onMounted(async () => {
         </div>
 
         <div v-if="selectedReclamation.date_cloture">
-          <p class="text-xs text-surface-400 mb-1">Date de cloture</p>
+          <p class="text-xs text-surface-400 mb-1">Date de clôture</p>
           <p class="text-sm font-medium text-surface-700 dark:text-surface-300">
             {{ formatDate(selectedReclamation.date_cloture) }}
           </p>
@@ -557,13 +557,13 @@ onMounted(async () => {
     <!-- Dialog cloture -->
     <Dialog
       v-model:visible="clotureDialog"
-      header="Cloturer la reclamation"
+      header="Clôturer la réclamation"
       :modal="true"
       :style="{ width: '32rem' }"
     >
       <div v-if="clotureReclamation" class="flex flex-col gap-4 pt-2">
         <p class="text-sm text-surface-500">
-          Reclamation du <strong>{{ formatDate(clotureReclamation.created_at) }}</strong>
+          Réclamation du <strong>{{ formatDate(clotureReclamation.created_at) }}</strong>
           &mdash; {{ getTypeLabel(clotureReclamation.type_reclamation) }}
           ({{ getGraviteLabel(clotureReclamation.gravite) }})
         </p>
@@ -579,13 +579,13 @@ onMounted(async () => {
           <Textarea
             v-model="actionCorrective"
             rows="4"
-            placeholder="Decrivez l'action corrective mise en place..."
+            placeholder="Décrivez l'action corrective mise en place..."
             class="w-full"
           />
         </div>
 
         <div class="flex flex-col gap-2">
-          <label class="font-semibold text-surface-700 dark:text-surface-300">Date de cloture</label>
+          <label class="font-semibold text-surface-700 dark:text-surface-300">Date de clôture</label>
           <DatePicker
             v-model="dateCloture"
             dateFormat="dd/mm/yy"
@@ -598,7 +598,7 @@ onMounted(async () => {
       <template #footer>
         <div class="flex justify-end gap-2">
           <Button label="Annuler" severity="secondary" text @click="clotureDialog = false" />
-          <Button label="Cloturer" icon="pi pi-lock" severity="success" @click="handleCloturer" />
+          <Button label="Clôturer" icon="pi pi-lock" severity="success" @click="handleCloturer" />
         </div>
       </template>
     </Dialog>

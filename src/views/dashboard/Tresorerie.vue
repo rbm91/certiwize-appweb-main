@@ -53,10 +53,10 @@ onMounted(() => {
 
 <template>
   <div class="p-6">
-    <!-- En-tete -->
+    <!-- En-tête -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
       <h1 class="text-2xl font-bold text-surface-900 dark:text-surface-0">
-        Tresorerie Previsionnelle
+        Trésorerie Prévisionnelle
       </h1>
       <Dropdown
         v-model="selectedPeriode"
@@ -112,7 +112,7 @@ onMounted(() => {
     <!-- Tableau previsionnel -->
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-6">
       <h2 class="text-lg font-semibold text-primary border-b pb-2 mb-6">
-        <i class="pi pi-chart-bar mr-2"></i>Prevision mensuelle ({{ selectedPeriode }} mois)
+        <i class="pi pi-chart-bar mr-2"></i>Prévision mensuelle ({{ selectedPeriode }} mois)
       </h2>
 
       <DataTable
@@ -125,15 +125,15 @@ onMounted(() => {
         <template #empty>
           <div class="flex flex-col items-center justify-center py-10 text-surface-500">
             <i class="pi pi-chart-bar text-4xl mb-3" />
-            <p class="text-lg font-medium">Aucune donnee previsionnelle</p>
-            <p class="text-sm mt-1">Les previsions apparaitront une fois les factures creees.</p>
+            <p class="text-lg font-medium">Aucune donnée prévisionnelle</p>
+            <p class="text-sm mt-1">Les prévisions apparaîtront une fois les factures créées.</p>
           </div>
         </template>
 
         <template #loading>
           <div class="flex items-center justify-center py-10 text-surface-500">
             <i class="pi pi-spin pi-spinner text-2xl mr-3" />
-            Chargement des donnees...
+            Chargement des données...
           </div>
         </template>
 
@@ -156,7 +156,7 @@ onMounted(() => {
         </Column>
 
         <!-- A recevoir -->
-        <Column field="aRecevoir" header="A recevoir" style="min-width: 10rem">
+        <Column field="aRecevoir" header="À recevoir" style="min-width: 10rem">
           <template #body="{ data }">
             <span class="font-medium" :style="{ color: TRESORERIE_COLORS.facture }">
               {{ formatEur(data.aRecevoir) }}
@@ -165,7 +165,7 @@ onMounted(() => {
         </Column>
 
         <!-- Total previsionnel -->
-        <Column field="total" header="Total previsionnel" style="min-width: 10rem">
+        <Column field="total" header="Total prévisionnel" style="min-width: 10rem">
           <template #body="{ data }">
             <span class="font-bold text-surface-900 dark:text-surface-0">
               {{ formatEur(data.total) }}
@@ -217,7 +217,7 @@ onMounted(() => {
         </Column>
 
         <!-- Numero -->
-        <Column field="numero" header="Numero" style="min-width: 10rem">
+        <Column field="numero" header="Numéro" style="min-width: 10rem">
           <template #body="{ data }">
             <span class="font-semibold text-surface-700 dark:text-surface-300">
               {{ data.numero || '-' }}
@@ -235,7 +235,7 @@ onMounted(() => {
         </Column>
 
         <!-- Echeance -->
-        <Column field="date_echeance" header="Echeance" sortable style="min-width: 10rem">
+        <Column field="date_echeance" header="Échéance" sortable style="min-width: 10rem">
           <template #body="{ data }">
             <span class="text-red-500 font-semibold">
               {{ formatDate(data.date_echeance) }}

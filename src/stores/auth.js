@@ -233,9 +233,15 @@ export const useAuthStore = defineStore('auth', () => {
 
         // Broadcast l'événement aux autres onglets
         switch (event) {
-          case 'SIGNED_IN':
+          case 'SIGNED_IN': {
             broadcastAuthEvent('SIGNED_IN', { userId: _session?.user?.id });
+            // Si l'utilisateur arrive via un lien d'invitation, rediriger vers la création de mot de passe
+            const hash = window.location.hash;
+            if (hash && hash.includes('type=invite')) {
+              router.push('/update-password');
+            }
             break;
+          }
           case 'SIGNED_OUT':
             broadcastAuthEvent('SIGNED_OUT', null);
             break;

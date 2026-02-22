@@ -30,6 +30,9 @@ if (!authStore.isSuperAdmin) {
 // ── Onglet actif ──
 const activeTab = ref(0);
 
+// ── Sentry ──
+const sentryConfigured = computed(() => !!import.meta.env.VITE_SENTRY_DSN);
+
 // ── State : Utilisateurs ──
 const users = ref([]);
 const loadingUsers = ref(true);
@@ -1017,6 +1020,77 @@ onMounted(() => {
                                 </template>
                             </Column>
                         </DataTable>
+                    </div>
+                </div>
+            </TabPanel>
+
+            <!-- ═══════════ Onglet Monitoring (Sentry) ═══════════ -->
+            <TabPanel header="Monitoring">
+                <div class="space-y-6">
+                    <!-- Statut Sentry -->
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm">
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                            <i class="pi pi-shield mr-2"></i>Monitoring des erreurs — Sentry
+                        </h2>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Statut -->
+                            <div class="p-5 rounded-xl border-l-4" :class="sentryConfigured ? 'bg-green-50 dark:bg-green-900/20 border-green-500' : 'bg-red-50 dark:bg-red-900/20 border-red-500'">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <i class="pi text-xl" :class="sentryConfigured ? 'pi-check-circle text-green-600' : 'pi-times-circle text-red-600'"></i>
+                                    <span class="font-semibold text-lg">{{ sentryConfigured ? 'Sentry actif' : 'Sentry non configuré' }}</span>
+                                </div>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">
+                                    {{ sentryConfigured
+                                        ? 'Les erreurs JavaScript en production sont capturées automatiquement.'
+                                        : 'Ajoutez VITE_SENTRY_DSN dans les variables d\'environnement Vercel.' }}
+                                </p>
+                            </div>
+
+                            <!-- Lien vers Sentry -->
+                            <div class="p-5 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <i class="pi pi-external-link text-xl text-blue-600"></i>
+                                    <span class="font-semibold text-lg">Dashboard Sentry</span>
+                                </div>
+                                <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                                    Consultez les erreurs, performances et sessions utilisateurs.
+                                </p>
+                                <a href="https://sentry.io" target="_blank" rel="noopener noreferrer">
+                                    <Button label="Ouvrir Sentry" icon="pi pi-external-link" severity="info" />
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ce que Sentry capture -->
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm">
+                        <h3 class="font-semibold text-gray-900 dark:text-white mb-4">
+                            <i class="pi pi-info-circle mr-2"></i>Ce que Sentry capture
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="flex items-start gap-3 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                <i class="pi pi-bug text-red-500 text-xl mt-0.5"></i>
+                                <div>
+                                    <p class="font-medium">Erreurs JavaScript</p>
+                                    <p class="text-sm text-gray-500">Exceptions non gérées, erreurs de rendu Vue, requêtes Supabase échouées</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                <i class="pi pi-chart-line text-blue-500 text-xl mt-0.5"></i>
+                                <div>
+                                    <p class="font-medium">Performance</p>
+                                    <p class="text-sm text-gray-500">Temps de chargement des pages, transactions lentes, requêtes réseau</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                <i class="pi pi-users text-green-500 text-xl mt-0.5"></i>
+                                <div>
+                                    <p class="font-medium">Sessions</p>
+                                    <p class="text-sm text-gray-500">Nombre d'utilisateurs affectés par les erreurs, taux de crash</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </TabPanel>

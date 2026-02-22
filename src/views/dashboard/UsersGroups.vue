@@ -92,6 +92,8 @@ const handleInvite = async () => {
       text: `Invitation envoyée à ${inviteForm.value.email}. Le lien d'invitation est valable 7 jours.`,
     };
     showInviteDialog.value = false;
+    // Rafraîchir la liste des invitations en attente pour afficher immédiatement
+    await orgStore.fetchPendingInvitations();
   } else {
     message.value = {
       severity: 'error',

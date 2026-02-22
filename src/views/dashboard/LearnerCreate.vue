@@ -100,9 +100,16 @@ const handleAddressSelected = (addressData) => {
 const fetchOptions = async () => {
   try {
     await authStore.refreshSession();
+    const orgId = authStore.currentOrganization?.id;
+    let projectsQuery = supabase.from('projects').select('id, name').order('name');
+    let tiersQuery = supabase.from('tiers').select('id, name').order('name');
+    if (orgId) {
+      projectsQuery = projectsQuery.eq('organization_id', orgId);
+      tiersQuery = tiersQuery.eq('organization_id', orgId);
+    }
     const [projectsRes, tiersRes] = await Promise.all([
-      supabase.from('projects').select('id, name').order('name'),
-      supabase.from('tiers').select('id, name').order('name')
+      projectsQuery,
+      tiersQuery
     ]);
 
     projects.value = projectsRes.data || [];

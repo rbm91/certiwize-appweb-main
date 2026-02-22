@@ -2,6 +2,7 @@
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useTrainingStore } from '../../stores/training';
+import { useAuthStore } from '../../stores/auth';
 import { supabase } from '../../supabase';
 import { useI18n } from 'vue-i18n';
 
@@ -27,6 +28,7 @@ const modalitesOptions = [
 const confirm = useConfirm();
 const route = useRoute();
 const trainingStore = useTrainingStore();
+const authStore = useAuthStore();
 const { errors, validate, clearError } = useFormValidation();
 const { t } = useI18n();
 
@@ -117,11 +119,13 @@ watch([() => form.value.horaires_debut, () => form.value.horaires_fin], () => {
 onMounted(async () => {
     if (trainingId.value) {
         try {
-            const { data, error } = await supabase
+            const orgId = authStore?.currentOrganization?.id;
+            let loadQuery = supabase
                 .from('formations')
                 .select('*')
-                .eq('id', trainingId.value)
-                .single();
+                .eq('id', trainingId.value);
+            if (orgId) loadQuery = loadQuery.eq('organization_id', orgId);
+            const { data, error } = await loadQuery.single();
 
             if (error) throw error;
             

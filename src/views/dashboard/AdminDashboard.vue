@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useAuthStore } from '../../stores/auth';
 import { supabase } from '../../supabase';
 import { useI18n } from 'vue-i18n';
@@ -12,7 +12,10 @@ import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
+import Dropdown from 'primevue/dropdown';
+import DatePicker from 'primevue/datepicker';
 import { useToast } from 'primevue/usetoast';
+import { useAuditTrail } from '../../composables/useAuditTrail';
 
 const { t } = useI18n();
 const authStore = useAuthStore();
@@ -333,6 +336,179 @@ const updateDeletionStatus = async (request, newStatus) => {
     }
 };
 
+// ── State : Logs d'activité ──
+const auditLogs = ref([]);
+const authLogs = ref([]);
+const loadingLogs = ref(false);
+const totalAuditRecords = ref(0);
+const logsPage = ref(0);
+const logsRowsPerPage = ref(25);
+
+// Filtres logs
+const logFilterUser = ref(null);
+const logFilterOrg = ref(null);
+const logFilterType = ref(null);
+const logDateRange = ref(null);
+
+// Options pour les dropdowns filtres
+const userOptions = computed(() =>
+    users.value.map(u => ({ label: u.full_name || u.email, value: u.id }))
+);
+const orgOptions = computed(() =>
+    organizations.value.map(o => ({ label: o.name, value: o.id }))
+);
+const eventTypeOptions = [
+    { label: 'Création', value: 'creation' },
+    { label: 'Modification', value: 'modification' },
+    { label: 'Ajout rôle', value: 'ajout_role' },
+    { label: 'Suppression rôle', value: 'suppression_role' },
+    { label: 'Ajout document', value: 'ajout_document' },
+    { label: 'Suppression document', value: 'suppression_document' },
+    { label: 'Ajout contact', value: 'ajout_relation' },
+    { label: 'Suppression contact', value: 'suppression_relation' },
+    { label: 'Archivage', value: 'archivage' },
+];
+
+// Composable audit
+const { fetchAdminAuditLogs, fetchAuthLogs } = useAuditTrail();
+
+// ── Fetch logs d'activité ──
+const fetchActivityLogs = async () => {
+    loadingLogs.value = true;
+    try {
+        const filters = {};
+        if (logFilterUser.value) filters.userId = logFilterUser.value;
+        if (logFilterOrg.value) filters.organizationId = logFilterOrg.value;
+        if (logFilterType.value) filters.typeEvenement = logFilterType.value;
+        if (logDateRange.value?.[0]) {
+            const start = new Date(logDateRange.value[0]);
+            start.setHours(0, 0, 0, 0);
+            filters.dateFrom = start.toISOString();
+        }
+        if (logDateRange.value?.[1]) {
+            const end = new Date(logDateRange.value[1]);
+            end.setHours(23, 59, 59, 999);
+            filters.dateTo = end.toISOString();
+        }
+
+        const { data, totalRecords } = await fetchAdminAuditLogs({
+            page: logsPage.value,
+            rowsPerPage: logsRowsPerPage.value,
+            filters,
+        });
+
+        auditLogs.value = data;
+        totalAuditRecords.value = totalRecords;
+
+        // Charger les auth logs (première page, sans filtres spécifiques)
+        if (logsPage.value === 0 && !logFilterType.value && !logFilterOrg.value) {
+            authLogs.value = await fetchAuthLogs({ limit: 20, offset: 0 });
+        }
+    } catch (err) {
+        console.error('[AdminDashboard] Erreur fetch logs:', err);
+        toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les logs', life: 5000 });
+    } finally {
+        loadingLogs.value = false;
+    }
+};
+
+const onLogsPageChange = (event) => {
+    logsPage.value = event.page;
+    logsRowsPerPage.value = event.rows;
+    fetchActivityLogs();
+};
+
+const onLogFiltersChange = () => {
+    logsPage.value = 0;
+    fetchActivityLogs();
+};
+
+const clearLogFilters = () => {
+    logFilterUser.value = null;
+    logFilterOrg.value = null;
+    logFilterType.value = null;
+    logDateRange.value = null;
+    logsPage.value = 0;
+    fetchActivityLogs();
+};
+
+// Détection d'activité suspecte
+const isSuspiciousHour = (dateString) => {
+    if (!dateString) return false;
+    const hour = new Date(dateString).getHours();
+    return hour >= 0 && hour < 6;
+};
+
+const getSuspiciousIndicators = (log) => {
+    const indicators = [];
+    if (isSuspiciousHour(log.created_at)) {
+        indicators.push({ label: 'Heure inhabituelle (00h-06h)', severity: 'warn' });
+    }
+    if (['suppression_role', 'suppression_document', 'suppression_relation'].includes(log.type_evenement)) {
+        indicators.push({ label: 'Action destructive', severity: 'danger' });
+    }
+    return indicators;
+};
+
+// Helpers affichage audit
+const getAuditSeverity = (type) => {
+    const map = {
+        creation: 'success', modification: 'info',
+        ajout_role: 'success', suppression_role: 'danger',
+        ajout_document: 'info', suppression_document: 'danger',
+        ajout_relation: 'info', suppression_relation: 'danger',
+        archivage: 'warn',
+    };
+    return map[type] || 'secondary';
+};
+
+const getAuditLabel = (type) => {
+    const map = {
+        creation: 'Création', modification: 'Modification',
+        ajout_role: 'Ajout rôle', suppression_role: 'Suppr. rôle',
+        ajout_document: 'Ajout doc.', suppression_document: 'Suppr. doc.',
+        ajout_relation: 'Ajout contact', suppression_relation: 'Suppr. contact',
+        archivage: 'Archivage',
+    };
+    return map[type] || type;
+};
+
+const getAuthActionLabel = (action) => {
+    const map = {
+        'login': 'Connexion', 'logout': 'Déconnexion',
+        'token_refreshed': 'Renouvellement', 'user_signedup': 'Inscription',
+        'user_invited': 'Invitation', 'user_deleted': 'Suppression compte',
+    };
+    return map[action] || action || '-';
+};
+
+const getAuthActionSeverity = (action) => {
+    const map = {
+        'login': 'success', 'logout': 'info',
+        'token_refreshed': 'secondary', 'user_signedup': 'success',
+        'user_invited': 'info', 'user_deleted': 'danger',
+    };
+    return map[action] || 'secondary';
+};
+
+const truncateValue = (val) => {
+    if (!val) return '';
+    try {
+        const parsed = JSON.parse(val);
+        const str = typeof parsed === 'object' ? JSON.stringify(parsed) : String(parsed);
+        return str.length > 50 ? str.substring(0, 50) + '…' : str;
+    } catch {
+        return val.length > 50 ? val.substring(0, 50) + '…' : val;
+    }
+};
+
+// Charger les logs quand l'onglet est activé (index 3)
+watch(activeTab, (newTab) => {
+    if (newTab === 3 && auditLogs.value.length === 0) {
+        fetchActivityLogs();
+    }
+});
+
 onMounted(() => {
     fetchUsers();
     fetchOrganizations();
@@ -599,6 +775,245 @@ onMounted(() => {
                             <Column field="completed_at" header="Traité le" style="width: 25%">
                                 <template #body="{ data }">
                                     <span class="text-sm text-gray-500">{{ data.completed_at ? formatDate(data.completed_at) : '-' }}</span>
+                                </template>
+                            </Column>
+                        </DataTable>
+                    </div>
+                </div>
+            </TabPanel>
+
+            <!-- ═══════════ Onglet Logs d'activité ═══════════ -->
+            <TabPanel header="Logs d'activité">
+                <div class="space-y-4">
+                    <!-- Barre de filtres -->
+                    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm">
+                        <div class="flex flex-col lg:flex-row gap-3 items-end">
+                            <div class="flex flex-col gap-1 w-full lg:w-52">
+                                <label class="text-xs text-gray-500">Utilisateur</label>
+                                <Dropdown
+                                    v-model="logFilterUser"
+                                    :options="userOptions"
+                                    optionLabel="label"
+                                    optionValue="value"
+                                    placeholder="Tous"
+                                    class="w-full"
+                                    showClear
+                                    filter
+                                    @change="onLogFiltersChange"
+                                />
+                            </div>
+                            <div class="flex flex-col gap-1 w-full lg:w-52">
+                                <label class="text-xs text-gray-500">Organisation</label>
+                                <Dropdown
+                                    v-model="logFilterOrg"
+                                    :options="orgOptions"
+                                    optionLabel="label"
+                                    optionValue="value"
+                                    placeholder="Toutes"
+                                    class="w-full"
+                                    showClear
+                                    filter
+                                    @change="onLogFiltersChange"
+                                />
+                            </div>
+                            <div class="flex flex-col gap-1 w-full lg:w-52">
+                                <label class="text-xs text-gray-500">Type d'événement</label>
+                                <Dropdown
+                                    v-model="logFilterType"
+                                    :options="eventTypeOptions"
+                                    optionLabel="label"
+                                    optionValue="value"
+                                    placeholder="Tous"
+                                    class="w-full"
+                                    showClear
+                                    @change="onLogFiltersChange"
+                                />
+                            </div>
+                            <div class="flex flex-col gap-1 w-full lg:w-64">
+                                <label class="text-xs text-gray-500">Période</label>
+                                <DatePicker
+                                    v-model="logDateRange"
+                                    selectionMode="range"
+                                    dateFormat="dd/mm/yy"
+                                    placeholder="Toute la période"
+                                    class="w-full"
+                                    showIcon
+                                    showButtonBar
+                                    @date-select="onLogFiltersChange"
+                                />
+                            </div>
+                            <div class="flex gap-2">
+                                <Button
+                                    icon="pi pi-filter-slash"
+                                    severity="secondary"
+                                    outlined
+                                    @click="clearLogFilters"
+                                    v-tooltip="'Réinitialiser les filtres'"
+                                />
+                                <Button
+                                    icon="pi pi-refresh"
+                                    severity="secondary"
+                                    outlined
+                                    @click="fetchActivityLogs"
+                                    :loading="loadingLogs"
+                                    v-tooltip="'Rafraîchir'"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tableau des logs applicatifs -->
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm">
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                            <i class="pi pi-list mr-2"></i>Journal d'activité
+                            <span class="text-sm font-normal text-gray-400 ml-2">(6 derniers mois)</span>
+                        </h2>
+
+                        <DataTable
+                            :value="auditLogs"
+                            :loading="loadingLogs"
+                            :lazy="true"
+                            :paginator="true"
+                            :rows="logsRowsPerPage"
+                            :totalRecords="totalAuditRecords"
+                            :rowsPerPageOptions="[10, 25, 50]"
+                            @page="onLogsPageChange"
+                            dataKey="id"
+                        >
+                            <template #empty>
+                                <div class="text-center py-8 text-gray-500">
+                                    <i class="pi pi-inbox text-3xl mb-2 block"></i>
+                                    <p>Aucun log trouvé pour cette période.</p>
+                                </div>
+                            </template>
+
+                            <Column field="created_at" header="Date" style="width: 14%">
+                                <template #body="{ data }">
+                                    <div class="flex items-center gap-1">
+                                        <span class="text-sm">{{ formatDate(data.created_at) }}</span>
+                                        <i v-if="isSuspiciousHour(data.created_at)"
+                                           class="pi pi-moon text-orange-500 text-xs"
+                                           v-tooltip="'Activité entre 00h et 06h'" />
+                                    </div>
+                                </template>
+                            </Column>
+
+                            <Column field="type_evenement" header="Type" style="width: 12%">
+                                <template #body="{ data }">
+                                    <Tag
+                                        :value="getAuditLabel(data.type_evenement)"
+                                        :severity="getAuditSeverity(data.type_evenement)"
+                                        class="text-xs"
+                                    />
+                                </template>
+                            </Column>
+
+                            <Column field="objet" header="Objet" style="width: 10%">
+                                <template #body="{ data }">
+                                    <span class="text-sm font-medium capitalize">{{ data.objet }}</span>
+                                </template>
+                            </Column>
+
+                            <Column header="Utilisateur" style="width: 18%">
+                                <template #body="{ data }">
+                                    <div>
+                                        <span class="text-sm">{{ data.profiles?.full_name || '-' }}</span>
+                                        <span class="block text-xs text-gray-400">{{ data.profiles?.email }}</span>
+                                    </div>
+                                </template>
+                            </Column>
+
+                            <Column header="Organisation" style="width: 14%">
+                                <template #body="{ data }">
+                                    <span class="text-sm text-gray-600 dark:text-gray-400">
+                                        {{ data.organizations?.name || '-' }}
+                                    </span>
+                                </template>
+                            </Column>
+
+                            <Column header="Détail" style="width: 24%">
+                                <template #body="{ data }">
+                                    <div class="text-xs text-gray-500 space-y-0.5">
+                                        <div v-if="data.champ">
+                                            <span class="font-medium">{{ data.champ }}</span>
+                                        </div>
+                                        <div v-if="data.ancienne_valeur" class="text-red-400">
+                                            − {{ truncateValue(data.ancienne_valeur) }}
+                                        </div>
+                                        <div v-if="data.nouvelle_valeur" class="text-green-400">
+                                            + {{ truncateValue(data.nouvelle_valeur) }}
+                                        </div>
+                                        <span v-if="!data.champ && !data.ancienne_valeur && !data.nouvelle_valeur" class="text-gray-400">-</span>
+                                    </div>
+                                </template>
+                            </Column>
+
+                            <Column header="" style="width: 8%">
+                                <template #body="{ data }">
+                                    <div class="flex gap-1">
+                                        <Tag
+                                            v-for="indicator in getSuspiciousIndicators(data)"
+                                            :key="indicator.label"
+                                            :severity="indicator.severity"
+                                            value="!"
+                                            v-tooltip="indicator.label"
+                                            class="text-xs"
+                                        />
+                                    </div>
+                                </template>
+                            </Column>
+                        </DataTable>
+                    </div>
+
+                    <!-- Section Connexions récentes (auth logs Supabase) -->
+                    <div v-if="authLogs.length > 0" class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm">
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                            <i class="pi pi-sign-in mr-2"></i>Connexions récentes
+                        </h2>
+
+                        <DataTable :value="authLogs" :rows="10" paginator dataKey="id">
+                            <template #empty>Aucun log d'authentification</template>
+
+                            <Column field="created_at" header="Date" sortable style="width: 20%">
+                                <template #body="{ data }">
+                                    <div class="flex items-center gap-1">
+                                        <span class="text-sm">{{ formatDate(data.created_at) }}</span>
+                                        <i v-if="isSuspiciousHour(data.created_at)"
+                                           class="pi pi-moon text-orange-500 text-xs"
+                                           v-tooltip="'Heure inhabituelle'" />
+                                    </div>
+                                </template>
+                            </Column>
+
+                            <Column header="Action" style="width: 20%">
+                                <template #body="{ data }">
+                                    <Tag
+                                        :value="getAuthActionLabel(data.payload?.action)"
+                                        :severity="getAuthActionSeverity(data.payload?.action)"
+                                    />
+                                </template>
+                            </Column>
+
+                            <Column header="Utilisateur" style="width: 30%">
+                                <template #body="{ data }">
+                                    <span class="text-sm">{{ data.payload?.actor_username || data.payload?.actor_email || '-' }}</span>
+                                </template>
+                            </Column>
+
+                            <Column header="Adresse IP" style="width: 15%">
+                                <template #body="{ data }">
+                                    <span class="text-sm text-gray-500 font-mono">{{ data.ip_address || '-' }}</span>
+                                </template>
+                            </Column>
+
+                            <Column header="" style="width: 15%">
+                                <template #body="{ data }">
+                                    <Tag
+                                        v-if="isSuspiciousHour(data.created_at)"
+                                        severity="warn"
+                                        value="Heure inhabituelle"
+                                        class="text-xs"
+                                    />
                                 </template>
                             </Column>
                         </DataTable>

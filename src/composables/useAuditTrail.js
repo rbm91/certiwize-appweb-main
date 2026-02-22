@@ -93,11 +93,88 @@ export const useAuditTrail = () => {
     }
   };
 
+  /**
+   * Récupère les logs d'audit pour le dashboard admin (cross-org, super-admin)
+   * Supporte la pagination serveur et les filtres
+   * Rétention : 6 mois maximum
+   */
+  const fetchAdminAuditLogs = async ({
+    page = 0,
+    rowsPerPage = 25,
+    filters = {},
+  } = {}) => {
+    loading.value = true;
+    error.value = null;
+    try {
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+      let query = supabase
+        .from('audit_log')
+        .select('*, profiles:user_id(email, full_name), organizations:organization_id(name)', { count: 'exact' })
+        .gte('created_at', sixMonthsAgo.toISOString())
+        .order('created_at', { ascending: false })
+        .range(page * rowsPerPage, (page + 1) * rowsPerPage - 1);
+
+      // Appliquer les filtres
+      if (filters.userId) {
+        query = query.eq('user_id', filters.userId);
+      }
+      if (filters.organizationId) {
+        query = query.eq('organization_id', filters.organizationId);
+      }
+      if (filters.typeEvenement) {
+        query = query.eq('type_evenement', filters.typeEvenement);
+      }
+      if (filters.dateFrom) {
+        query = query.gte('created_at', filters.dateFrom);
+      }
+      if (filters.dateTo) {
+        query = query.lte('created_at', filters.dateTo);
+      }
+
+      const { data, count, error: err } = await query;
+      if (err) throw err;
+
+      return { data: data || [], totalRecords: count || 0 };
+    } catch (e) {
+      error.value = e.message;
+      return { data: [], totalRecords: 0 };
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  /**
+   * Récupère les logs d'authentification Supabase via la fonction RPC
+   * Seul un super-admin peut appeler cette fonction
+   * Rétention : 6 mois maximum
+   */
+  const fetchAuthLogs = async ({ limit = 50, offset = 0 } = {}) => {
+    try {
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+      const { data, error: err } = await supabase.rpc('get_auth_audit_logs', {
+        p_limit: limit,
+        p_offset: offset,
+        p_since: sixMonthsAgo.toISOString(),
+      });
+      if (err) throw err;
+      return data || [];
+    } catch (e) {
+      console.warn('[AuditTrail] Erreur fetch auth logs:', e.message);
+      return [];
+    }
+  };
+
   return {
     loading,
     error,
     logEvent,
     fetchAuditLog,
     fetchRecentAudit,
+    fetchAdminAuditLogs,
+    fetchAuthLogs,
   };
 };

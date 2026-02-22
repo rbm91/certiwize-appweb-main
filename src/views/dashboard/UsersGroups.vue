@@ -27,9 +27,16 @@ const inviteLoading = ref(false);
 // Rôles disponibles pour l'invitation (pas owner — un seul owner par org)
 const inviteRoleOptions = ORG_ROLE_OPTIONS.filter(r => r.value !== 'owner');
 
+// Limite de membres par organisation
+const MAX_MEMBERS_PER_ORG = 5;
+
 // Permissions
 const canManageMembers = computed(() => authStore.isOrgAdmin);
 const canChangeRoles = computed(() => authStore.isOrgOwner);
+
+// Vérifier si la limite de membres est atteinte
+const memberCount = computed(() => orgStore.members?.length || 0);
+const memberLimitReached = computed(() => memberCount.value >= MAX_MEMBERS_PER_ORG);
 
 onMounted(async () => {
   await Promise.all([
@@ -64,6 +71,16 @@ const openInviteDialog = () => {
 
 const handleInvite = async () => {
   if (!inviteForm.value.email) return;
+
+  // Vérifier la limite de membres avant d'inviter
+  if (memberLimitReached.value) {
+    message.value = {
+      severity: 'warn',
+      text: `Votre organisation a atteint la limite de ${MAX_MEMBERS_PER_ORG} membres. Retirez un membre existant pour pouvoir en inviter un nouveau.`,
+    };
+    showInviteDialog.value = false;
+    return;
+  }
 
   inviteLoading.value = true;
   const result = await orgStore.inviteMember(inviteForm.value.email, inviteForm.value.role);
@@ -151,12 +168,18 @@ const copyInviteLink = async (invitation) => {
           {{ authStore.currentOrganization?.name }}
         </p>
       </div>
-      <Button
-        v-if="canManageMembers"
-        label="Inviter un membre"
-        icon="pi pi-user-plus"
-        @click="openInviteDialog"
-      />
+      <div v-if="canManageMembers" class="flex items-center gap-3">
+        <span class="text-sm text-gray-500 dark:text-gray-400">
+          {{ memberCount }}/{{ MAX_MEMBERS_PER_ORG }} membres
+        </span>
+        <Button
+          label="Inviter un membre"
+          icon="pi pi-user-plus"
+          @click="openInviteDialog"
+          :disabled="memberLimitReached"
+          v-tooltip="memberLimitReached ? 'Limite de ' + MAX_MEMBERS_PER_ORG + ' membres atteinte' : ''"
+        />
+      </div>
     </div>
 
     <Message v-if="message" :severity="message.severity" class="mb-4" :closable="true" @close="message = null">

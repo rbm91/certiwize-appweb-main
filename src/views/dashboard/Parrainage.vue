@@ -8,10 +8,11 @@ import Message from 'primevue/message';
 const authStore = useAuthStore();
 const companyStore = useCompanyStore();
 
-// Code de parrainage généré à partir de l'organisation
+// Code de parrainage unique par organisation (8 premiers caractères de l'UUID)
 const codeParrainage = computed(() => {
-  const orgId = authStore.user?.user_metadata?.organization_id || 'XXXX';
-  const shortId = String(orgId).substring(0, 8).toUpperCase();
+  const orgId = authStore.currentOrganization?.id;
+  if (!orgId) return 'CW-XXXX';
+  const shortId = orgId.replace(/-/g, '').substring(0, 8).toUpperCase();
   return `CW-${shortId}`;
 });
 

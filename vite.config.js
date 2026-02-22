@@ -9,6 +9,20 @@ export default defineConfig({
   build: {
     // Cibler Safari 14+ pour compatibilité JS iOS/macOS
     target: ['es2020', 'safari14'],
+    rollupOptions: {
+      output: {
+        // Code-splitting pour réduire le bundle principal
+        manualChunks: {
+          'vendor-vue': ['vue', 'vue-router', 'pinia', 'vue-i18n'],
+          'vendor-supabase': ['@supabase/supabase-js'],
+        },
+      },
+    },
+  },
+  // Configuration pour Vitest
+  test: {
+    environment: 'jsdom',
+    globals: true,
   },
   css: {
     // Utiliser Lightning CSS pour convertir les fonctions CSS modernes

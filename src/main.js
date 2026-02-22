@@ -17,6 +17,7 @@ import router from './router'; // Import router d'abord
 import i18n from './i18n';
 import './style.css';
 import { useAuthStore } from './stores/auth'; // Import store après createPinia
+import { initSentry } from './lib/sentry';
 
 const app = createApp(App);
 const pinia = createPinia();
@@ -39,6 +40,8 @@ app.directive('tooltip', Tooltip);
 app.use(ConfirmationService);
 app.use(ToastService);
 
+// Initialiser Sentry pour le monitoring d'erreurs (nécessite VITE_SENTRY_DSN)
+initSentry(app, router);
 
 // Initialiser l'auth avant de monter l'app (avec timeout de sécurité)
 const authStore = useAuthStore();

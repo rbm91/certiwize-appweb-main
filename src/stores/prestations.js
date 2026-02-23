@@ -147,6 +147,23 @@ export const usePrestationsStore = defineStore('prestations', () => {
       const type = prestationData.type || 'formation';
       const color = PRESTATION_COLORS[type] || '#3B82F6';
 
+      // Récupérer l'organization_id de l'utilisateur
+      let organizationId = null;
+      try {
+        const { data: orgData } = await supabase
+          .from('organization_members')
+          .select('organization_id')
+          .eq('user_id', auth.user.id)
+          .limit(1)
+          .single();
+
+        if (orgData) {
+          organizationId = orgData.organization_id;
+        }
+      } catch (err) {
+        console.warn('[PrestationsStore] Utilisateur sans organisation:', err.message);
+      }
+
       const finalData = cleanPayload({
         ...prestationData,
         reference: prestationData.reference || generateReference(type),
@@ -156,6 +173,7 @@ export const usePrestationsStore = defineStore('prestations', () => {
         workflow_data: prestationData.workflow_data || {},
         organization_id: auth.currentOrganization?.id,
         user_id: auth.user.id,
+        organization_id: organizationId,
       });
 
       const { data, error: err } = await supabase

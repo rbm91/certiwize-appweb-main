@@ -6,6 +6,7 @@ import { useToast } from 'primevue/usetoast';
 import { usePrestationsStore } from '../../stores/prestations';
 import { useTiersStore } from '../../stores/tiers';
 import { useTrainingStore } from '../../stores/training';
+import { useAuthStore } from '../../stores/auth';
 import { supabase } from '../../supabase';
 import WorkflowTimeline from '../../components/dashboard/WorkflowTimeline.vue';
 import { FORMATION_WORKFLOW_STEPS } from '../../config/constants';
@@ -18,6 +19,7 @@ import MultiSelect from 'primevue/multiselect';
 import Calendar from 'primevue/calendar';
 import InputNumber from 'primevue/inputnumber';
 import Message from 'primevue/message';
+import axios from 'axios';
 
 const router = useRouter();
 const route = useRoute();
@@ -25,6 +27,7 @@ const toast = useToast();
 const store = usePrestationsStore();
 const tiersStore = useTiersStore();
 const trainingStore = useTrainingStore();
+const authStore = useAuthStore();
 
 // -- Edit mode --
 const editId = computed(() => route.params.id || null);
@@ -32,6 +35,12 @@ const isEdit = computed(() => !!editId.value);
 const loading = ref(false);
 const saving = ref(false);
 const savedPrestationId = ref(null); // ID de la session après première création (pour auto-save)
+
+// -- Document generation --
+const generatingConvention = ref(false);
+const generatingConvocation = ref(false);
+const generatingEtude = ref(false);
+const generatingLivret = ref(false);
 
 // -- Workflow step --
 const currentStep = ref(1);
@@ -169,6 +178,118 @@ const syncApprenants = async (prestationId, newApprenantIds) => {
     console.error('[SessionCreate] syncApprenants:', err.message);
     return { success: false, error: err.message };
   }
+};
+
+// -- Document generation functions --
+const generateDocument = async (type, loadingRef, webhookUrl) => {
+  if (!editId.value && !form.value.intitule) {
+    toast.add({
+      severity: 'warn',
+      summary: 'Attention',
+      detail: 'Veuillez d\'abord enregistrer la session avant de générer des documents.',
+      life: 4000,
+    });
+    return;
+  }
+
+  loadingRef.value = true;
+  try {
+    const payload = {
+      session_id: editId.value,
+      user_id: authStore.user?.id,
+      intitule: form.value.intitule,
+      client_id: form.value.client_id,
+      payeur_id: form.value.payeur_id,
+      formateur_id: form.value.formateur_id,
+      apprenants: form.value.apprenants,
+      date_debut: form.value.date_debut,
+      date_fin: form.value.date_fin,
+      duree_heures: form.value.duree_heures,
+      montant_ht: form.value.montant_ht,
+      contexte: form.value.contexte,
+      objectifs: form.value.objectifs,
+      public_vise: form.value.public_vise,
+      modalites: form.value.modalites,
+      handicap_info: form.value.handicap_info,
+    };
+
+    const response = await axios.post(webhookUrl, payload);
+
+    toast.add({
+      severity: 'success',
+      summary: 'Document généré',
+      detail: `Le document ${type} a été généré avec succès.`,
+      life: 3000,
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error(`Erreur génération ${type}:`, error);
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: `Impossible de générer le document ${type}. ${error.message}`,
+      life: 5000,
+    });
+  } finally {
+    loadingRef.value = false;
+  }
+};
+
+const generateConvention = () => {
+  const webhookUrl = import.meta.env.VITE_N8N_HOOK_PROJ_CONVENTION;
+  if (!webhookUrl) {
+    toast.add({
+      severity: 'error',
+      summary: 'Configuration manquante',
+      detail: 'Le webhook de génération de convention n\'est pas configuré.',
+      life: 4000,
+    });
+    return;
+  }
+  return generateDocument('Convention', generatingConvention, webhookUrl);
+};
+
+const generateConvocation = () => {
+  const webhookUrl = import.meta.env.VITE_N8N_HOOK_PROJ_CONVOCATION;
+  if (!webhookUrl) {
+    toast.add({
+      severity: 'error',
+      summary: 'Configuration manquante',
+      detail: 'Le webhook de génération de convocation n\'est pas configuré.',
+      life: 4000,
+    });
+    return;
+  }
+  return generateDocument('Convocation', generatingConvocation, webhookUrl);
+};
+
+const generateEtude = () => {
+  const webhookUrl = import.meta.env.VITE_N8N_HOOK_PROJ_ETUDE;
+  if (!webhookUrl) {
+    toast.add({
+      severity: 'error',
+      summary: 'Configuration manquante',
+      detail: 'Le webhook de génération du projet d\'étude n\'est pas configuré.',
+      life: 4000,
+    });
+    return;
+  }
+  return generateDocument('Projet d\'étude', generatingEtude, webhookUrl);
+};
+
+const generateLivret = () => {
+  const webhookUrl = import.meta.env.VITE_N8N_HOOK_PROJ_LIVRET;
+  if (!webhookUrl) {
+    toast.add({
+      severity: 'error',
+      summary: 'Configuration manquante',
+      detail: 'Le webhook de génération du livret n\'est pas configuré.',
+      life: 4000,
+    });
+    return;
+  }
+  return generateDocument('Livret', generatingLivret, webhookUrl);
 };
 
 // -- Save --
@@ -462,6 +583,22 @@ onMounted(async () => {
               <label class="text-sm font-medium">Prise en compte du handicap</label>
               <Textarea v-model="form.handicap_info" rows="2" placeholder="Aménagements prévus, accessibilité, référent handicap..." class="w-full" />
             </div>
+
+            <!-- Document generation section -->
+            <div class="border-t pt-6 mt-4">
+              <h3 class="text-md font-semibold text-surface-700 dark:text-surface-300 mb-4">
+                <i class="pi pi-file-pdf mr-2"></i>Génération de documents
+              </h3>
+              <div class="flex gap-3">
+                <Button
+                  label="Générer le projet d'étude"
+                  icon="pi pi-file-word"
+                  severity="info"
+                  :loading="generatingEtude"
+                  @click="generateEtude"
+                />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -473,12 +610,20 @@ onMounted(async () => {
           <div class="flex flex-col items-center justify-center py-12 text-surface-500">
             <i class="pi pi-file text-5xl mb-4 text-primary"></i>
             <p class="text-lg font-medium mb-2">Génération automatique</p>
-            <p class="text-sm text-center max-w-md">
+            <p class="text-sm text-center max-w-md mb-6">
               La convention de formation sera générée automatiquement à partir des informations
               saisies lors des étapes précédentes. Vous pourrez la personnaliser et la télécharger.
             </p>
+            <Button
+              label="Générer la convention"
+              icon="pi pi-file-pdf"
+              severity="success"
+              size="large"
+              :loading="generatingConvention"
+              @click="generateConvention"
+            />
             <Message severity="info" :closable="false" class="mt-4">
-              Fonctionnalité disponible prochainement.
+              La génération peut prendre quelques secondes.
             </Message>
           </div>
         </div>
@@ -491,12 +636,20 @@ onMounted(async () => {
           <div class="flex flex-col items-center justify-center py-12 text-surface-500">
             <i class="pi pi-envelope text-5xl mb-4 text-primary"></i>
             <p class="text-lg font-medium mb-2">Convocation des apprenants</p>
-            <p class="text-sm text-center max-w-md">
-              Les convocations seront envoyées automatiquement aux apprenants inscrits
+            <p class="text-sm text-center max-w-md mb-6">
+              Les convocations seront générées automatiquement pour les apprenants inscrits
               avec les informations pratiques de la session.
             </p>
+            <Button
+              label="Générer les convocations"
+              icon="pi pi-send"
+              severity="success"
+              size="large"
+              :loading="generatingConvocation"
+              @click="generateConvocation"
+            />
             <Message severity="info" :closable="false" class="mt-4">
-              Fonctionnalité disponible prochainement.
+              Les convocations seront envoyées aux apprenants après génération.
             </Message>
           </div>
         </div>
@@ -509,12 +662,20 @@ onMounted(async () => {
           <div class="flex flex-col items-center justify-center py-12 text-surface-500">
             <i class="pi pi-play text-5xl mb-4 text-primary"></i>
             <p class="text-lg font-medium mb-2">Suivi de la réalisation</p>
-            <p class="text-sm text-center max-w-md">
+            <p class="text-sm text-center max-w-md mb-6">
               Gérez les émargements, le suivi des présences et les événements
               survenus pendant la formation.
             </p>
+            <Button
+              label="Générer le livret de formation"
+              icon="pi pi-book"
+              severity="success"
+              size="large"
+              :loading="generatingLivret"
+              @click="generateLivret"
+            />
             <Message severity="info" :closable="false" class="mt-4">
-              Fonctionnalité disponible prochainement.
+              Le livret regroupe tous les documents de la formation.
             </Message>
           </div>
         </div>

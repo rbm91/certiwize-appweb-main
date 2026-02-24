@@ -1,0 +1,15 @@
+{
+  "lock": false,
+  "imports": {
+    "@supabase/supabase-js": "jsr:@supabase/supabase-js@2",
+    "@supabase/functions-js": "jsr:@supabase/functions-js"
+  },
+  "tasks": {
+    "serve": "deno serve --watch --allow-all",
+    "test": "deno test --allow-all"
+  },
+  "compilerOptions": {
+    "lib": ["deno.window"],
+    "strict": true
+  }
+}

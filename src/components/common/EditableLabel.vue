@@ -121,7 +121,7 @@ const cancel = () => {
   background: transparent;
   color: #94a3b8;
   cursor: pointer;
-  opacity: 0;
+  opacity: 0.6;
   transition: opacity 0.15s, color 0.15s, background-color 0.15s;
   font-size: 11px;
   padding: 0;

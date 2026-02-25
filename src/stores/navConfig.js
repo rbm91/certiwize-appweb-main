@@ -159,6 +159,107 @@ export const useNavConfigStore = defineStore('navConfig', () => {
     return { success: true };
   };
 
+  // ========================================
+  // Gestion des champs masqués (hiddenFields)
+  // ========================================
+
+  /**
+   * Vérifier si un champ est masqué
+   */
+  const isFieldHidden = (fieldKey) => {
+    return (config.value?.hiddenFields || []).includes(fieldKey);
+  };
+
+  /**
+   * Masquer un champ
+   */
+  const hideField = async (fieldKey) => {
+    const newConfig = structuredClone(config.value || DEFAULT_CONFIG);
+    if (!newConfig.hiddenFields) newConfig.hiddenFields = [];
+    if (!newConfig.hiddenFields.includes(fieldKey)) {
+      newConfig.hiddenFields.push(fieldKey);
+    }
+    return saveConfig(newConfig);
+  };
+
+  /**
+   * Restaurer un champ masqué
+   */
+  const showField = async (fieldKey) => {
+    const newConfig = structuredClone(config.value || DEFAULT_CONFIG);
+    if (!newConfig.hiddenFields) return { success: true };
+    newConfig.hiddenFields = newConfig.hiddenFields.filter(k => k !== fieldKey);
+    return saveConfig(newConfig);
+  };
+
+  /**
+   * Récupérer les champs masqués d'une section (par préfixe)
+   */
+  const getHiddenFieldsBySection = (sectionPrefix) => {
+    const all = config.value?.hiddenFields || [];
+    return all.filter(k => k.startsWith(sectionPrefix));
+  };
+
+  // ========================================
+  // Gestion des champs custom (customFields)
+  // ========================================
+
+  /**
+   * Récupérer les champs custom d'une section
+   */
+  const getCustomFields = (section) => {
+    return config.value?.customFields?.[section] || [];
+  };
+
+  /**
+   * Ajouter un champ custom à une section
+   */
+  const addCustomField = async (section, { label, type }) => {
+    const newConfig = structuredClone(config.value || DEFAULT_CONFIG);
+    if (!newConfig.customFields) newConfig.customFields = {};
+    if (!newConfig.customFields[section]) newConfig.customFields[section] = [];
+
+    // Générer une clé unique
+    const timestamp = Date.now();
+    const key = `custom_${section.replace(/\./g, '_')}_${timestamp}`;
+
+    newConfig.customFields[section].push({
+      key,
+      label,
+      type, // 'text' | 'textarea' | 'number' | 'date' | 'toggle'
+      createdAt: new Date().toISOString()
+    });
+
+    return saveConfig(newConfig);
+  };
+
+  /**
+   * Supprimer un champ custom
+   */
+  const removeCustomField = async (section, fieldKey) => {
+    const newConfig = structuredClone(config.value || DEFAULT_CONFIG);
+    if (!newConfig.customFields?.[section]) return { success: true };
+    newConfig.customFields[section] = newConfig.customFields[section].filter(f => f.key !== fieldKey);
+    // Nettoyer la section si vide
+    if (newConfig.customFields[section].length === 0) {
+      delete newConfig.customFields[section];
+    }
+    return saveConfig(newConfig);
+  };
+
+  /**
+   * Mettre à jour le label d'un champ custom
+   */
+  const updateCustomFieldLabel = async (section, fieldKey, newLabel) => {
+    const newConfig = structuredClone(config.value || DEFAULT_CONFIG);
+    const field = newConfig.customFields?.[section]?.find(f => f.key === fieldKey);
+    if (field) {
+      field.label = newLabel;
+      return saveConfig(newConfig);
+    }
+    return { success: true };
+  };
+
   return {
     config,
     loading,
@@ -170,6 +271,16 @@ export const useNavConfigStore = defineStore('navConfig', () => {
     resetConfig,
     getCustomLabel,
     updateCustomLabel,
-    removeCustomLabel
+    removeCustomLabel,
+    // Champs masqués
+    isFieldHidden,
+    hideField,
+    showField,
+    getHiddenFieldsBySection,
+    // Champs custom
+    getCustomFields,
+    addCustomField,
+    removeCustomField,
+    updateCustomFieldLabel
   };
 });

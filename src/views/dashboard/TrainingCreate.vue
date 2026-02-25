@@ -18,6 +18,10 @@ import ProgressBar from 'primevue/progressbar';
 import { useConfirm } from 'primevue/useconfirm';
 import { useFormValidation } from '../../composables/useFormValidation';
 import EditableLabel from '../../components/common/EditableLabel.vue';
+import ManageableField from '../../components/common/ManageableField.vue';
+import AddFieldButton from '../../components/common/AddFieldButton.vue';
+import CustomFieldRenderer from '../../components/common/CustomFieldRenderer.vue';
+import RestoreFieldsButton from '../../components/common/RestoreFieldsButton.vue';
 
 // Options pour le dropdown modalités
 const modalitesOptions = [
@@ -101,6 +105,38 @@ Workshop 1 :
     accessibilite: '',
     modalites: null
 });
+
+// Valeurs des champs custom
+const customFieldValues = ref({ main: {}, cdc: {} });
+
+// Labels pour restauration
+const trainingFieldLabels = {
+  'training.titre': 'Titre',
+  'training.maj': 'Date de mise à jour',
+  'training.lieu': 'Lieu',
+  'training.duree': 'Durée',
+  'training.tarif': 'Tarif',
+  'training.dates': 'Dates',
+  'training.horaires': 'Horaires',
+  'training.grp_max': 'Taille max groupe',
+  'training.public_vise': 'Public visé',
+  'training.prerequis': 'Prérequis',
+  'training.objc_pedagq': 'Objectifs pédagogiques',
+  'training.prgm': 'Programme',
+  'training.moyens_pedagq': 'Moyens pédagogiques',
+  'training.modalites_eval': "Modalités d'évaluation",
+  'training.num': 'Numéro de contact',
+  'training.mail': 'Email de contact',
+  'training.ref_handi': 'Référent handicap',
+  'training.cdc.public_cible': 'CDC - Public visé',
+  'training.cdc.prerequis': 'CDC - Prérequis',
+  'training.cdc.objectifs': 'CDC - Objectifs',
+  'training.cdc.programme': 'CDC - Programme',
+  'training.cdc.moyens': 'CDC - Moyens',
+  'training.cdc.evaluation': 'CDC - Évaluation',
+  'training.cdc.accessibilite': 'CDC - Accessibilité',
+  'training.cdc.modalites': 'CDC - Modalités'
+};
 
 // Watcher pour générer automatiquement le format horaires
 watch([() => form.value.horaires_debut, () => form.value.horaires_fin], () => {
@@ -379,99 +415,142 @@ const goBack = () => {
             <form @submit.prevent="handleGenerate" class="space-y-8">
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="md:col-span-2">
-                        <label class="font-semibold block mb-2"><EditableLabel labelKey="training.titre" defaultLabel="Titre" /></label>
-                        <InputText v-model="form.titre" class="w-full text-lg" :placeholder="t('training.placeholders.title')" :invalid="!!errors.titre" @input="clearError('titre')" />
-                    </div>
-                    <div>
-                        <label class="block mb-2"><EditableLabel labelKey="training.maj" defaultLabel="Date de mise à jour" /></label>
-                        <Calendar v-model="form.maj" dateFormat="dd/mm/yy" showIcon class="w-full" />
-                    </div>
-                     <div>
-                        <label class="block mb-2"><EditableLabel labelKey="training.lieu" defaultLabel="Lieu" /></label>
-                        <InputText v-model="form.lieu" class="w-full" :placeholder="t('training.placeholders.location')" />
-                    </div>
+                    <ManageableField fieldKey="training.titre" class="md:col-span-2">
+                        <div>
+                            <label class="font-semibold block mb-2"><EditableLabel labelKey="training.titre" defaultLabel="Titre" /></label>
+                            <InputText v-model="form.titre" class="w-full text-lg" :placeholder="t('training.placeholders.title')" :invalid="!!errors.titre" @input="clearError('titre')" />
+                        </div>
+                    </ManageableField>
+                    <ManageableField fieldKey="training.maj">
+                        <div>
+                            <label class="block mb-2"><EditableLabel labelKey="training.maj" defaultLabel="Date de mise à jour" /></label>
+                            <Calendar v-model="form.maj" dateFormat="dd/mm/yy" showIcon class="w-full" />
+                        </div>
+                    </ManageableField>
+                    <ManageableField fieldKey="training.lieu">
+                        <div>
+                            <label class="block mb-2"><EditableLabel labelKey="training.lieu" defaultLabel="Lieu" /></label>
+                            <InputText v-model="form.lieu" class="w-full" :placeholder="t('training.placeholders.location')" />
+                        </div>
+                    </ManageableField>
                 </div>
 
                 <div class="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block mb-2 text-sm"><EditableLabel labelKey="training.duree" defaultLabel="Durée (heures)" /></label>
-                        <InputNumber v-model="form.duree" class="w-full" :min="0" :maxFractionDigits="1" placeholder="Ex: 14" suffix=" h" />
-                    </div>
-                    <div>
-                        <label class="block mb-2 text-sm"><EditableLabel labelKey="training.tarif" defaultLabel="Tarif" /></label>
-                        <InputNumber v-model="form.tarif" mode="currency" currency="EUR" class="w-full" />
-                    </div>
-                    <div>
-                        <label class="block mb-2 text-sm"><EditableLabel labelKey="training.dates" defaultLabel="Dates" /></label>
-                        <div class="flex gap-2">
-                            <div class="flex-1">
-                                <Calendar v-model="form.dates" dateFormat="dd/mm/yy" showIcon placeholder="Début" class="w-full" />
-                            </div>
-                            <div class="flex-1">
-                                <Calendar v-model="form.dates_fin" dateFormat="dd/mm/yy" showIcon placeholder="Fin" class="w-full" />
+                    <ManageableField fieldKey="training.duree">
+                        <div>
+                            <label class="block mb-2 text-sm"><EditableLabel labelKey="training.duree" defaultLabel="Durée (heures)" /></label>
+                            <InputNumber v-model="form.duree" class="w-full" :min="0" :maxFractionDigits="1" placeholder="Ex: 14" suffix=" h" />
+                        </div>
+                    </ManageableField>
+                    <ManageableField fieldKey="training.tarif">
+                        <div>
+                            <label class="block mb-2 text-sm"><EditableLabel labelKey="training.tarif" defaultLabel="Tarif" /></label>
+                            <InputNumber v-model="form.tarif" mode="currency" currency="EUR" class="w-full" />
+                        </div>
+                    </ManageableField>
+                    <ManageableField fieldKey="training.dates">
+                        <div>
+                            <label class="block mb-2 text-sm"><EditableLabel labelKey="training.dates" defaultLabel="Dates" /></label>
+                            <div class="flex gap-2">
+                                <div class="flex-1">
+                                    <Calendar v-model="form.dates" dateFormat="dd/mm/yy" showIcon placeholder="Début" class="w-full" />
+                                </div>
+                                <div class="flex-1">
+                                    <Calendar v-model="form.dates_fin" dateFormat="dd/mm/yy" showIcon placeholder="Fin" class="w-full" />
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div>
-                        <label class="block mb-2 text-sm"><EditableLabel labelKey="training.horaires" defaultLabel="Horaires" /></label>
-                        <div class="flex gap-2">
-                            <div class="flex-1">
-                                <Calendar v-model="form.horaires_debut" timeOnly hourFormat="24" placeholder="Début" class="w-full" />
-                            </div>
-                            <div class="flex-1">
-                                <Calendar v-model="form.horaires_fin" timeOnly hourFormat="24" placeholder="Fin" class="w-full" />
+                    </ManageableField>
+                    <ManageableField fieldKey="training.horaires">
+                        <div>
+                            <label class="block mb-2 text-sm"><EditableLabel labelKey="training.horaires" defaultLabel="Horaires" /></label>
+                            <div class="flex gap-2">
+                                <div class="flex-1">
+                                    <Calendar v-model="form.horaires_debut" timeOnly hourFormat="24" placeholder="Début" class="w-full" />
+                                </div>
+                                <div class="flex-1">
+                                    <Calendar v-model="form.horaires_fin" timeOnly hourFormat="24" placeholder="Fin" class="w-full" />
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="block mb-2 text-sm"><EditableLabel labelKey="training.grp_max" defaultLabel="Taille max du groupe" /></label>
-                        <InputNumber v-model="form.grp_max" showButtons :min="1" class="w-full" />
-                    </div>
+                    </ManageableField>
+                    <ManageableField fieldKey="training.grp_max" class="md:col-span-2">
+                        <div>
+                            <label class="block mb-2 text-sm"><EditableLabel labelKey="training.grp_max" defaultLabel="Taille max du groupe" /></label>
+                            <InputNumber v-model="form.grp_max" showButtons :min="1" class="w-full" />
+                        </div>
+                    </ManageableField>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="md:col-span-2">
-                        <label class="font-semibold block mb-2"><EditableLabel labelKey="training.public_vise" defaultLabel="Public visé" /></label>
-                        <Textarea v-model="form.public_vise" rows="2" class="w-full" />
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="font-semibold block mb-2"><EditableLabel labelKey="training.prerequis" defaultLabel="Prérequis" /></label>
-                        <Textarea v-model="form.prerequis" rows="2" class="w-full" />
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="font-semibold block mb-2"><EditableLabel labelKey="training.objc_pedagq" defaultLabel="Objectifs pédagogiques" /></label>
-                        <Textarea v-model="form.objc_pedagq" rows="4" class="w-full" />
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="font-semibold block mb-2"><EditableLabel labelKey="training.prgm" defaultLabel="Programme" /></label>
-                        <Textarea v-model="form.prgm" rows="6" class="w-full" :placeholder="t('training.placeholders.program')" />
-                    </div>
+                    <ManageableField fieldKey="training.public_vise" class="md:col-span-2">
+                        <div>
+                            <label class="font-semibold block mb-2"><EditableLabel labelKey="training.public_vise" defaultLabel="Public visé" /></label>
+                            <Textarea v-model="form.public_vise" rows="2" class="w-full" />
+                        </div>
+                    </ManageableField>
+                    <ManageableField fieldKey="training.prerequis" class="md:col-span-2">
+                        <div>
+                            <label class="font-semibold block mb-2"><EditableLabel labelKey="training.prerequis" defaultLabel="Prérequis" /></label>
+                            <Textarea v-model="form.prerequis" rows="2" class="w-full" />
+                        </div>
+                    </ManageableField>
+                    <ManageableField fieldKey="training.objc_pedagq" class="md:col-span-2">
+                        <div>
+                            <label class="font-semibold block mb-2"><EditableLabel labelKey="training.objc_pedagq" defaultLabel="Objectifs pédagogiques" /></label>
+                            <Textarea v-model="form.objc_pedagq" rows="4" class="w-full" />
+                        </div>
+                    </ManageableField>
+                    <ManageableField fieldKey="training.prgm" class="md:col-span-2">
+                        <div>
+                            <label class="font-semibold block mb-2"><EditableLabel labelKey="training.prgm" defaultLabel="Programme" /></label>
+                            <Textarea v-model="form.prgm" rows="6" class="w-full" :placeholder="t('training.placeholders.program')" />
+                        </div>
+                    </ManageableField>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="font-semibold block mb-2"><EditableLabel labelKey="training.moyens_pedagq" defaultLabel="Moyens pédagogiques" /></label>
-                        <Textarea v-model="form.moyens_pedagq" rows="3" class="w-full" />
-                    </div>
-                    <div>
-                        <label class="font-semibold block mb-2"><EditableLabel labelKey="training.modalites_eval" defaultLabel="Modalités d'évaluation" /></label>
-                        <Textarea v-model="form.modalités_eval" rows="3" class="w-full" />
-                    </div>
+                    <ManageableField fieldKey="training.moyens_pedagq">
+                        <div>
+                            <label class="font-semibold block mb-2"><EditableLabel labelKey="training.moyens_pedagq" defaultLabel="Moyens pédagogiques" /></label>
+                            <Textarea v-model="form.moyens_pedagq" rows="3" class="w-full" />
+                        </div>
+                    </ManageableField>
+                    <ManageableField fieldKey="training.modalites_eval">
+                        <div>
+                            <label class="font-semibold block mb-2"><EditableLabel labelKey="training.modalites_eval" defaultLabel="Modalités d'évaluation" /></label>
+                            <Textarea v-model="form.modalités_eval" rows="3" class="w-full" />
+                        </div>
+                    </ManageableField>
                 </div>
 
                 <div class="border-t pt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block mb-2"><EditableLabel labelKey="training.num" defaultLabel="Numéro de contact" /></label>
-                        <InputText v-model="form.num" class="w-full" />
-                    </div>
-                    <div>
-                        <label class="block mb-2"><EditableLabel labelKey="training.mail" defaultLabel="Email de contact" /></label>
-                        <InputText v-model="form.mail" class="w-full" />
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="font-semibold block mb-2"><EditableLabel labelKey="training.ref_handi" defaultLabel="Référent handicap" /></label>
-                        <Textarea v-model="form.ref_handi" rows="2" class="w-full" />
+                    <ManageableField fieldKey="training.num">
+                        <div>
+                            <label class="block mb-2"><EditableLabel labelKey="training.num" defaultLabel="Numéro de contact" /></label>
+                            <InputText v-model="form.num" class="w-full" />
+                        </div>
+                    </ManageableField>
+                    <ManageableField fieldKey="training.mail">
+                        <div>
+                            <label class="block mb-2"><EditableLabel labelKey="training.mail" defaultLabel="Email de contact" /></label>
+                            <InputText v-model="form.mail" class="w-full" />
+                        </div>
+                    </ManageableField>
+                    <ManageableField fieldKey="training.ref_handi" class="md:col-span-2">
+                        <div>
+                            <label class="font-semibold block mb-2"><EditableLabel labelKey="training.ref_handi" defaultLabel="Référent handicap" /></label>
+                            <Textarea v-model="form.ref_handi" rows="2" class="w-full" />
+                        </div>
+                    </ManageableField>
+                </div>
+
+                <!-- Champs custom + Restaurer + Ajouter (section principale) -->
+                <div>
+                    <CustomFieldRenderer section="training.main" v-model="customFieldValues.main" />
+                    <div class="flex items-center gap-4 mt-2">
+                        <AddFieldButton section="training.main" />
+                        <RestoreFieldsButton section="training" :fieldLabels="trainingFieldLabels" />
                     </div>
                 </div>
 
@@ -481,37 +560,60 @@ const goBack = () => {
                 <div class="border-l-4 border-blue-500 pl-6 py-4 space-y-6 bg-blue-50/40 dark:bg-blue-900/10 rounded-r-lg">
                     <h2 class="text-lg font-bold text-blue-700 dark:text-blue-300 mb-2">Cahier des charges (CDC)</h2>
 
-                    <div>
-                        <label class="font-semibold block mb-2"><EditableLabel labelKey="training.public_cible" defaultLabel="Public visé" /></label>
-                        <Textarea v-model="form.public_cible" rows="3" class="w-full" placeholder="Décrivez le public cible de la formation" />
-                    </div>
-                    <div>
-                        <label class="font-semibold block mb-2"><EditableLabel labelKey="training.prerequis_cdc" defaultLabel="Prérequis" /></label>
-                        <Textarea v-model="form.prerequis" rows="3" class="w-full" placeholder="Prérequis nécessaires pour suivre la formation" />
-                    </div>
-                    <div>
-                        <label class="font-semibold block mb-2"><EditableLabel labelKey="training.objectifs_pedagogiques" defaultLabel="Objectifs pédagogiques" /></label>
-                        <Textarea v-model="form.objectifs_pedagogiques" rows="4" class="w-full" placeholder="Listez les objectifs pédagogiques" />
-                    </div>
-                    <div>
-                        <label class="font-semibold block mb-2"><EditableLabel labelKey="training.programme" defaultLabel="Programme détaillé" /></label>
-                        <Textarea v-model="form.programme" rows="6" class="w-full" placeholder="Décrivez le programme détaillé de la formation" />
-                    </div>
-                    <div>
-                        <label class="font-semibold block mb-2"><EditableLabel labelKey="training.moyens_pedagogiques" defaultLabel="Moyens pédagogiques et techniques" /></label>
-                        <Textarea v-model="form.moyens_pedagogiques" rows="3" class="w-full" placeholder="Moyens pédagogiques et techniques mis en oeuvre" />
-                    </div>
-                    <div>
-                        <label class="font-semibold block mb-2"><EditableLabel labelKey="training.modalites_evaluation" defaultLabel="Modalités d'évaluation" /></label>
-                        <Textarea v-model="form.modalites_evaluation" rows="3" class="w-full" placeholder="Décrivez les modalités d'évaluation" />
-                    </div>
-                    <div>
-                        <label class="font-semibold block mb-2"><EditableLabel labelKey="training.accessibilite" defaultLabel="Accessibilité aux personnes en situation de handicap" /></label>
-                        <Textarea v-model="form.accessibilite" rows="3" class="w-full" placeholder="Indiquez les dispositions d'accessibilité" />
-                    </div>
-                    <div class="max-w-sm">
-                        <label class="font-semibold block mb-2"><EditableLabel labelKey="training.modalites" defaultLabel="Modalités" /></label>
-                        <Dropdown v-model="form.modalites" :options="modalitesOptions" optionLabel="label" optionValue="value" placeholder="Choisir une modalité" class="w-full" />
+                    <ManageableField fieldKey="training.cdc.public_cible">
+                        <div>
+                            <label class="font-semibold block mb-2"><EditableLabel labelKey="training.public_cible" defaultLabel="Public visé" /></label>
+                            <Textarea v-model="form.public_cible" rows="3" class="w-full" placeholder="Décrivez le public cible de la formation" />
+                        </div>
+                    </ManageableField>
+                    <ManageableField fieldKey="training.cdc.prerequis">
+                        <div>
+                            <label class="font-semibold block mb-2"><EditableLabel labelKey="training.prerequis_cdc" defaultLabel="Prérequis" /></label>
+                            <Textarea v-model="form.prerequis" rows="3" class="w-full" placeholder="Prérequis nécessaires pour suivre la formation" />
+                        </div>
+                    </ManageableField>
+                    <ManageableField fieldKey="training.cdc.objectifs">
+                        <div>
+                            <label class="font-semibold block mb-2"><EditableLabel labelKey="training.objectifs_pedagogiques" defaultLabel="Objectifs pédagogiques" /></label>
+                            <Textarea v-model="form.objectifs_pedagogiques" rows="4" class="w-full" placeholder="Listez les objectifs pédagogiques" />
+                        </div>
+                    </ManageableField>
+                    <ManageableField fieldKey="training.cdc.programme">
+                        <div>
+                            <label class="font-semibold block mb-2"><EditableLabel labelKey="training.programme" defaultLabel="Programme détaillé" /></label>
+                            <Textarea v-model="form.programme" rows="6" class="w-full" placeholder="Décrivez le programme détaillé de la formation" />
+                        </div>
+                    </ManageableField>
+                    <ManageableField fieldKey="training.cdc.moyens">
+                        <div>
+                            <label class="font-semibold block mb-2"><EditableLabel labelKey="training.moyens_pedagogiques" defaultLabel="Moyens pédagogiques et techniques" /></label>
+                            <Textarea v-model="form.moyens_pedagogiques" rows="3" class="w-full" placeholder="Moyens pédagogiques et techniques mis en oeuvre" />
+                        </div>
+                    </ManageableField>
+                    <ManageableField fieldKey="training.cdc.evaluation">
+                        <div>
+                            <label class="font-semibold block mb-2"><EditableLabel labelKey="training.modalites_evaluation" defaultLabel="Modalités d'évaluation" /></label>
+                            <Textarea v-model="form.modalites_evaluation" rows="3" class="w-full" placeholder="Décrivez les modalités d'évaluation" />
+                        </div>
+                    </ManageableField>
+                    <ManageableField fieldKey="training.cdc.accessibilite">
+                        <div>
+                            <label class="font-semibold block mb-2"><EditableLabel labelKey="training.accessibilite" defaultLabel="Accessibilité aux personnes en situation de handicap" /></label>
+                            <Textarea v-model="form.accessibilite" rows="3" class="w-full" placeholder="Indiquez les dispositions d'accessibilité" />
+                        </div>
+                    </ManageableField>
+                    <ManageableField fieldKey="training.cdc.modalites">
+                        <div class="max-w-sm">
+                            <label class="font-semibold block mb-2"><EditableLabel labelKey="training.modalites" defaultLabel="Modalités" /></label>
+                            <Dropdown v-model="form.modalites" :options="modalitesOptions" optionLabel="label" optionValue="value" placeholder="Choisir une modalité" class="w-full" />
+                        </div>
+                    </ManageableField>
+
+                    <!-- Champs custom CDC + Restaurer + Ajouter -->
+                    <CustomFieldRenderer section="training.cdc" v-model="customFieldValues.cdc" />
+                    <div class="flex items-center gap-4 mt-2">
+                        <AddFieldButton section="training.cdc" />
+                        <RestoreFieldsButton section="training.cdc" :fieldLabels="trainingFieldLabels" />
                     </div>
                 </div>
 

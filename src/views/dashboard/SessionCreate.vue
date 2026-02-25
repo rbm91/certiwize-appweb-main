@@ -381,6 +381,11 @@ const handleSave = async (redirect = true) => {
   }
 };
 
+// -- Renommer une étape du stepper (super_admin) --
+const handleStepRenamed = async ({ stepNumber, label }) => {
+  await workflowConfigStore.renameStepperStep('formation', stepNumber, label);
+};
+
 // -- Load existing data --
 onMounted(async () => {
   loading.value = true;
@@ -458,7 +463,7 @@ onMounted(async () => {
 
       <!-- Workflow Timeline -->
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 mb-6">
-        <WorkflowTimeline :steps="formationSteps" :currentStep="currentStep - 1" />
+        <WorkflowTimeline :steps="formationSteps" :currentStep="currentStep - 1" :editable="true" @step-renamed="handleStepRenamed" />
       </div>
 
       <!-- Step Content Card -->

@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, computed, toRaw, nextTick, watch } from 'vue';
-import { useWorkflowConfigStore, DEFAULT_WORKFLOW } from '../../stores/workflowConfig';
+import { useWorkflowConfigStore, DEFAULT_WORKFLOW, DEFAULT_FORMATION_STEPS, DEFAULT_COACHING_STEPS, DEFAULT_CONSEIL_STEPS } from '../../stores/workflowConfig';
 import { useI18n } from 'vue-i18n';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
@@ -367,6 +367,110 @@ const selectFieldFromPreview = (fieldKey) => {
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   });
 };
+
+// ═══════════════════════════════════════════════════
+// SECTION : Gestion des étapes Stepper (Formation, Coaching, Conseil)
+// ═══════════════════════════════════════════════════
+
+const stepperActiveType = ref('formation');
+const stepperSteps = ref([]);
+const stepperSaving = ref(false);
+const editingStepperStepIndex = ref(null);
+const showAddStepperStepDialog = ref(false);
+const newStepperStep = ref({ label: '', icon: 'pi-circle' });
+
+const stepperTypes = [
+  { label: 'Formation', value: 'formation', color: '#3B82F6' },
+  { label: 'Coaching', value: 'coaching', color: '#F59E0B' },
+  { label: 'Conseil', value: 'conseil', color: '#10B981' },
+];
+
+const stepperIconOptions = [
+  { label: 'Utilisateur', value: 'pi-user', icon: 'pi pi-user' },
+  { label: 'Recherche', value: 'pi-search', icon: 'pi pi-search' },
+  { label: 'Fichier', value: 'pi-file', icon: 'pi pi-file' },
+  { label: 'Enveloppe', value: 'pi-envelope', icon: 'pi pi-envelope' },
+  { label: 'Lecture', value: 'pi-play', icon: 'pi pi-play' },
+  { label: 'Validation', value: 'pi-check-circle', icon: 'pi pi-check-circle' },
+  { label: 'Étoile', value: 'pi-star', icon: 'pi pi-star' },
+  { label: 'Portefeuille', value: 'pi-wallet', icon: 'pi pi-wallet' },
+  { label: 'Cadenas', value: 'pi-lock', icon: 'pi pi-lock' },
+  { label: 'Boîte', value: 'pi-box', icon: 'pi pi-box' },
+  { label: 'Boussole', value: 'pi-compass', icon: 'pi pi-compass' },
+  { label: 'Carte', value: 'pi-map', icon: 'pi pi-map' },
+  { label: 'Discussion', value: 'pi-comments', icon: 'pi pi-comments' },
+  { label: 'Graphique', value: 'pi-chart-bar', icon: 'pi pi-chart-bar' },
+  { label: 'Cercle', value: 'pi-circle', icon: 'pi pi-circle' },
+  { label: 'Édition', value: 'pi-file-edit', icon: 'pi pi-file-edit' },
+];
+
+const loadStepperSteps = () => {
+  stepperSteps.value = workflowStore.getStepperSteps(stepperActiveType.value);
+};
+
+const switchStepperType = (type) => {
+  stepperActiveType.value = type;
+  loadStepperSteps();
+  editingStepperStepIndex.value = null;
+};
+
+const saveStepperSteps = async () => {
+  stepperSaving.value = true;
+  const result = await workflowStore.saveStepperSteps(stepperActiveType.value, stepperSteps.value);
+  stepperSaving.value = false;
+  if (result.success) {
+    toast.add({ severity: 'success', summary: 'Étapes sauvegardées', life: 3000 });
+  } else {
+    toast.add({ severity: 'error', summary: 'Erreur', detail: result.error, life: 5000 });
+  }
+};
+
+const addStepperStep = () => {
+  if (!newStepperStep.value.label.trim()) return;
+  stepperSteps.value.push({
+    step: stepperSteps.value.length + 1,
+    label: newStepperStep.value.label,
+    icon: newStepperStep.value.icon
+  });
+  newStepperStep.value = { label: '', icon: 'pi-circle' };
+  showAddStepperStepDialog.value = false;
+};
+
+const removeStepperStep = (index) => {
+  const step = stepperSteps.value[index];
+  confirm.require({
+    message: `Supprimer l'étape "${step.label}" ?`,
+    header: 'Supprimer',
+    icon: 'pi pi-trash',
+    acceptClass: 'p-button-danger',
+    accept: () => {
+      stepperSteps.value.splice(index, 1);
+      // Renuméroter
+      stepperSteps.value.forEach((s, i) => { s.step = i + 1; });
+    }
+  });
+};
+
+const resetStepperSteps = () => {
+  confirm.require({
+    message: 'Réinitialiser les étapes aux valeurs par défaut ?',
+    header: 'Réinitialiser',
+    icon: 'pi pi-refresh',
+    acceptClass: 'p-button-warning',
+    accept: async () => {
+      stepperSaving.value = true;
+      await workflowStore.resetStepperSteps(stepperActiveType.value);
+      loadStepperSteps();
+      stepperSaving.value = false;
+      toast.add({ severity: 'info', summary: 'Étapes réinitialisées', life: 3000 });
+    }
+  });
+};
+
+// Charger les steps stepper au montage (après fetchConfig)
+watch(() => workflowStore.config, () => {
+  if (workflowStore.config) loadStepperSteps();
+}, { immediate: true });
 </script>
 
 <template>
@@ -384,6 +488,132 @@ const selectFieldFromPreview = (fieldKey) => {
         <Button :label="t('workflow_settings.save')" icon="pi pi-save" @click="saveConfig" :loading="saving" />
       </div>
     </div>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- SECTION : Étapes du Stepper (Formation/Coaching/Conseil) -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <div class="mb-10 bg-white dark:bg-surface-800 rounded-2xl border border-surface-200 dark:border-surface-700 p-6">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-5">
+        <div class="flex items-center gap-2">
+          <i class="pi pi-list text-primary-500 text-lg"></i>
+          <h2 class="font-semibold text-surface-700 dark:text-surface-200">Étapes du parcours</h2>
+          <span class="text-xs text-surface-400 ml-2">{{ stepperSteps.length }} étapes</span>
+        </div>
+        <div class="flex gap-2">
+          <Button icon="pi pi-refresh" label="Défaut" severity="secondary" outlined size="small" @click="resetStepperSteps" :loading="stepperSaving" />
+          <Button icon="pi pi-save" label="Sauvegarder" size="small" @click="saveStepperSteps" :loading="stepperSaving" />
+        </div>
+      </div>
+
+      <!-- Onglets type de prestation -->
+      <div class="flex gap-2 mb-5">
+        <button v-for="type in stepperTypes" :key="type.value"
+                class="px-4 py-2 rounded-full text-sm font-medium transition-all"
+                :class="stepperActiveType === type.value
+                  ? 'text-white shadow-md'
+                  : 'bg-surface-100 dark:bg-surface-700 text-surface-600 dark:text-surface-300 hover:bg-surface-200'"
+                :style="stepperActiveType === type.value ? { backgroundColor: type.color } : {}"
+                @click="switchStepperType(type.value)">
+          {{ type.label }}
+        </button>
+      </div>
+
+      <!-- Aperçu timeline -->
+      <div class="flex items-center gap-0 overflow-x-auto pb-4 mb-4">
+        <template v-for="(step, idx) in stepperSteps" :key="idx">
+          <div v-if="idx > 0" class="w-6 md:w-10 flex items-center justify-center shrink-0">
+            <div class="h-0.5 w-full bg-surface-300 dark:bg-surface-600"></div>
+          </div>
+          <div class="flex flex-col items-center shrink-0 min-w-[80px]">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                 :style="{ backgroundColor: stepperTypes.find(t => t.value === stepperActiveType)?.color || '#3B82F6' }">
+              {{ step.step }}
+            </div>
+            <span class="text-xs text-surface-600 dark:text-surface-300 mt-1 text-center max-w-[90px] truncate">{{ step.label }}</span>
+          </div>
+        </template>
+      </div>
+
+      <!-- Liste éditable des étapes -->
+      <draggable v-model="stepperSteps" item-key="step" handle=".stepper-drag-handle" ghost-class="opacity-30"
+                 @end="stepperSteps.forEach((s, i) => { s.step = i + 1; })"
+                 class="space-y-2">
+        <template #item="{ element: step, index }">
+          <div class="group flex items-center gap-3 p-3 rounded-xl border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800 hover:border-primary-300 transition-all">
+            <!-- Drag handle -->
+            <i class="stepper-drag-handle pi pi-grip-vertical text-surface-300 cursor-grab"></i>
+
+            <!-- Numéro -->
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+                 :style="{ backgroundColor: stepperTypes.find(t => t.value === stepperActiveType)?.color || '#3B82F6' }">
+              {{ step.step }}
+            </div>
+
+            <!-- Icône -->
+            <Dropdown v-model="step.icon" :options="stepperIconOptions" optionLabel="label" optionValue="value"
+                      class="w-36" size="small">
+              <template #value="{ value }">
+                <div class="flex items-center gap-2"><i :class="`pi ${value}`"></i></div>
+              </template>
+              <template #option="{ option }">
+                <div class="flex items-center gap-2"><i :class="option.icon"></i><span class="text-sm">{{ option.label }}</span></div>
+              </template>
+            </Dropdown>
+
+            <!-- Label éditable -->
+            <input v-if="editingStepperStepIndex === index"
+                   v-model="step.label"
+                   @blur="editingStepperStepIndex = null"
+                   @keyup.enter="editingStepperStepIndex = null"
+                   class="flex-1 bg-transparent font-medium text-sm border-b-2 border-primary-400 outline-none text-surface-900 dark:text-white" />
+            <span v-else class="flex-1 font-medium text-sm text-surface-800 dark:text-surface-100 cursor-pointer"
+                  @dblclick="editingStepperStepIndex = index">
+              {{ step.label }}
+              <button class="ml-2 text-surface-300 hover:text-primary-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                      @click.stop="editingStepperStepIndex = index">
+                <i class="pi pi-pencil text-xs"></i>
+              </button>
+            </span>
+
+            <!-- Supprimer -->
+            <button class="w-7 h-7 rounded-full flex items-center justify-center text-surface-300 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all"
+                    @click.stop="removeStepperStep(index)">
+              <i class="pi pi-times text-xs"></i>
+            </button>
+          </div>
+        </template>
+      </draggable>
+
+      <!-- Bouton ajouter -->
+      <div class="mt-3 border-2 border-dashed border-surface-300 dark:border-surface-600 rounded-xl p-3 flex items-center justify-center
+                  cursor-pointer hover:border-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/10 transition-all text-surface-400 hover:text-primary-500"
+           @click="showAddStepperStepDialog = true">
+        <i class="pi pi-plus mr-2"></i>
+        <span class="text-sm font-medium">Ajouter une étape</span>
+      </div>
+    </div>
+
+    <!-- Dialog: Ajouter une étape stepper -->
+    <Dialog v-model:visible="showAddStepperStepDialog" header="Nouvelle étape" modal :style="{ width: '400px' }">
+      <div class="space-y-4">
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium">Nom de l'étape</label>
+          <InputText v-model="newStepperStep.label" placeholder="Ex: Évaluation, Bilan..." autofocus @keyup.enter="addStepperStep" />
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium">Icône</label>
+          <Dropdown v-model="newStepperStep.icon" :options="stepperIconOptions" optionLabel="label" optionValue="value">
+            <template #option="{ option }">
+              <div class="flex items-center gap-2"><i :class="option.icon"></i><span>{{ option.label }}</span></div>
+            </template>
+          </Dropdown>
+        </div>
+      </div>
+      <template #footer>
+        <Button label="Annuler" severity="secondary" text @click="showAddStepperStepDialog = false" />
+        <Button label="Ajouter" icon="pi pi-plus" @click="addStepperStep" :disabled="!newStepperStep.label.trim()" />
+      </template>
+    </Dialog>
 
     <!-- Loading -->
     <div v-if="loading" class="flex justify-center py-20">

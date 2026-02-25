@@ -24,6 +24,7 @@ import DatePicker from 'primevue/datepicker';
 import { useI18n } from 'vue-i18n';
 import { useFormValidation } from '../../composables/useFormValidation';
 import AddressAutocomplete from '../../components/common/AddressAutocomplete.vue';
+import EditableLabel from '../../components/common/EditableLabel.vue';
 
 const store = useCompanyStore();
 const authStore = useAuthStore();
@@ -201,7 +202,7 @@ const uploadQualiopi = async (event) => {
 <template>
   <div class="max-w-6xl mx-auto pb-20">
     <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Paramètres de l'entreprise</h1>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white"><EditableLabel labelKey="settings.page_title" defaultLabel="Paramètres de l'entreprise" tag="span" /></h1>
       <Button label="Enregistrer" icon="pi pi-save" :loading="saving" @click="handleSave" />
     </div>
 
@@ -216,25 +217,25 @@ const uploadQualiopi = async (event) => {
         <TabPanel header="Identité & coordonnées">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
             <div class="flex flex-col gap-2">
-              <label class="font-semibold">Raison sociale <span class="text-red-500">*</span></label>
+              <label class="font-semibold"><EditableLabel labelKey="settings.identity.raison_sociale" defaultLabel="Raison sociale" /> <span class="text-red-500">*</span></label>
               <InputText v-model="form.name" placeholder="Nom de l'entreprise" :invalid="!!errors.name" @input="clearError('name')" />
             </div>
             <div class="flex flex-col gap-2">
-              <label class="font-semibold">Forme juridique</label>
+              <label class="font-semibold"><EditableLabel labelKey="settings.identity.forme_juridique" defaultLabel="Forme juridique" /></label>
               <Dropdown v-model="form.forme_juridique" :options="FORMES_JURIDIQUES" optionLabel="label" optionValue="value" placeholder="Sélectionner" />
             </div>
 
             <div class="flex flex-col gap-2">
-              <label class="font-semibold">Représentant légal</label>
+              <label class="font-semibold"><EditableLabel labelKey="settings.identity.representant_legal" defaultLabel="Représentant légal" /></label>
               <InputText v-model="form.representant_legal" placeholder="Prénom Nom" />
             </div>
             <div class="flex flex-col gap-2">
-              <label class="font-semibold">Devise</label>
+              <label class="font-semibold"><EditableLabel labelKey="settings.identity.devise" defaultLabel="Devise" /></label>
               <Dropdown v-model="form.currency" :options="currencies" />
             </div>
 
             <div class="md:col-span-2 flex flex-col gap-2">
-              <label class="font-semibold">Adresse</label>
+              <label class="font-semibold"><EditableLabel labelKey="settings.identity.adresse" defaultLabel="Adresse" /></label>
               <AddressAutocomplete
                 v-model="form.address"
                 @address-selected="handleAddressSelected"
@@ -244,33 +245,33 @@ const uploadQualiopi = async (event) => {
             </div>
 
             <div class="flex flex-col gap-2">
-              <label class="font-semibold">Code postal</label>
+              <label class="font-semibold"><EditableLabel labelKey="settings.identity.code_postal" defaultLabel="Code postal" /></label>
               <InputMask v-model="form.zip_code" mask="99999" placeholder="75001" slotChar="" />
             </div>
             <div class="flex flex-col gap-2">
-              <label class="font-semibold">Ville</label>
+              <label class="font-semibold"><EditableLabel labelKey="settings.identity.ville" defaultLabel="Ville" /></label>
               <InputText v-model="form.city" />
             </div>
             <div class="flex flex-col gap-2">
-              <label class="font-semibold">Pays</label>
+              <label class="font-semibold"><EditableLabel labelKey="settings.identity.pays" defaultLabel="Pays" /></label>
               <Dropdown v-model="form.country" :options="countries" />
             </div>
 
             <div class="flex flex-col gap-2">
-              <label class="font-semibold">Téléphone</label>
+              <label class="font-semibold"><EditableLabel labelKey="settings.identity.telephone" defaultLabel="Téléphone" /></label>
               <InputMask v-model="form.phone" mask="99 99 99 99 99" placeholder="01 23 45 67 89" />
             </div>
             <div class="flex flex-col gap-2">
-              <label class="font-semibold">Email général</label>
+              <label class="font-semibold"><EditableLabel labelKey="settings.identity.email" defaultLabel="Email général" /></label>
               <InputText v-model="form.email" type="email" placeholder="contact@entreprise.fr" />
             </div>
             <div class="flex flex-col gap-2">
-              <label class="font-semibold">Site web</label>
+              <label class="font-semibold"><EditableLabel labelKey="settings.identity.site_web" defaultLabel="Site web" /></label>
               <InputText v-model="form.website" type="url" placeholder="https://www.entreprise.fr" />
             </div>
 
             <div class="flex flex-col gap-2">
-              <label class="font-semibold">Logo</label>
+              <label class="font-semibold"><EditableLabel labelKey="settings.identity.logo" defaultLabel="Logo" /></label>
               <img v-if="form.logo_url" :src="form.logo_url" class="h-16 mb-2 object-contain" />
               <FileUpload mode="basic" name="logo" accept="image/*" :auto="true" @select="uploadLogo" chooseLabel="Choisir un logo" />
             </div>
@@ -286,31 +287,31 @@ const uploadQualiopi = async (event) => {
             <!-- Identifiants légaux -->
             <div>
               <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
-                <i class="pi pi-id-card text-blue-500"></i> Identifiants légaux
+                <i class="pi pi-id-card text-blue-500"></i> <EditableLabel labelKey="settings.legal.section_identifiants" defaultLabel="Identifiants légaux" />
               </h3>
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="flex flex-col gap-2">
-                  <label>SIREN</label>
+                  <label><EditableLabel labelKey="settings.legal.siren" defaultLabel="SIREN" /></label>
                   <InputMask v-model="form.siren" mask="999 999 999" placeholder="123 456 789" slotChar="" />
                 </div>
                 <div class="flex flex-col gap-2">
-                  <label>SIRET</label>
+                  <label><EditableLabel labelKey="settings.legal.siret" defaultLabel="SIRET" /></label>
                   <InputMask v-model="form.siret" mask="999 999 999 99999" placeholder="123 456 789 00012" slotChar="" />
                 </div>
                 <div class="flex flex-col gap-2">
-                  <label>Code NAF/APE</label>
+                  <label><EditableLabel labelKey="settings.legal.naf_ape" defaultLabel="Code NAF/APE" /></label>
                   <InputMask v-model="form.naf_ape" mask="9999a" placeholder="8559A" slotChar="" />
                 </div>
                 <div class="flex flex-col gap-2">
-                  <label>N° TVA intracommunautaire</label>
+                  <label><EditableLabel labelKey="settings.legal.tva_intracom" defaultLabel="N° TVA intracommunautaire" /></label>
                   <InputText v-model="form.vat_number" placeholder="FR12345678901" />
                 </div>
                 <div class="flex flex-col gap-2">
-                  <label>Capital social</label>
+                  <label><EditableLabel labelKey="settings.legal.capital" defaultLabel="Capital social" /></label>
                   <InputNumber v-model="form.capital" mode="currency" currency="EUR" :min="0" />
                 </div>
                 <div class="flex flex-col gap-2">
-                  <label>RCS / RM</label>
+                  <label><EditableLabel labelKey="settings.legal.rcs_rm" defaultLabel="RCS / RM" /></label>
                   <InputText v-model="form.rcs_rm" placeholder="Paris B 123 456 789" />
                 </div>
               </div>
@@ -321,19 +322,19 @@ const uploadQualiopi = async (event) => {
             <!-- NDA -->
             <div>
               <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
-                <i class="pi pi-file text-green-500"></i> Numéro de Déclaration d'Activité (NDA)
+                <i class="pi pi-file text-green-500"></i> <EditableLabel labelKey="settings.nda.section_title" defaultLabel="Numéro de Déclaration d'Activité (NDA)" />
               </h3>
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="flex flex-col gap-2">
-                  <label>Numéro NDA</label>
+                  <label><EditableLabel labelKey="settings.nda.numero" defaultLabel="Numéro NDA" /></label>
                   <InputText v-model="form.nda_numero" placeholder="11 75 12345 67" />
                 </div>
                 <div class="flex flex-col gap-2">
-                  <label>Date d'enregistrement</label>
+                  <label><EditableLabel labelKey="settings.nda.date_enregistrement" defaultLabel="Date d'enregistrement" /></label>
                   <DatePicker v-model="form.nda_date_enregistrement" dateFormat="dd/mm/yy" showIcon />
                 </div>
                 <div class="flex flex-col gap-2">
-                  <label>Région d'enregistrement</label>
+                  <label><EditableLabel labelKey="settings.nda.region" defaultLabel="Région d'enregistrement" /></label>
                   <Dropdown v-model="form.nda_region" :options="regions" placeholder="Sélectionner" editable />
                 </div>
               </div>
@@ -358,27 +359,27 @@ const uploadQualiopi = async (event) => {
             <!-- Qualiopi -->
             <div>
               <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
-                <i class="pi pi-verified text-purple-500"></i> Certification Qualiopi
+                <i class="pi pi-verified text-purple-500"></i> <EditableLabel labelKey="settings.qualiopi.section_title" defaultLabel="Certification Qualiopi" />
               </h3>
               <div class="flex items-center gap-3 mb-4">
                 <ToggleSwitch v-model="form.qualiopi_certifie" />
-                <label class="font-semibold">Organisme certifié Qualiopi</label>
+                <label class="font-semibold"><EditableLabel labelKey="settings.qualiopi.certifie" defaultLabel="Organisme certifié Qualiopi" /></label>
               </div>
               <div v-if="form.qualiopi_certifie" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="flex flex-col gap-2">
-                  <label>Certificateur</label>
+                  <label><EditableLabel labelKey="settings.qualiopi.certificateur" defaultLabel="Certificateur" /></label>
                   <InputText v-model="form.qualiopi_certificateur" placeholder="AFNOR, Bureau Veritas..." />
                 </div>
                 <div class="flex flex-col gap-2">
-                  <label>Date de certification</label>
+                  <label><EditableLabel labelKey="settings.qualiopi.date_certif" defaultLabel="Date de certification" /></label>
                   <DatePicker v-model="form.qualiopi_date_certification" dateFormat="dd/mm/yy" showIcon />
                 </div>
                 <div class="flex flex-col gap-2">
-                  <label>Date de fin de validité</label>
+                  <label><EditableLabel labelKey="settings.qualiopi.date_fin" defaultLabel="Date de fin de validité" /></label>
                   <DatePicker v-model="form.qualiopi_date_fin" dateFormat="dd/mm/yy" showIcon />
                 </div>
                 <div class="flex flex-col gap-2">
-                  <label>Certificat (PDF)</label>
+                  <label><EditableLabel labelKey="settings.qualiopi.certificat" defaultLabel="Certificat (PDF)" /></label>
                   <div v-if="form.qualiopi_certificat_url" class="flex items-center gap-2 mb-2">
                     <a :href="form.qualiopi_certificat_url" target="_blank" class="text-blue-500 underline text-sm">Voir le certificat</a>
                   </div>
@@ -392,19 +393,19 @@ const uploadQualiopi = async (event) => {
             <!-- Référent Handicap -->
             <div>
               <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
-                <i class="pi pi-heart text-orange-500"></i> Référent Handicap
+                <i class="pi pi-heart text-orange-500"></i> <EditableLabel labelKey="settings.handicap.section_title" defaultLabel="Référent Handicap" />
               </h3>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="flex flex-col gap-2">
-                  <label>Nom</label>
+                  <label><EditableLabel labelKey="settings.handicap.nom" defaultLabel="Nom" /></label>
                   <InputText v-model="form.handicap_nom" />
                 </div>
                 <div class="flex flex-col gap-2">
-                  <label>Email</label>
+                  <label><EditableLabel labelKey="settings.handicap.email" defaultLabel="Email" /></label>
                   <InputText v-model="form.handicap_email" type="email" />
                 </div>
                 <div class="flex flex-col gap-2">
-                  <label>Téléphone</label>
+                  <label><EditableLabel labelKey="settings.handicap.telephone" defaultLabel="Téléphone" /></label>
                   <InputMask v-model="form.handicap_telephone" mask="99 99 99 99 99" />
                 </div>
               </div>
@@ -422,14 +423,14 @@ const uploadQualiopi = async (event) => {
         <TabPanel header="Documents">
           <div class="p-4 space-y-6">
             <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
-              <i class="pi pi-file-edit text-blue-500"></i> Options globales des documents générés
+              <i class="pi pi-file-edit text-blue-500"></i> <EditableLabel labelKey="settings.docs.section_title" defaultLabel="Options globales des documents générés" />
             </h3>
 
             <div class="flex flex-col gap-4">
               <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                 <ToggleSwitch v-model="form.doc_afficher_logo" />
                 <div>
-                  <label class="font-semibold">Afficher le logo</label>
+                  <label class="font-semibold"><EditableLabel labelKey="settings.docs.afficher_logo" defaultLabel="Afficher le logo" /></label>
                   <p class="text-sm text-gray-500">Le logo de l'entreprise sera affiché sur tous les documents générés</p>
                 </div>
               </div>
@@ -437,7 +438,7 @@ const uploadQualiopi = async (event) => {
               <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                 <ToggleSwitch v-model="form.doc_signature_representant" />
                 <div>
-                  <label class="font-semibold">Signature du représentant</label>
+                  <label class="font-semibold"><EditableLabel labelKey="settings.docs.signature_representant" defaultLabel="Signature du représentant" /></label>
                   <p class="text-sm text-gray-500">Ajouter automatiquement le bloc signature du représentant légal</p>
                 </div>
               </div>
@@ -445,7 +446,7 @@ const uploadQualiopi = async (event) => {
               <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                 <ToggleSwitch v-model="form.doc_mention_rgpd" />
                 <div>
-                  <label class="font-semibold">Mention RGPD</label>
+                  <label class="font-semibold"><EditableLabel labelKey="settings.docs.mention_rgpd" defaultLabel="Mention RGPD" /></label>
                   <p class="text-sm text-gray-500">Ajouter la mention RGPD en pied de page des documents</p>
                 </div>
               </div>
@@ -453,7 +454,7 @@ const uploadQualiopi = async (event) => {
               <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                 <ToggleSwitch v-model="form.doc_mention_nda" />
                 <div>
-                  <label class="font-semibold">Mention NDA</label>
+                  <label class="font-semibold"><EditableLabel labelKey="settings.docs.mention_nda" defaultLabel="Mention NDA" /></label>
                   <p class="text-sm text-gray-500">Ajouter le numéro de déclaration d'activité sur les documents</p>
                 </div>
               </div>
@@ -480,24 +481,24 @@ const uploadQualiopi = async (event) => {
         <TabPanel header="Email & envoi">
           <div class="p-4 space-y-6">
             <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
-              <i class="pi pi-envelope text-blue-500"></i> Configuration des emails
+              <i class="pi pi-envelope text-blue-500"></i> <EditableLabel labelKey="settings.email.section_title" defaultLabel="Configuration des emails" />
             </h3>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div class="flex flex-col gap-2">
-                <label class="font-semibold">Nom de l'expéditeur</label>
+                <label class="font-semibold"><EditableLabel labelKey="settings.email.nom_expediteur" defaultLabel="Nom de l'expéditeur" /></label>
                 <InputText v-model="form.email_nom_expediteur" placeholder="Mon Organisme de Formation" />
                 <small class="text-gray-500">Nom affiché dans les emails envoyés</small>
               </div>
               <div class="flex flex-col gap-2">
-                <label class="font-semibold">Email d'envoi</label>
+                <label class="font-semibold"><EditableLabel labelKey="settings.email.email_envoi" defaultLabel="Email d'envoi" /></label>
                 <InputText v-model="form.email" type="email" placeholder="envoi@organisme.fr" />
                 <small class="text-gray-500">Adresse utilisée pour l'envoi des documents</small>
               </div>
             </div>
 
             <div class="flex flex-col gap-2">
-              <label class="font-semibold">Signature email</label>
+              <label class="font-semibold"><EditableLabel labelKey="settings.email.signature" defaultLabel="Signature email" /></label>
               <Textarea v-model="form.email_signature" rows="4" placeholder="Cordialement,\nL'équipe Mon Organisme..." />
               <small class="text-gray-500">Signature ajoutée automatiquement à chaque email envoyé</small>
             </div>
@@ -508,7 +509,7 @@ const uploadQualiopi = async (event) => {
               <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                 <ToggleSwitch v-model="form.email_envoi_auto" />
                 <div>
-                  <label class="font-semibold">Envoi automatique</label>
+                  <label class="font-semibold"><EditableLabel labelKey="settings.email.envoi_auto" defaultLabel="Envoi automatique" /></label>
                   <p class="text-sm text-gray-500">Envoyer automatiquement les documents à leur génération (convention, convocation, attestation)</p>
                 </div>
               </div>
@@ -516,7 +517,7 @@ const uploadQualiopi = async (event) => {
               <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                 <ToggleSwitch v-model="form.email_signature_electronique" />
                 <div>
-                  <label class="font-semibold">Signature électronique</label>
+                  <label class="font-semibold"><EditableLabel labelKey="settings.email.signature_electronique" defaultLabel="Signature électronique" /></label>
                   <p class="text-sm text-gray-500">Activer la signature électronique pour les conventions et contrats</p>
                 </div>
               </div>
@@ -530,16 +531,16 @@ const uploadQualiopi = async (event) => {
         <TabPanel header="RGPD & DPO">
           <div class="p-4 space-y-6">
             <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
-              <i class="pi pi-shield text-green-500"></i> Délégué à la Protection des Données (DPO)
+              <i class="pi pi-shield text-green-500"></i> <EditableLabel labelKey="settings.rgpd.section_dpo" defaultLabel="Délégué à la Protection des Données (DPO)" />
             </h3>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div class="flex flex-col gap-2">
-                <label class="font-semibold">Nom du DPO</label>
+                <label class="font-semibold"><EditableLabel labelKey="settings.rgpd.dpo_nom" defaultLabel="Nom du DPO" /></label>
                 <InputText v-model="form.dpo_nom" placeholder="Prénom Nom" />
               </div>
               <div class="flex flex-col gap-2">
-                <label class="font-semibold">Email du DPO</label>
+                <label class="font-semibold"><EditableLabel labelKey="settings.rgpd.dpo_email" defaultLabel="Email du DPO" /></label>
                 <InputText v-model="form.dpo_email" type="email" placeholder="dpo@organisme.fr" />
               </div>
             </div>
@@ -547,18 +548,18 @@ const uploadQualiopi = async (event) => {
             <Divider />
 
             <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
-              <i class="pi pi-lock text-green-500"></i> Politique de confidentialité
+              <i class="pi pi-lock text-green-500"></i> <EditableLabel labelKey="settings.rgpd.section_politique" defaultLabel="Politique de confidentialité" />
             </h3>
 
             <div class="flex flex-col gap-2">
-              <label class="font-semibold">Politique de confidentialité</label>
+              <label class="font-semibold"><EditableLabel labelKey="settings.rgpd.politique" defaultLabel="Politique de confidentialité" /></label>
               <Textarea v-model="form.politique_confidentialite" rows="6"
                 placeholder="Décrivez votre politique de traitement des données personnelles..." />
               <small class="text-gray-500">Ce texte pourra être intégré dans les documents à destination des apprenants</small>
             </div>
 
             <div class="flex flex-col gap-2 max-w-xs">
-              <label class="font-semibold">Durée de conservation des données (années)</label>
+              <label class="font-semibold"><EditableLabel labelKey="settings.rgpd.duree_conservation" defaultLabel="Durée de conservation des données (années)" /></label>
               <InputNumber v-model="form.duree_conservation_donnees" :min="1" :max="20" showButtons />
               <small class="text-gray-500">Durée légale minimale : 5 ans pour les OF</small>
             </div>
@@ -574,23 +575,23 @@ const uploadQualiopi = async (event) => {
             <!-- TVA & Coordonnées bancaires -->
             <div>
               <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
-                <i class="pi pi-wallet text-blue-500"></i> TVA & Coordonnées bancaires
+                <i class="pi pi-wallet text-blue-500"></i> <EditableLabel labelKey="settings.financier.section_tva" defaultLabel="TVA & Coordonnées bancaires" />
               </h3>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="flex items-center gap-3">
                   <ToggleSwitch v-model="form.tva_assujetti" />
-                  <label class="font-semibold">Assujetti à la TVA</label>
+                  <label class="font-semibold"><EditableLabel labelKey="settings.financier.assujetti_tva" defaultLabel="Assujetti à la TVA" /></label>
                 </div>
                 <div class="flex flex-col gap-2">
-                  <label>Taux TVA par défaut (%)</label>
+                  <label><EditableLabel labelKey="settings.financier.taux_tva" defaultLabel="Taux TVA par défaut (%)" /></label>
                   <InputNumber v-model="form.tva_taux_defaut" :min="0" :max="30" :minFractionDigits="2" suffix=" %" />
                 </div>
                 <div class="flex flex-col gap-2">
-                  <label>IBAN</label>
+                  <label><EditableLabel labelKey="settings.financier.iban" defaultLabel="IBAN" /></label>
                   <InputText v-model="form.iban" placeholder="FR76 XXXX XXXX XXXX XXXX XXXX XXX" />
                 </div>
                 <div class="flex flex-col gap-2">
-                  <label>BIC</label>
+                  <label><EditableLabel labelKey="settings.financier.bic" defaultLabel="BIC" /></label>
                   <InputText v-model="form.bic" placeholder="BNPAFRPP" />
                 </div>
               </div>
@@ -601,28 +602,28 @@ const uploadQualiopi = async (event) => {
             <!-- Paramètres facturation -->
             <div>
               <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
-                <i class="pi pi-receipt text-orange-500"></i> Paramètres de facturation
+                <i class="pi pi-receipt text-orange-500"></i> <EditableLabel labelKey="settings.financier.section_facturation" defaultLabel="Paramètres de facturation" />
               </h3>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="flex flex-col gap-2">
-                  <label>% acompte par défaut</label>
+                  <label><EditableLabel labelKey="settings.financier.acompte" defaultLabel="% acompte par défaut" /></label>
                   <InputNumber v-model="form.acompte_pourcentage" :min="0" :max="100" suffix=" %" />
                 </div>
                 <div class="flex flex-col gap-2">
-                  <label>Conditions de paiement par défaut</label>
+                  <label><EditableLabel labelKey="settings.financier.conditions_paiement" defaultLabel="Conditions de paiement par défaut" /></label>
                   <Dropdown v-model="form.conditions_paiement_defaut" :options="conditionsPaiementOptions"
                     optionLabel="label" optionValue="value" />
                 </div>
                 <div class="flex items-center gap-3">
                   <ToggleSwitch v-model="form.acomptes_multiples" />
-                  <label>Autoriser les acomptes multiples</label>
+                  <label><EditableLabel labelKey="settings.financier.acomptes_multiples" defaultLabel="Autoriser les acomptes multiples" /></label>
                 </div>
                 <div class="flex items-center gap-3">
                   <ToggleSwitch v-model="form.penalite_annulation" />
-                  <label>Pénalité d'annulation</label>
+                  <label><EditableLabel labelKey="settings.financier.penalite_annulation" defaultLabel="Pénalité d'annulation" /></label>
                 </div>
                 <div v-if="form.penalite_annulation" class="flex flex-col gap-2">
-                  <label>% pénalité d'annulation</label>
+                  <label><EditableLabel labelKey="settings.financier.penalite_pourcentage" defaultLabel="% pénalité d'annulation" /></label>
                   <InputNumber v-model="form.penalite_pourcentage" :min="0" :max="100" suffix=" %" />
                 </div>
               </div>
@@ -633,35 +634,35 @@ const uploadQualiopi = async (event) => {
             <!-- Seuils qualité -->
             <div>
               <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
-                <i class="pi pi-chart-bar text-purple-500"></i> Seuils qualité
+                <i class="pi pi-chart-bar text-purple-500"></i> <EditableLabel labelKey="settings.financier.section_seuils" defaultLabel="Seuils qualité" />
               </h3>
               <p class="text-sm text-gray-500 mb-4">
                 Ces seuils déclenchent automatiquement des signaux qualité lorsqu'ils ne sont pas atteints.
               </p>
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div class="flex flex-col gap-2">
-                  <label>Satisfaction stagiaires (à chaud)</label>
+                  <label><EditableLabel labelKey="settings.financier.seuil_satisfaction_chaud" defaultLabel="Satisfaction stagiaires (à chaud)" /></label>
                   <InputNumber v-model="form.seuil_satisfaction_chaud" :min="0" :max="100" suffix=" %" />
                 </div>
                 <div class="flex flex-col gap-2">
-                  <label>Satisfaction formateurs</label>
+                  <label><EditableLabel labelKey="settings.financier.seuil_satisfaction_formateur" defaultLabel="Satisfaction formateurs" /></label>
                   <InputNumber v-model="form.seuil_satisfaction_formateur" :min="0" :max="100" suffix=" %" />
                 </div>
                 <div class="flex flex-col gap-2">
-                  <label>Satisfaction financeurs</label>
+                  <label><EditableLabel labelKey="settings.financier.seuil_satisfaction_financeur" defaultLabel="Satisfaction financeurs" /></label>
                   <InputNumber v-model="form.seuil_satisfaction_financeur" :min="0" :max="100" suffix=" %" />
                 </div>
                 <div class="flex flex-col gap-2">
-                  <label>Quiz de validation (seuil réussite)</label>
+                  <label><EditableLabel labelKey="settings.financier.seuil_quiz" defaultLabel="Quiz de validation (seuil réussite)" /></label>
                   <InputNumber v-model="form.seuil_quiz_validation" :min="0" :max="100" suffix=" %" />
                 </div>
                 <div class="flex flex-col gap-2">
-                  <label>Taux de réponse minimum</label>
+                  <label><EditableLabel labelKey="settings.financier.seuil_taux_reponse" defaultLabel="Taux de réponse minimum" /></label>
                   <InputNumber v-model="form.seuil_taux_reponse" :min="0" :max="100" suffix=" %" />
                 </div>
                 <div class="flex items-center gap-3">
                   <ToggleSwitch v-model="form.declenchement_question_critique" />
-                  <label>Déclencher un signal sur question critique</label>
+                  <label><EditableLabel labelKey="settings.financier.declenchement_critique" defaultLabel="Déclencher un signal sur question critique" /></label>
                 </div>
               </div>
             </div>

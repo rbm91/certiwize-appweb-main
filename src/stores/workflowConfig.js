@@ -225,6 +225,39 @@ const DEFAULT_WORKFLOW = {
 
 export { DEFAULT_WORKFLOW };
 
+// Étapes par défaut pour le stepper Formation (10 étapes)
+const DEFAULT_FORMATION_STEPS = [
+  { step: 1, label: 'Identification', icon: 'pi-user' },
+  { step: 2, label: 'Analyse du besoin', icon: 'pi-search' },
+  { step: 3, label: 'Convention', icon: 'pi-file' },
+  { step: 4, label: 'Convocation', icon: 'pi-envelope' },
+  { step: 5, label: 'Réalisation', icon: 'pi-play' },
+  { step: 6, label: 'Évaluation', icon: 'pi-check-circle' },
+  { step: 7, label: 'Satisfaction', icon: 'pi-star' },
+  { step: 8, label: 'Facturation', icon: 'pi-wallet' },
+  { step: 9, label: 'Clôture', icon: 'pi-lock' },
+  { step: 10, label: 'Archivé', icon: 'pi-box' },
+];
+
+const DEFAULT_COACHING_STEPS = [
+  { step: 1, label: 'Cadrage', icon: 'pi-compass' },
+  { step: 2, label: 'Contractualisation', icon: 'pi-file' },
+  { step: 3, label: 'Plan accompagnement', icon: 'pi-map' },
+  { step: 4, label: 'Séances', icon: 'pi-comments' },
+  { step: 5, label: 'Bilan', icon: 'pi-chart-bar' },
+  { step: 6, label: 'Clôture', icon: 'pi-lock' },
+];
+
+const DEFAULT_CONSEIL_STEPS = [
+  { step: 1, label: 'Cadrage', icon: 'pi-compass' },
+  { step: 2, label: 'Proposition', icon: 'pi-file-edit' },
+  { step: 3, label: 'Réalisation', icon: 'pi-play' },
+  { step: 4, label: 'Facturation', icon: 'pi-wallet' },
+  { step: 5, label: 'Clôture', icon: 'pi-lock' },
+];
+
+export { DEFAULT_FORMATION_STEPS, DEFAULT_COACHING_STEPS, DEFAULT_CONSEIL_STEPS };
+
 export const useWorkflowConfigStore = defineStore('workflowConfig', () => {
   const config = ref(null);
   const loading = ref(false);
@@ -350,6 +383,79 @@ export const useWorkflowConfigStore = defineStore('workflowConfig', () => {
       .map(s => ({ doc_key: s.doc_key, db_column: s.db_column }));
   };
 
+  // --- Gestion des étapes stepper (Formation, Coaching, Conseil) ---
+
+  /**
+   * Récupérer les étapes du stepper pour un type de prestation.
+   * Retourne les steps custom ou les defaults.
+   */
+  const getStepperSteps = (type = 'formation') => {
+    const key = `${type}Steps`;
+    const defaults = {
+      formation: DEFAULT_FORMATION_STEPS,
+      coaching: DEFAULT_COACHING_STEPS,
+      conseil: DEFAULT_CONSEIL_STEPS,
+    };
+    if (config.value?.[key]?.length) {
+      return [...config.value[key]].sort((a, b) => a.step - b.step);
+    }
+    return structuredClone(defaults[type] || defaults.formation);
+  };
+
+  /**
+   * Sauvegarder les étapes stepper pour un type de prestation
+   */
+  const saveStepperSteps = async (type, steps) => {
+    const key = `${type}Steps`;
+    // Renuméroter séquentiellement
+    const renumbered = steps.map((s, i) => ({ ...s, step: i + 1 }));
+    const newConfig = JSON.parse(JSON.stringify(config.value || DEFAULT_WORKFLOW));
+    newConfig[key] = renumbered;
+    return saveConfig(newConfig);
+  };
+
+  /**
+   * Ajouter une étape au stepper
+   */
+  const addStepperStep = async (type, label, icon = 'pi-circle', afterStep = null) => {
+    const steps = getStepperSteps(type);
+    const newStep = { step: 0, label, icon };
+    if (afterStep !== null && afterStep < steps.length) {
+      steps.splice(afterStep, 0, newStep);
+    } else {
+      steps.push(newStep);
+    }
+    return saveStepperSteps(type, steps);
+  };
+
+  /**
+   * Supprimer une étape du stepper
+   */
+  const removeStepperStep = async (type, stepNumber) => {
+    const steps = getStepperSteps(type).filter(s => s.step !== stepNumber);
+    return saveStepperSteps(type, steps);
+  };
+
+  /**
+   * Renommer une étape du stepper
+   */
+  const renameStepperStep = async (type, stepNumber, newLabel) => {
+    const steps = getStepperSteps(type);
+    const step = steps.find(s => s.step === stepNumber);
+    if (step) step.label = newLabel;
+    return saveStepperSteps(type, steps);
+  };
+
+  /**
+   * Réinitialiser les steps d'un type aux defaults
+   */
+  const resetStepperSteps = async (type) => {
+    const key = `${type}Steps`;
+    const newConfig = JSON.parse(JSON.stringify(config.value || DEFAULT_WORKFLOW));
+    delete newConfig[key];
+    return saveConfig(newConfig);
+  };
+
   return {
     config,
     loading,
@@ -358,6 +464,13 @@ export const useWorkflowConfigStore = defineStore('workflowConfig', () => {
     resetConfig,
     getAllSteps,
     getAllFields,
-    getDocKeys
+    getDocKeys,
+    // Stepper steps
+    getStepperSteps,
+    saveStepperSteps,
+    addStepperStep,
+    removeStepperStep,
+    renameStepperStep,
+    resetStepperSteps
   };
 });

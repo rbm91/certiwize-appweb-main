@@ -11,7 +11,8 @@ const DEFAULT_CONFIG = {
   },
   sidebar: {
     labels: {}   // labels custom pour les items sidebar
-  }
+  },
+  labels: {}     // labels custom pour tous les libellés de la plateforme (formulaires, titres, etc.)
 };
 
 export const useNavConfigStore = defineStore('navConfig', () => {
@@ -128,6 +129,36 @@ export const useNavConfigStore = defineStore('navConfig', () => {
     return saveConfig(newConfig);
   };
 
+  /**
+   * Récupérer un label custom (formulaires, titres, etc.)
+   * Retourne le label custom ou le fallback
+   */
+  const getCustomLabel = (key, fallback) => {
+    return config.value?.labels?.[key] || fallback || key;
+  };
+
+  /**
+   * Mettre à jour un label custom (formulaires, titres, etc.)
+   */
+  const updateCustomLabel = async (key, label) => {
+    const newConfig = structuredClone(config.value || DEFAULT_CONFIG);
+    if (!newConfig.labels) newConfig.labels = {};
+    newConfig.labels[key] = label;
+    return saveConfig(newConfig);
+  };
+
+  /**
+   * Supprimer un label custom (retour au défaut)
+   */
+  const removeCustomLabel = async (key) => {
+    const newConfig = structuredClone(config.value || DEFAULT_CONFIG);
+    if (newConfig.labels) {
+      delete newConfig.labels[key];
+      return saveConfig(newConfig);
+    }
+    return { success: true };
+  };
+
   return {
     config,
     loading,
@@ -136,6 +167,9 @@ export const useNavConfigStore = defineStore('navConfig', () => {
     updateLabel,
     updateSidebarLabel,
     updateOrder,
-    resetConfig
+    resetConfig,
+    getCustomLabel,
+    updateCustomLabel,
+    removeCustomLabel
   };
 });

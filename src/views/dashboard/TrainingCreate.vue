@@ -17,6 +17,7 @@ import Dropdown from 'primevue/dropdown';
 import ProgressBar from 'primevue/progressbar';
 import { useConfirm } from 'primevue/useconfirm';
 import { useFormValidation } from '../../composables/useFormValidation';
+import EditableLabel from '../../components/common/EditableLabel.vue';
 
 // Options pour le dropdown modalités
 const modalitesOptions = [
@@ -379,30 +380,30 @@ const goBack = () => {
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="md:col-span-2">
-                        <label class="font-semibold block mb-2">{{ t('training.fields.title') }}</label>
+                        <label class="font-semibold block mb-2"><EditableLabel labelKey="training.titre" defaultLabel="Titre" /></label>
                         <InputText v-model="form.titre" class="w-full text-lg" :placeholder="t('training.placeholders.title')" :invalid="!!errors.titre" @input="clearError('titre')" />
                     </div>
                     <div>
-                        <label class="block mb-2">{{ t('training.fields.updated_at') }}</label>
+                        <label class="block mb-2"><EditableLabel labelKey="training.maj" defaultLabel="Date de mise à jour" /></label>
                         <Calendar v-model="form.maj" dateFormat="dd/mm/yy" showIcon class="w-full" />
                     </div>
                      <div>
-                        <label class="block mb-2">{{ t('training.fields.location') }}</label>
+                        <label class="block mb-2"><EditableLabel labelKey="training.lieu" defaultLabel="Lieu" /></label>
                         <InputText v-model="form.lieu" class="w-full" :placeholder="t('training.placeholders.location')" />
                     </div>
                 </div>
 
                 <div class="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label class="block mb-2 text-sm">{{ t('training.fields.duration') }} (heures)</label>
+                        <label class="block mb-2 text-sm"><EditableLabel labelKey="training.duree" defaultLabel="Durée (heures)" /></label>
                         <InputNumber v-model="form.duree" class="w-full" :min="0" :maxFractionDigits="1" placeholder="Ex: 14" suffix=" h" />
                     </div>
                     <div>
-                        <label class="block mb-2 text-sm">{{ t('training.fields.price') }}</label>
+                        <label class="block mb-2 text-sm"><EditableLabel labelKey="training.tarif" defaultLabel="Tarif" /></label>
                         <InputNumber v-model="form.tarif" mode="currency" currency="EUR" class="w-full" />
                     </div>
                     <div>
-                        <label class="block mb-2 text-sm">{{ t('training.fields.dates') }}</label>
+                        <label class="block mb-2 text-sm"><EditableLabel labelKey="training.dates" defaultLabel="Dates" /></label>
                         <div class="flex gap-2">
                             <div class="flex-1">
                                 <Calendar v-model="form.dates" dateFormat="dd/mm/yy" showIcon placeholder="Début" class="w-full" />
@@ -413,7 +414,7 @@ const goBack = () => {
                         </div>
                     </div>
                     <div>
-                        <label class="block mb-2 text-sm">{{ t('training.fields.schedule') }}</label>
+                        <label class="block mb-2 text-sm"><EditableLabel labelKey="training.horaires" defaultLabel="Horaires" /></label>
                         <div class="flex gap-2">
                             <div class="flex-1">
                                 <Calendar v-model="form.horaires_debut" timeOnly hourFormat="24" placeholder="Début" class="w-full" />
@@ -424,52 +425,52 @@ const goBack = () => {
                         </div>
                     </div>
                     <div class="md:col-span-2">
-                        <label class="block mb-2 text-sm">{{ t('training.fields.max_group') }}</label>
+                        <label class="block mb-2 text-sm"><EditableLabel labelKey="training.grp_max" defaultLabel="Taille max du groupe" /></label>
                         <InputNumber v-model="form.grp_max" showButtons :min="1" class="w-full" />
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="md:col-span-2">
-                        <label class="font-semibold block mb-2">{{ t('training.fields.target_audience') }}</label>
+                        <label class="font-semibold block mb-2"><EditableLabel labelKey="training.public_vise" defaultLabel="Public visé" /></label>
                         <Textarea v-model="form.public_vise" rows="2" class="w-full" />
                     </div>
                     <div class="md:col-span-2">
-                        <label class="font-semibold block mb-2">{{ t('training.fields.prerequisites') }}</label>
+                        <label class="font-semibold block mb-2"><EditableLabel labelKey="training.prerequis" defaultLabel="Prérequis" /></label>
                         <Textarea v-model="form.prerequis" rows="2" class="w-full" />
                     </div>
                     <div class="md:col-span-2">
-                        <label class="font-semibold block mb-2">{{ t('training.fields.objectives') }}</label>
+                        <label class="font-semibold block mb-2"><EditableLabel labelKey="training.objc_pedagq" defaultLabel="Objectifs pédagogiques" /></label>
                         <Textarea v-model="form.objc_pedagq" rows="4" class="w-full" />
                     </div>
                     <div class="md:col-span-2">
-                        <label class="font-semibold block mb-2">{{ t('training.fields.program') }}</label>
+                        <label class="font-semibold block mb-2"><EditableLabel labelKey="training.prgm" defaultLabel="Programme" /></label>
                         <Textarea v-model="form.prgm" rows="6" class="w-full" :placeholder="t('training.placeholders.program')" />
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label class="font-semibold block mb-2">{{ t('training.fields.methods') }}</label>
+                        <label class="font-semibold block mb-2"><EditableLabel labelKey="training.moyens_pedagq" defaultLabel="Moyens pédagogiques" /></label>
                         <Textarea v-model="form.moyens_pedagq" rows="3" class="w-full" />
                     </div>
                     <div>
-                        <label class="font-semibold block mb-2">{{ t('training.fields.evaluation') }}</label>
+                        <label class="font-semibold block mb-2"><EditableLabel labelKey="training.modalites_eval" defaultLabel="Modalités d'évaluation" /></label>
                         <Textarea v-model="form.modalités_eval" rows="3" class="w-full" />
                     </div>
                 </div>
 
                 <div class="border-t pt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label class="block mb-2">{{ t('training.fields.contact_num') }}</label>
+                        <label class="block mb-2"><EditableLabel labelKey="training.num" defaultLabel="Numéro de contact" /></label>
                         <InputText v-model="form.num" class="w-full" />
                     </div>
                     <div>
-                        <label class="block mb-2">{{ t('training.fields.contact_email') }}</label>
+                        <label class="block mb-2"><EditableLabel labelKey="training.mail" defaultLabel="Email de contact" /></label>
                         <InputText v-model="form.mail" class="w-full" />
                     </div>
                     <div class="md:col-span-2">
-                        <label class="font-semibold block mb-2">{{ t('training.fields.handicap_referent') }}</label>
+                        <label class="font-semibold block mb-2"><EditableLabel labelKey="training.ref_handi" defaultLabel="Référent handicap" /></label>
                         <Textarea v-model="form.ref_handi" rows="2" class="w-full" />
                     </div>
                 </div>
@@ -481,35 +482,35 @@ const goBack = () => {
                     <h2 class="text-lg font-bold text-blue-700 dark:text-blue-300 mb-2">Cahier des charges (CDC)</h2>
 
                     <div>
-                        <label class="font-semibold block mb-2">Public visé</label>
+                        <label class="font-semibold block mb-2"><EditableLabel labelKey="training.public_cible" defaultLabel="Public visé" /></label>
                         <Textarea v-model="form.public_cible" rows="3" class="w-full" placeholder="Décrivez le public cible de la formation" />
                     </div>
                     <div>
-                        <label class="font-semibold block mb-2">Prérequis</label>
+                        <label class="font-semibold block mb-2"><EditableLabel labelKey="training.prerequis_cdc" defaultLabel="Prérequis" /></label>
                         <Textarea v-model="form.prerequis" rows="3" class="w-full" placeholder="Prérequis nécessaires pour suivre la formation" />
                     </div>
                     <div>
-                        <label class="font-semibold block mb-2">Objectifs pédagogiques</label>
+                        <label class="font-semibold block mb-2"><EditableLabel labelKey="training.objectifs_pedagogiques" defaultLabel="Objectifs pédagogiques" /></label>
                         <Textarea v-model="form.objectifs_pedagogiques" rows="4" class="w-full" placeholder="Listez les objectifs pédagogiques" />
                     </div>
                     <div>
-                        <label class="font-semibold block mb-2">Programme détaillé</label>
+                        <label class="font-semibold block mb-2"><EditableLabel labelKey="training.programme" defaultLabel="Programme détaillé" /></label>
                         <Textarea v-model="form.programme" rows="6" class="w-full" placeholder="Décrivez le programme détaillé de la formation" />
                     </div>
                     <div>
-                        <label class="font-semibold block mb-2">Moyens pédagogiques et techniques</label>
+                        <label class="font-semibold block mb-2"><EditableLabel labelKey="training.moyens_pedagogiques" defaultLabel="Moyens pédagogiques et techniques" /></label>
                         <Textarea v-model="form.moyens_pedagogiques" rows="3" class="w-full" placeholder="Moyens pédagogiques et techniques mis en oeuvre" />
                     </div>
                     <div>
-                        <label class="font-semibold block mb-2">Modalités d'évaluation</label>
+                        <label class="font-semibold block mb-2"><EditableLabel labelKey="training.modalites_evaluation" defaultLabel="Modalités d'évaluation" /></label>
                         <Textarea v-model="form.modalites_evaluation" rows="3" class="w-full" placeholder="Décrivez les modalités d'évaluation" />
                     </div>
                     <div>
-                        <label class="font-semibold block mb-2">Accessibilité aux personnes en situation de handicap</label>
+                        <label class="font-semibold block mb-2"><EditableLabel labelKey="training.accessibilite" defaultLabel="Accessibilité aux personnes en situation de handicap" /></label>
                         <Textarea v-model="form.accessibilite" rows="3" class="w-full" placeholder="Indiquez les dispositions d'accessibilité" />
                     </div>
                     <div class="max-w-sm">
-                        <label class="font-semibold block mb-2">Modalités</label>
+                        <label class="font-semibold block mb-2"><EditableLabel labelKey="training.modalites" defaultLabel="Modalités" /></label>
                         <Dropdown v-model="form.modalites" :options="modalitesOptions" optionLabel="label" optionValue="value" placeholder="Choisir une modalité" class="w-full" />
                     </div>
                 </div>

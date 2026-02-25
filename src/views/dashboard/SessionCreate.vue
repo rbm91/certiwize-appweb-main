@@ -10,6 +10,7 @@ import { useAuthStore } from '../../stores/auth';
 import { supabase } from '../../supabase';
 import WorkflowTimeline from '../../components/dashboard/WorkflowTimeline.vue';
 import { FORMATION_WORKFLOW_STEPS } from '../../config/constants';
+import { useWorkflowConfigStore } from '../../stores/workflowConfig';
 
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
@@ -28,6 +29,7 @@ const store = usePrestationsStore();
 const tiersStore = useTiersStore();
 const trainingStore = useTrainingStore();
 const authStore = useAuthStore();
+const workflowConfigStore = useWorkflowConfigStore();
 
 // -- Edit mode --
 const editId = computed(() => route.params.id || null);
@@ -42,9 +44,10 @@ const generatingConvocation = ref(false);
 const generatingEtude = ref(false);
 const generatingLivret = ref(false);
 
-// -- Workflow step --
+// -- Workflow step (dynamique depuis le store, fallback constants) --
 const currentStep = ref(1);
-const totalSteps = FORMATION_WORKFLOW_STEPS.length;
+const formationSteps = computed(() => workflowConfigStore.getStepperSteps('formation'));
+const totalSteps = computed(() => formationSteps.value.length);
 
 // -- Form data --
 const form = ref({
@@ -382,6 +385,9 @@ const handleSave = async (redirect = true) => {
 onMounted(async () => {
   loading.value = true;
   try {
+    // Charger la config workflow pour les steps dynamiques
+    await workflowConfigStore.fetchConfig();
+
     if (tiersStore.activeTiers.length === 0) {
       await tiersStore.fetchTiers();
     }
@@ -452,7 +458,7 @@ onMounted(async () => {
 
       <!-- Workflow Timeline -->
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 mb-6">
-        <WorkflowTimeline :steps="FORMATION_WORKFLOW_STEPS" :currentStep="currentStep - 1" />
+        <WorkflowTimeline :steps="formationSteps" :currentStep="currentStep - 1" />
       </div>
 
       <!-- Step Content Card -->

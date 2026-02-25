@@ -9,6 +9,7 @@ import { useTrainingStore } from '../../stores/training';
 import { useAuthStore } from '../../stores/auth';
 import { supabase } from '../../supabase';
 import WorkflowTimeline from '../../components/dashboard/WorkflowTimeline.vue';
+import StepManagerPanel from '../../components/common/StepManagerPanel.vue';
 import { FORMATION_WORKFLOW_STEPS } from '../../config/constants';
 import { useWorkflowConfigStore } from '../../stores/workflowConfig';
 
@@ -48,6 +49,8 @@ const generatingLivret = ref(false);
 const currentStep = ref(1);
 const formationSteps = computed(() => workflowConfigStore.getStepperSteps('formation'));
 const totalSteps = computed(() => formationSteps.value.length);
+const showStepManager = ref(false);
+const isSuperAdmin = computed(() => authStore.isSuperAdmin);
 
 // -- Form data --
 const form = ref({
@@ -462,9 +465,24 @@ onMounted(async () => {
       </div>
 
       <!-- Workflow Timeline -->
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 mb-6">
-        <WorkflowTimeline :steps="formationSteps" :currentStep="currentStep - 1" :editable="true" @step-renamed="handleStepRenamed" />
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 mb-6 flex items-center">
+        <WorkflowTimeline :steps="formationSteps" :currentStep="currentStep - 1" :editable="true" @step-renamed="handleStepRenamed" class="flex-1" />
+        <button
+          v-if="isSuperAdmin"
+          @click="showStepManager = true"
+          class="mr-4 p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+          title="Configurer les étapes"
+        >
+          <i class="pi pi-cog text-lg"></i>
+        </button>
       </div>
+
+      <!-- Panneau de gestion des étapes (style Pipedrive) -->
+      <StepManagerPanel
+        v-model:visible="showStepManager"
+        type="formation"
+        title="Configuration des étapes"
+      />
 
       <!-- Step Content Card -->
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">

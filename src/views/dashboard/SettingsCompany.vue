@@ -62,7 +62,6 @@ const form = ref({
   qualiopi_date_fin: null,
   qualiopi_certificat_url: '',
   handicap_nom: '',
-  handicap_fonction: '',
   handicap_email: '',
   handicap_telephone: '',
   handicap_afficher_programmes: false,
@@ -399,10 +398,6 @@ const uploadQualiopi = async (event) => {
                 <div class="flex flex-col gap-2">
                   <label>Nom</label>
                   <InputText v-model="form.handicap_nom" />
-                </div>
-                <div class="flex flex-col gap-2">
-                  <label>Fonction</label>
-                  <InputText v-model="form.handicap_fonction" />
                 </div>
                 <div class="flex flex-col gap-2">
                   <label>Email</label>

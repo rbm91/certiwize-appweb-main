@@ -2,6 +2,8 @@
 import { ref, computed, onMounted } from 'vue';
 import { useEvaluationsStore } from '../../stores/evaluations';
 import { usePrestationsStore } from '../../stores/prestations';
+import { useAuthStore } from '../../stores/auth';
+import { supabase } from '../../supabase';
 import { EVALUATION_TYPES, EVALUATION_EXEC_STATUTS } from '../../config/constants';
 
 import DataTable from 'primevue/datatable';
@@ -12,11 +14,15 @@ import Dropdown from 'primevue/dropdown';
 import Dialog from 'primevue/dialog';
 import Textarea from 'primevue/textarea';
 import InputText from 'primevue/inputtext';
+import FileUpload from 'primevue/fileupload';
 import { useToast } from 'primevue/usetoast';
+import { useConfirm } from 'primevue/useconfirm';
 
 const evaluationsStore = useEvaluationsStore();
 const prestationsStore = usePrestationsStore();
+const auth = useAuthStore();
 const toast = useToast();
+const confirm = useConfirm();
 
 // Filtres
 const selectedType = ref(null);
@@ -34,6 +40,14 @@ const destinatairesText = ref('');
 const resultatsDialog = ref(false);
 const resultatsExecution = ref(null);
 
+// Upload document (superadmin)
+const uploadDialog = ref(false);
+const uploadExecution = ref(null);
+const uploading = ref(false);
+
+// Archivage (superadmin)
+const showArchived = ref(false);
+
 // Computed: stats
 const totalEvaluations = computed(() => evaluationsStore.executions.length);
 
@@ -48,6 +62,11 @@ const countClôturées = computed(() =>
 // Computed: liste filtrée
 const filteredExecutions = computed(() => {
   let result = evaluationsStore.executions;
+  if (showArchived.value) {
+    result = result.filter(e => e.statut === 'archive');
+  } else {
+    result = result.filter(e => e.statut !== 'archive');
+  }
   if (selectedType.value) {
     result = result.filter(e => e.type_evaluation === selectedType.value);
   }
@@ -184,6 +203,86 @@ const openResultatsDialog = (execution) => {
   resultatsDialog.value = true;
 };
 
+// Upload document (superadmin)
+const openUploadDialog = (execution) => {
+  uploadExecution.value = execution;
+  uploadDialog.value = true;
+};
+
+const handleUpload = async (event) => {
+  const file = event.files?.[0];
+  if (!file || !uploadExecution.value) return;
+
+  uploading.value = true;
+  try {
+    await auth.refreshSession();
+    const orgId = auth.currentOrganization?.id || 'no-org';
+    const userId = auth.user?.id || 'unknown';
+    const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const fileName = `${orgId}/${userId}/evaluations/${uploadExecution.value.id}-${Date.now()}-${cleanName}`;
+
+    const { error: uploadErr } = await supabase.storage
+      .from('project-docs')
+      .upload(fileName, file);
+    if (uploadErr) throw uploadErr;
+
+    const { data: urlData } = supabase.storage
+      .from('project-docs')
+      .getPublicUrl(fileName);
+
+    const existingDocs = uploadExecution.value.resultats?.documents || [];
+    const newDoc = { url: urlData.publicUrl, nom: file.name, date: new Date().toISOString() };
+
+    const { error: updateErr } = await supabase
+      .from('evaluation_executions')
+      .update({
+        resultats: {
+          ...uploadExecution.value.resultats,
+          documents: [...existingDocs, newDoc],
+        },
+      })
+      .eq('id', uploadExecution.value.id);
+    if (updateErr) throw updateErr;
+
+    // Mettre à jour localement
+    uploadExecution.value.resultats = {
+      ...uploadExecution.value.resultats,
+      documents: [...existingDocs, newDoc],
+    };
+
+    toast.add({ severity: 'success', summary: 'Document chargé', detail: file.name, life: 3000 });
+    uploadDialog.value = false;
+  } catch (err) {
+    toast.add({ severity: 'error', summary: 'Erreur', detail: err.message, life: 5000 });
+  } finally {
+    uploading.value = false;
+  }
+};
+
+// Archiver (superadmin)
+const handleArchiver = (execution) => {
+  confirm.require({
+    message: `Archiver cette évaluation (${getTypeLabel(execution.type_evaluation)}) ?`,
+    header: 'Confirmation',
+    icon: 'pi pi-exclamation-triangle',
+    acceptClass: 'p-button-danger',
+    acceptLabel: 'Archiver',
+    rejectLabel: 'Annuler',
+    accept: async () => {
+      const { error: err } = await supabase
+        .from('evaluation_executions')
+        .update({ statut: 'archive' })
+        .eq('id', execution.id);
+      if (err) {
+        toast.add({ severity: 'error', summary: 'Erreur', detail: err.message, life: 5000 });
+      } else {
+        execution.statut = 'archive';
+        toast.add({ severity: 'success', summary: 'Évaluation archivée', life: 3000 });
+      }
+    },
+  });
+};
+
 const getResultatsRéponses = computed(() => {
   if (!resultatsExecution.value) return [];
   return resultatsExecution.value.resultats?.reponses || [];
@@ -279,8 +378,8 @@ onMounted(async () => {
       </div>
     </div>
 
-    <!-- Filtre type -->
-    <div class="flex gap-3 mb-5">
+    <!-- Filtre type + toggle archives -->
+    <div class="flex gap-3 mb-5 items-center">
       <Dropdown
         v-model="selectedType"
         :options="EVALUATION_TYPES"
@@ -289,6 +388,14 @@ onMounted(async () => {
         placeholder="Filtrer par type"
         class="w-full lg:w-72"
         showClear
+      />
+      <Button
+        v-if="auth.isSuperAdmin"
+        :label="showArchived ? 'Voir actives' : 'Voir archives'"
+        :icon="showArchived ? 'pi pi-list' : 'pi pi-box'"
+        :severity="showArchived ? 'info' : 'secondary'"
+        text
+        @click="showArchived = !showArchived"
       />
     </div>
 
@@ -416,6 +523,24 @@ onMounted(async () => {
               v-tooltip.top="'Voir résultats'"
               @click="openResultatsDialog(data)"
             />
+            <Button
+              v-if="auth.isSuperAdmin && data.statut !== 'archive'"
+              icon="pi pi-upload"
+              text
+              rounded
+              severity="secondary"
+              v-tooltip.top="'Charger un document'"
+              @click="openUploadDialog(data)"
+            />
+            <Button
+              v-if="auth.isSuperAdmin && data.statut !== 'archive'"
+              icon="pi pi-box"
+              text
+              rounded
+              severity="danger"
+              v-tooltip.top="'Archiver'"
+              @click="handleArchiver(data)"
+            />
           </div>
         </template>
       </Column>
@@ -495,6 +620,44 @@ onMounted(async () => {
           <Button label="Annuler" severity="secondary" text @click="envoiDialog = false" />
           <Button label="Envoyer" icon="pi pi-send" @click="handleEnvoyer" />
         </div>
+      </template>
+    </Dialog>
+
+    <!-- Dialog upload document (superadmin) -->
+    <Dialog
+      v-model:visible="uploadDialog"
+      header="Charger un document"
+      :modal="true"
+      :style="{ width: '32rem' }"
+    >
+      <div class="flex flex-col gap-4 pt-2">
+        <p class="text-sm text-surface-500">
+          Évaluation : <strong>{{ getTypeLabel(uploadExecution?.type_evaluation) }}</strong>
+        </p>
+        <FileUpload
+          mode="basic"
+          :auto="true"
+          :maxFileSize="10485760"
+          accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png"
+          chooseLabel="Sélectionner un fichier"
+          :disabled="uploading"
+          @uploader="handleUpload"
+          customUpload
+        />
+        <p v-if="uploading" class="text-sm text-surface-500">
+          <i class="pi pi-spin pi-spinner mr-2" />Chargement en cours...
+        </p>
+        <!-- Documents déjà attachés -->
+        <div v-if="uploadExecution?.resultats?.documents?.length" class="mt-2">
+          <p class="text-sm font-semibold text-surface-700 dark:text-surface-300 mb-2">Documents existants :</p>
+          <div v-for="(doc, idx) in uploadExecution.resultats.documents" :key="idx" class="flex items-center gap-2 mb-1">
+            <i class="pi pi-file text-surface-400" />
+            <a :href="doc.url" target="_blank" class="text-sm text-primary hover:underline">{{ doc.nom }}</a>
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <Button label="Fermer" severity="secondary" text @click="uploadDialog = false" />
       </template>
     </Dialog>
 
@@ -581,6 +744,18 @@ onMounted(async () => {
             <span class="text-sm font-semibold text-surface-700 dark:text-surface-300">
               {{ Math.round((getResultatsRéponses.length / getResultatsDestinataires.length) * 100) }}%
             </span>
+          </div>
+        </div>
+
+        <!-- Documents attachés -->
+        <div v-if="resultatsExecution?.resultats?.documents?.length" class="border-t pt-4">
+          <h4 class="text-sm font-semibold text-surface-700 dark:text-surface-300 mb-3">
+            <i class="pi pi-paperclip mr-1" />Documents joints
+          </h4>
+          <div v-for="(doc, idx) in resultatsExecution.resultats.documents" :key="idx" class="flex items-center gap-2 mb-2">
+            <i class="pi pi-file text-surface-400" />
+            <a :href="doc.url" target="_blank" class="text-sm text-primary hover:underline">{{ doc.nom }}</a>
+            <span class="text-xs text-surface-400">{{ formatDate(doc.date) }}</span>
           </div>
         </div>
       </div>

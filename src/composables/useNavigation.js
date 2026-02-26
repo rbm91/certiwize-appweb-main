@@ -31,18 +31,28 @@ const sidebarItemsBySection = {
   tiers: [
     { name: 'sidebar_tiers_list', href: '/dashboard/tiers', icon: 'pi-list' },
     { name: 'sidebar_tiers_create', href: '/dashboard/tiers/create', icon: 'pi-plus' },
+    { type: 'separator', label: 'Client' },
+    { name: 'sidebar_tiers_clients', href: '/dashboard/tiers?role=client', icon: 'pi-building' },
+    { type: 'separator', label: 'Apprenant' },
+    { name: 'sidebar_tiers_apprenants', href: '/dashboard/tiers?role=apprenant', icon: 'pi-user' },
+    { type: 'separator', label: 'Formateur' },
+    { name: 'sidebar_tiers_formateurs', href: '/dashboard/tiers?role=formateur', icon: 'pi-id-card' },
+    { type: 'separator', label: 'Fournisseur' },
+    { name: 'sidebar_tiers_fournisseurs', href: '/dashboard/tiers?role=fournisseur', icon: 'pi-briefcase' },
   ],
 
   catalogue: [
+    { type: 'separator', label: 'Formations' },
     { name: 'sidebar_catalogue_formations', href: '/dashboard/catalogue', icon: 'pi-book' },
     { name: 'sidebar_catalogue_create', href: '/dashboard/catalogue/create', icon: 'pi-plus' },
+    { type: 'separator', label: 'Missions' },
     { name: 'sidebar_catalogue_missions', href: '/dashboard/catalogue/missions', icon: 'pi-briefcase' },
     { name: 'sidebar_catalogue_missions_create', href: '/dashboard/catalogue/missions/create', icon: 'pi-plus' },
+    { type: 'separator', label: 'Outils' },
     { name: 'sidebar_qualite_boite_outils', href: '/dashboard/catalogue/boite-outils', icon: 'pi-box' },
   ],
 
   prestations: [
-    { type: 'separator', label: 'Formation' },
     { name: 'sidebar_sessions_create', href: '/dashboard/sessions/create', icon: 'pi-plus', badge: 'blue' },
     { name: 'sidebar_sessions_list', href: '/dashboard/sessions', icon: 'pi-list' },
     { type: 'separator', label: 'Coaching' },

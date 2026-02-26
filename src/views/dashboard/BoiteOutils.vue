@@ -13,10 +13,12 @@ import Tooltip from 'primevue/tooltip';
 import { supabase } from '../../supabase';
 import { useAuthStore } from '../../stores/auth';
 import { useToast } from 'primevue/usetoast';
+import { useConfirm } from 'primevue/useconfirm';
 
 const vTooltip = Tooltip;
 const auth = useAuthStore();
 const toast = useToast();
+const confirm = useConfirm();
 
 // -- État --
 const loading = ref(false);
@@ -228,6 +230,88 @@ const handleUpload = async (event) => {
   }
 };
 
+// -- Upload fichier sur un modèle existant (superadmin) --
+const attachDialog = ref(false);
+const attachTarget = ref(null);
+const attachUploading = ref(false);
+
+const openAttachDialog = (doc) => {
+  attachTarget.value = doc;
+  attachDialog.value = true;
+};
+
+const handleAttachUpload = async (event) => {
+  const file = event.files?.[0];
+  if (!file || !attachTarget.value) return;
+
+  attachUploading.value = true;
+  try {
+    await auth.refreshSession();
+    const orgId = auth.currentOrganization?.id || 'no-org';
+    const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const fileName = `${orgId}/boite-outils/${Date.now()}-${cleanName}`;
+
+    const { error: uploadErr } = await supabase.storage
+      .from('project-docs')
+      .upload(fileName, file);
+    if (uploadErr) throw uploadErr;
+
+    const { data: urlData } = supabase.storage
+      .from('project-docs')
+      .getPublicUrl(fileName);
+
+    // Si c'est un document uploadé en base, mettre à jour
+    if (attachTarget.value.id) {
+      const { error: updateErr } = await supabase
+        .from('boite_outils_documents')
+        .update({ url: urlData.publicUrl, nom_fichier: file.name })
+        .eq('id', attachTarget.value.id);
+      if (updateErr) throw updateErr;
+    }
+
+    // Mettre à jour localement
+    attachTarget.value.url = urlData.publicUrl;
+    attachTarget.value.nom_fichier = file.name;
+
+    toast.add({ severity: 'success', summary: 'Fichier chargé', detail: file.name, life: 3000 });
+    attachDialog.value = false;
+  } catch (err) {
+    toast.add({ severity: 'error', summary: 'Erreur', detail: err.message, life: 5000 });
+  } finally {
+    attachUploading.value = false;
+  }
+};
+
+// -- Archiver un document (superadmin) --
+const handleArchive = (doc) => {
+  confirm.require({
+    message: `Archiver le document "${doc.titre}" ?`,
+    header: 'Confirmation',
+    icon: 'pi pi-exclamation-triangle',
+    acceptClass: 'p-button-danger',
+    acceptLabel: 'Archiver',
+    rejectLabel: 'Annuler',
+    accept: async () => {
+      if (doc.id) {
+        // Document en base → soft delete
+        const { error: err } = await supabase
+          .from('boite_outils_documents')
+          .update({ deleted_at: new Date().toISOString() })
+          .eq('id', doc.id);
+        if (err) {
+          toast.add({ severity: 'error', summary: 'Erreur', detail: err.message, life: 5000 });
+          return;
+        }
+        userDocuments.value = userDocuments.value.filter(d => d.id !== doc.id);
+      } else {
+        // Modèle statique → retirer de la liste
+        templates.value = templates.value.filter(t => t !== doc);
+      }
+      toast.add({ severity: 'success', summary: 'Document archivé', life: 3000 });
+    },
+  });
+};
+
 // -- Init --
 onMounted(() => {
   fetchUserDocuments();
@@ -337,6 +421,28 @@ onMounted(() => {
               :disabled="!data.url"
               @click="data.url && window.open(data.url, '_blank')"
             />
+            <!-- Bouton Charger un fichier (superadmin) -->
+            <Button
+              v-if="auth.isSuperAdmin"
+              icon="pi pi-upload"
+              severity="success"
+              size="small"
+              rounded
+              text
+              v-tooltip.top="'Charger un fichier'"
+              @click="openAttachDialog(data)"
+            />
+            <!-- Bouton Archiver (superadmin) -->
+            <Button
+              v-if="auth.isSuperAdmin"
+              icon="pi pi-box"
+              severity="danger"
+              size="small"
+              rounded
+              text
+              v-tooltip.top="'Archiver'"
+              @click="handleArchive(data)"
+            />
           </div>
         </template>
       </Column>
@@ -395,6 +501,39 @@ onMounted(() => {
           />
         </div>
       </div>
+    </Dialog>
+
+    <!-- Dialog : Charger un fichier sur un document (superadmin) -->
+    <Dialog
+      v-model:visible="attachDialog"
+      header="Charger un fichier"
+      :modal="true"
+      :style="{ width: '32rem' }"
+    >
+      <div class="flex flex-col gap-4 pt-2">
+        <p class="text-sm text-gray-500">
+          Document : <strong>{{ attachTarget?.titre }}</strong>
+        </p>
+        <FileUpload
+          mode="basic"
+          :auto="true"
+          :maxFileSize="10485760"
+          accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.txt,.jpg,.jpeg,.png"
+          chooseLabel="Sélectionner un fichier"
+          :disabled="attachUploading"
+          @uploader="handleAttachUpload"
+          customUpload
+        />
+        <p v-if="attachUploading" class="text-sm text-gray-500">
+          <i class="pi pi-spin pi-spinner mr-2" />Chargement en cours...
+        </p>
+        <p v-if="attachTarget?.url" class="text-sm text-green-600">
+          <i class="pi pi-check-circle mr-1" />Fichier actuel : {{ attachTarget?.nom_fichier || 'Fichier associé' }}
+        </p>
+      </div>
+      <template #footer>
+        <Button label="Fermer" severity="secondary" text @click="attachDialog = false" />
+      </template>
     </Dialog>
   </div>
 </template>

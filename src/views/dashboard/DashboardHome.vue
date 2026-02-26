@@ -78,6 +78,9 @@ onMounted(async () => {
       </p>
     </div>
 
+    <!-- ═══ Agenda ═══ -->
+    <AgendaWidget v-if="!loading" />
+
     <!-- Grille 2x2 -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
@@ -309,7 +312,5 @@ onMounted(async () => {
 
     </div>
 
-    <!-- ═══ Agenda ═══ -->
-    <AgendaWidget v-if="!loading" />
   </div>
 </template>

@@ -622,7 +622,10 @@ onMounted(async () => {
             </ManageableField>
             <ManageableField fieldKey="session.tiers" class="md:col-span-2">
               <div class="flex flex-col gap-2">
-                <label class="text-sm font-medium"><EditableLabel labelKey="session.tiers" defaultLabel="Sélectionner le tiers" /></label>
+                <small class="text-green-600 font-medium">
+                  <i class="pi pi-id-card mr-1"></i>
+                  <EditableLabel labelKey="session.tiers" defaultLabel="Sélectionner le tiers" />
+                </small>
                 <Dropdown
                   v-model="form.tiers_id"
                   :options="allTiersOptions"

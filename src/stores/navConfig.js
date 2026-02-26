@@ -21,32 +21,21 @@ export const useNavConfigStore = defineStore('navConfig', () => {
   const auth = useAuthStore();
 
   /**
-   * Charger la config nav la plus récente depuis Supabase
+   * Charger la config nav globale (plateforme SaaS — même config pour toutes les orgs)
    */
   const fetchConfig = async () => {
-    const orgId = auth.currentOrganization?.id;
-    console.log('[NavConfig] fetchConfig appelé, orgId =', orgId);
-    if (!orgId) {
-      console.warn('[NavConfig] Pas d\'organisation, fetch ignoré');
-      return;
-    }
     loading.value = true;
     try {
       const { data, error } = await supabase
         .from('nav_config')
         .select('config')
-        .eq('organization_id', orgId)
         .order('updated_at', { ascending: false })
         .limit(1)
         .maybeSingle();
 
-      console.log('[NavConfig] Supabase réponse:', { data, error });
-      console.log('[NavConfig] Labels topNav reçus:', data?.config?.topNav?.labels);
-
       if (error) throw error;
 
       config.value = data?.config || JSON.parse(JSON.stringify(DEFAULT_CONFIG));
-      console.log('[NavConfig] config.value mis à jour, catalogue =', config.value?.topNav?.labels?.catalogue);
     } catch (err) {
       console.error('[NavConfig] Error fetching config:', err);
       config.value = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
@@ -56,19 +45,15 @@ export const useNavConfigStore = defineStore('navConfig', () => {
   };
 
   /**
-   * Sauvegarder la config (UPDATE si existant, INSERT sinon)
+   * Sauvegarder la config globale (UPDATE si existant, INSERT sinon)
    */
   const saveConfig = async (newConfig) => {
     loading.value = true;
     try {
-      const orgId = auth.currentOrganization?.id;
-      if (!orgId) throw new Error('Organization ID manquant');
-
-      // Chercher une config existante pour cette organisation
+      // Chercher la config existante (globale — la plus récente)
       const { data: existing } = await supabase
         .from('nav_config')
         .select('id')
-        .eq('organization_id', orgId)
         .order('updated_at', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -92,7 +77,7 @@ export const useNavConfigStore = defineStore('navConfig', () => {
             config: newConfig,
             updated_at: new Date().toISOString(),
             updated_by: auth.user?.id || null,
-            organization_id: orgId
+            organization_id: auth.currentOrganization?.id || null
           }));
       }
 
@@ -135,11 +120,11 @@ export const useNavConfigStore = defineStore('navConfig', () => {
   const resetConfig = async () => {
     loading.value = true;
     try {
-      const orgId = auth.currentOrganization?.id;
+      // Supprimer toutes les lignes nav_config (config globale)
       const { error } = await supabase
         .from('nav_config')
         .delete()
-        .eq('organization_id', orgId);
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // delete all rows
 
       if (error) throw error;
 

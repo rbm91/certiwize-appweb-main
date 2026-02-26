@@ -13,17 +13,9 @@ const layoutStore = useLayoutStore();
 const navConfigStore = useNavConfigStore();
 const route = useRoute();
 
-// Charger la config de navigation dès que l'organisation est connue
-// (auth peut ne pas être prêt quand DashboardLayout monte)
-watch(
-  () => authStore.currentOrganization?.id,
-  (orgId) => {
-    if (orgId) navConfigStore.fetchConfig();
-  },
-  { immediate: true }
-);
-
+// Charger la config globale de la plateforme dès le montage
 onMounted(() => {
+  navConfigStore.fetchConfig();
   // Recharger la config quand l'utilisateur revient sur l'onglet
   // (permet de voir les modifications faites par un autre admin)
   document.addEventListener('visibilitychange', onVisibilityChange);

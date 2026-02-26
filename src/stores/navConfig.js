@@ -37,10 +37,10 @@ export const useNavConfigStore = defineStore('navConfig', () => {
 
       if (error) throw error;
 
-      config.value = data?.config || structuredClone(DEFAULT_CONFIG);
+      config.value = data?.config || JSON.parse(JSON.stringify(DEFAULT_CONFIG));
     } catch (err) {
       console.error('[NavConfig] Error fetching config:', err);
-      config.value = structuredClone(DEFAULT_CONFIG);
+      config.value = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
     } finally {
       loading.value = false;
     }
@@ -134,7 +134,7 @@ export const useNavConfigStore = defineStore('navConfig', () => {
 
       if (error) throw error;
 
-      config.value = structuredClone(DEFAULT_CONFIG);
+      config.value = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
       return { success: true };
     } catch (err) {
       console.error('[NavConfig] Error resetting config:', err);
@@ -243,7 +243,7 @@ export const useNavConfigStore = defineStore('navConfig', () => {
   const addCustomField = async (section, { label, type, placeholder, options }) => {
     // Initialiser config si null
     if (!config.value) {
-      config.value = structuredClone(DEFAULT_CONFIG);
+      config.value = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
     }
 
     // Muter en place pour la réactivité Vue
@@ -333,7 +333,7 @@ export const useNavConfigStore = defineStore('navConfig', () => {
    * Mettre à jour le placeholder d'un champ
    */
   const updateFieldPlaceholder = async (fieldKey, placeholder) => {
-    if (!config.value) config.value = structuredClone(DEFAULT_CONFIG);
+    if (!config.value) config.value = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
     if (!config.value.placeholders) config.value.placeholders = {};
     if (placeholder && placeholder.trim()) {
       config.value.placeholders[fieldKey] = placeholder.trim();
@@ -358,7 +358,7 @@ export const useNavConfigStore = defineStore('navConfig', () => {
    * Basculer l'état obligatoire d'un champ
    */
   const toggleFieldRequired = async (fieldKey) => {
-    if (!config.value) config.value = structuredClone(DEFAULT_CONFIG);
+    if (!config.value) config.value = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
     if (!config.value.requiredFields) config.value.requiredFields = [];
     const idx = config.value.requiredFields.indexOf(fieldKey);
     if (idx !== -1) {

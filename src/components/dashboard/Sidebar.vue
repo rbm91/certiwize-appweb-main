@@ -8,7 +8,7 @@ import LogoBrand from './LogoBrand.vue';
 
 const { t } = useI18n();
 const authStore = useAuthStore();
-const { navigation, isCurrent } = useNavigation();
+const { navigation, isCurrent, getLabel } = useNavigation();
 
 const hoveredMenu = ref(null);
 const submenuStyle = ref({});
@@ -75,8 +75,8 @@ const logout = async () => {
           @click="item.disabled ? $event.preventDefault() : (item.submenu ? $event.preventDefault() : null)"
         >
           <i class="pi" :class="[item.icon, item.disabled ? 'text-slate-600' : (!item.href?.startsWith('http') && isCurrent(item.href)) ? 'text-white' : 'text-slate-400 group-hover:text-white']"></i>
-          <span class="font-medium flex-1">{{ t(`nav.${item.name}`) }}</span>
-          <span v-if="item.disabled" class="text-xs bg-slate-700 px-1.5 py-0.5 rounded">{{ t('nav.coming_soon') }}</span>
+          <span class="font-medium flex-1">{{ getLabel(item.name) }}</span>
+          <span v-if="item.disabled" class="text-xs bg-slate-700 px-1.5 py-0.5 rounded">{{ getLabel('coming_soon') }}</span>
           <i v-if="item.submenu" class="pi pi-chevron-right text-xs opacity-50"></i>
         </a>
 
@@ -105,8 +105,8 @@ const logout = async () => {
                 @click="sub.disabled ? $event.preventDefault() : null"
               >
                 <i class="pi" :class="sub.icon"></i>
-                <span class="text-sm">{{ t(`nav.${sub.name}`) }}</span>
-                <span v-if="sub.disabled" class="ml-auto text-xs bg-slate-600 px-1.5 py-0.5 rounded">{{ t('nav.coming_soon') }}</span>
+                <span class="text-sm">{{ getLabel(sub.name) }}</span>
+                <span v-if="sub.disabled" class="ml-auto text-xs bg-slate-600 px-1.5 py-0.5 rounded">{{ getLabel('coming_soon') }}</span>
               </a>
             </div>
           </transition>

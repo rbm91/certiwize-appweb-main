@@ -108,7 +108,7 @@ const adminNavItem = { name: 'admin', href: '/dashboard/admin', icon: 'pi-shield
 
 // Tous les items pour le mode sidebar classique
 const allNavItems = [
-  { name: 'dashboard', href: '/dashboard', icon: 'pi-home' },
+  { name: 'accueil', href: '/dashboard', icon: 'pi-home' },
   { name: 'tiers', href: '/dashboard/tiers', icon: 'pi-users' },
   { name: 'catalogue', href: '/dashboard/catalogue', icon: 'pi-book' },
   { name: 'prestations', href: '/dashboard/sessions', icon: 'pi-briefcase' },

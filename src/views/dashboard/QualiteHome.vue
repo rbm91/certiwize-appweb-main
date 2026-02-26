@@ -17,17 +17,6 @@ const sections = [
     hoverClass: 'hover:border-purple-400 dark:hover:border-purple-600',
   },
   {
-    titre: 'Boîte à outils',
-    description: 'Modèles de documents types à télécharger et adapter à votre organisme.',
-    icon: 'pi pi-box',
-    color: 'blue',
-    route: '/dashboard/qualite/boite-outils',
-    bgClass: 'bg-blue-50 dark:bg-blue-900/20',
-    iconClass: 'text-blue-600 dark:text-blue-400',
-    borderClass: 'border-blue-200 dark:border-blue-800',
-    hoverClass: 'hover:border-blue-400 dark:hover:border-blue-600',
-  },
-  {
     titre: 'Bibliothèque évaluations',
     description: 'Quiz de positionnement, validation des acquis et enquêtes de satisfaction.',
     icon: 'pi pi-list-check',

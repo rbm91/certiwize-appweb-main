@@ -111,6 +111,11 @@ const routes = [
         name: 'dashboard-mission-edit',
         component: () => import('../views/dashboard/MissionCreate.vue')
       },
+      {
+        path: 'catalogue/boite-outils',
+        name: 'dashboard-catalogue-boite-outils',
+        component: () => import('../views/dashboard/BoiteOutils.vue')
+      },
 
       // ══════════════════════════════════
       // MODULE PRESTATIONS — Formations (bleu)
@@ -239,11 +244,6 @@ const routes = [
         path: 'qualite/manuel',
         name: 'dashboard-qualite-manuel',
         component: () => import('../views/dashboard/ManuelQualiopi.vue')
-      },
-      {
-        path: 'qualite/boite-outils',
-        name: 'dashboard-qualite-boite-outils',
-        component: () => import('../views/dashboard/BoiteOutils.vue')
       },
       {
         path: 'qualite/evaluations',

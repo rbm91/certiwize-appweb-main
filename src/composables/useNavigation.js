@@ -38,6 +38,7 @@ const sidebarItemsBySection = {
     { name: 'sidebar_catalogue_create', href: '/dashboard/catalogue/create', icon: 'pi-plus' },
     { name: 'sidebar_catalogue_missions', href: '/dashboard/catalogue/missions', icon: 'pi-briefcase' },
     { name: 'sidebar_catalogue_missions_create', href: '/dashboard/catalogue/missions/create', icon: 'pi-plus' },
+    { name: 'sidebar_qualite_boite_outils', href: '/dashboard/catalogue/boite-outils', icon: 'pi-box' },
   ],
 
   prestations: [
@@ -62,7 +63,6 @@ const sidebarItemsBySection = {
 
   qualite: [
     { name: 'sidebar_qualite_manuel', href: '/dashboard/qualite/manuel', icon: 'pi-book' },
-    { name: 'sidebar_qualite_boite_outils', href: '/dashboard/qualite/boite-outils', icon: 'pi-box' },
     { name: 'sidebar_qualite_evaluations', href: '/dashboard/qualite/evaluations', icon: 'pi-question-circle' },
     { name: 'sidebar_qualite_analyse_doc', href: '/dashboard/qualite/analyse-doc', icon: 'pi-search' },
     { name: 'sidebar_qualite_reclamations', href: '/dashboard/qualite/reclamations', icon: 'pi-exclamation-triangle' },

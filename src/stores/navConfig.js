@@ -24,9 +24,13 @@ export const useNavConfigStore = defineStore('navConfig', () => {
    * Charger la config nav la plus récente depuis Supabase
    */
   const fetchConfig = async () => {
+    const orgId = auth.currentOrganization?.id;
+    if (!orgId) {
+      console.warn('[NavConfig] Pas d\'organisation, fetch ignoré');
+      return;
+    }
     loading.value = true;
     try {
-      const orgId = auth.currentOrganization?.id;
       const { data, error } = await supabase
         .from('nav_config')
         .select('config')

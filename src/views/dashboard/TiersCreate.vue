@@ -33,7 +33,7 @@ import InputNumber from 'primevue/inputnumber';
 import FileUpload from 'primevue/fileupload';
 import Message from 'primevue/message';
 import Tag from 'primevue/tag';
-import ToggleSwitch from 'primevue/toggleswitch';
+import SelectButton from 'primevue/selectbutton';
 import DatePicker from 'primevue/datepicker';
 import Divider from 'primevue/divider';
 import Chips from 'primevue/chips';
@@ -49,6 +49,11 @@ const { uploading: fileUploading, uploadFile } = useFileUpload('tier-files');
 const { showSuccess, showError } = useNotification();
 
 const isSuperAdmin = computed(() => authStore.isSuperAdmin);
+
+const ouiNonOptions = [
+  { label: 'Oui', value: true },
+  { label: 'Non', value: false },
+];
 
 // --- Personnalisation ---
 const ph = (key, fallback) => navConfig.getFieldPlaceholder(key, fallback);
@@ -745,11 +750,9 @@ onMounted(async () => {
           <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
             <!-- NDA -->
             <ManageableField labelKey="tiers.nda_signe" class="md:col-span-2">
-              <div class="flex flex-col gap-3">
-                <div class="flex items-center gap-3">
-                  <ToggleSwitch v-model="form.nda_signe" />
-                  <EditableLabel labelKey="tiers.nda_signe" :defaultLabel="tiersFieldLabels['tiers.nda_signe']" />
-                </div>
+              <div class="flex flex-col gap-2">
+                <EditableLabel labelKey="tiers.nda_signe" :defaultLabel="tiersFieldLabels['tiers.nda_signe']" />
+                <SelectButton v-model="form.nda_signe" :options="ouiNonOptions" optionLabel="label" optionValue="value" />
               </div>
             </ManageableField>
             <ManageableField v-if="form.nda_signe" labelKey="tiers.nda_date_signature">
@@ -795,11 +798,9 @@ onMounted(async () => {
 
             <!-- Qualiopi -->
             <ManageableField labelKey="tiers.qualiopi_certifie" class="md:col-span-2">
-              <div class="flex flex-col gap-3">
-                <div class="flex items-center gap-3">
-                  <ToggleSwitch v-model="form.qualiopi_certifie" />
-                  <EditableLabel labelKey="tiers.qualiopi_certifie" :defaultLabel="tiersFieldLabels['tiers.qualiopi_certifie']" />
-                </div>
+              <div class="flex flex-col gap-2">
+                <EditableLabel labelKey="tiers.qualiopi_certifie" :defaultLabel="tiersFieldLabels['tiers.qualiopi_certifie']" />
+                <SelectButton v-model="form.qualiopi_certifie" :options="ouiNonOptions" optionLabel="label" optionValue="value" />
               </div>
             </ManageableField>
             <template v-if="form.qualiopi_certifie">
@@ -876,11 +877,9 @@ onMounted(async () => {
               </div>
             </ManageableField>
             <ManageableField labelKey="tiers.accord_cadre_signe">
-              <div class="flex flex-col gap-3">
-                <div class="flex items-center gap-3 mt-6">
-                  <ToggleSwitch v-model="form.accord_cadre_signe" />
-                  <EditableLabel labelKey="tiers.accord_cadre_signe" :defaultLabel="tiersFieldLabels['tiers.accord_cadre_signe']" />
-                </div>
+              <div class="flex flex-col gap-2">
+                <EditableLabel labelKey="tiers.accord_cadre_signe" :defaultLabel="tiersFieldLabels['tiers.accord_cadre_signe']" />
+                <SelectButton v-model="form.accord_cadre_signe" :options="ouiNonOptions" optionLabel="label" optionValue="value" />
               </div>
             </ManageableField>
           </div>

@@ -192,19 +192,27 @@ onUnmounted(() => {
             >
               <i class="pi text-sm" :class="item.icon"></i>
 
-              <!-- Inline rename input -->
-              <input
-                v-if="editingNavItem === item.name"
-                ref="renameInput"
-                v-model="editingLabel"
-                @blur="saveRename(item)"
-                @keyup.enter="saveRename(item)"
-                @keyup.escape="cancelRename"
-                @click.stop
-                class="bg-transparent border-b border-blue-400 text-white
-                       text-sm font-medium outline-none min-w-[2rem] max-w-[12rem]"
-                :size="Math.max(editingLabel.length, 4)"
-              />
+              <!-- Inline rename input + boutons ✓ × -->
+              <template v-if="editingNavItem === item.name">
+                <input
+                  ref="renameInput"
+                  v-model="editingLabel"
+                  @keyup.enter.stop="saveRename(item)"
+                  @keyup.escape.stop="cancelRename"
+                  @click.stop
+                  class="bg-transparent border-b border-blue-400 text-white
+                         text-sm font-medium outline-none min-w-[2rem] max-w-[12rem]"
+                  :size="Math.max(editingLabel.length, 4)"
+                />
+                <i class="pi pi-check text-xs text-green-400 hover:text-green-300
+                          cursor-pointer ml-1"
+                   @click.stop.prevent="saveRename(item)"
+                   title="Valider"></i>
+                <i class="pi pi-times text-xs text-red-400 hover:text-red-300
+                          cursor-pointer ml-0.5"
+                   @click.stop.prevent="cancelRename"
+                   title="Annuler"></i>
+              </template>
 
               <!-- Normal label display -->
               <span v-else class="font-medium whitespace-nowrap">{{ getLabel(item.name) }}</span>

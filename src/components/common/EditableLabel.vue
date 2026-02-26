@@ -92,10 +92,15 @@ const cancel = () => {
         v-model="editedLabel"
         @keydown.enter.prevent="save"
         @keydown.escape.prevent="cancel"
-        @blur="save"
         class="editable-label-input"
         :style="{ width: Math.max(editedLabel.length * 8, 60) + 'px' }"
       />
+      <button @click.stop.prevent="save" class="editable-label-action editable-label-save" title="Valider">
+        <i class="pi pi-check"></i>
+      </button>
+      <button @click.stop.prevent="cancel" class="editable-label-action editable-label-cancel" title="Annuler">
+        <i class="pi pi-times"></i>
+      </button>
     </template>
   </component>
 </template>
@@ -162,5 +167,40 @@ const cancel = () => {
   font-size: 10px;
   color: #3b82f6;
   flex-shrink: 0;
+}
+
+.editable-label-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 0;
+  flex-shrink: 0;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.editable-label-save {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.editable-label-save:hover {
+  background: #bbf7d0;
+  color: #15803d;
+}
+
+.editable-label-cancel {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.editable-label-cancel:hover {
+  background: #fecaca;
+  color: #b91c1c;
 }
 </style>

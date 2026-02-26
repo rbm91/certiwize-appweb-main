@@ -6,6 +6,9 @@ export default defineConfig({
     vue(),
     tailwindcss(),
   ],
+  server: {
+    host: '127.0.0.1',
+  },
   build: {
     // Cibler Safari 14+ pour compatibilité JS iOS/macOS
     target: ['es2020', 'safari14'],

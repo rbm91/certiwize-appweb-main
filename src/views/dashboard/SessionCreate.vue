@@ -74,6 +74,7 @@ const setDocument = (key, value) => {
 const sessionFieldLabels = {
   'session.intitule': 'Intitulé de la formation',
   'session.client': 'Client',
+  'session.tiers': 'Sélectionner le tiers',
   'session.payeur': 'Financeur / Payeur',
   'session.formateur': 'Formateur',
   'session.apprenants': 'Apprenants',
@@ -114,6 +115,7 @@ const form = ref({
   intitule: '',
   formation_id: null,
   client_id: null,
+  tiers_id: null,
   payeur_id: null,
   formateur_id: null,
   apprenants: [],
@@ -160,6 +162,20 @@ const apprenantOptions = computed(() =>
     value: t.id,
   }))
 );
+
+// Options tous les tiers
+const allTiersOptions = computed(() =>
+  (tiersStore.tiers || []).map(t => ({
+    label: t.nom_affiche || t.raison_sociale || t.email,
+    value: t.id,
+  }))
+);
+
+const selectedTiersLabel = computed(() => {
+  if (!form.value.tiers_id) return null;
+  const found = (tiersStore.tiers || []).find(t => t.id === form.value.tiers_id);
+  return found ? (found.nom_affiche || found.raison_sociale || found.email) : null;
+});
 
 // Options formations du catalogue
 const formationOptions = computed(() => {
@@ -258,6 +274,7 @@ const generateDocument = async (type, loadingRef, webhookUrl) => {
       user_id: authStore.user?.id,
       intitule: form.value.intitule,
       client_id: form.value.client_id,
+      tiers_id: form.value.tiers_id,
       payeur_id: form.value.payeur_id,
       formateur_id: form.value.formateur_id,
       apprenants: form.value.apprenants,
@@ -361,6 +378,7 @@ const handleSave = async (redirect = true) => {
       intitule: form.value.intitule,
       formation_id: form.value.formation_id,
       client_id: form.value.client_id,
+      tiers_id: form.value.tiers_id,
       payeur_id: form.value.payeur_id,
       formateur_id: form.value.formateur_id,
       date_debut: form.value.date_debut ? new Date(form.value.date_debut).toISOString() : null,
@@ -502,6 +520,7 @@ onMounted(async () => {
           customIntitule.value = true;
         }
         form.value.client_id = data.client_id;
+        form.value.tiers_id = data.tiers_id || null;
         form.value.payeur_id = data.payeur_id;
         form.value.formateur_id = data.formateur_id;
         form.value.date_debut = data.date_debut ? new Date(data.date_debut) : null;
@@ -599,6 +618,24 @@ onMounted(async () => {
                   filter
                   class="w-full"
                 />
+              </div>
+            </ManageableField>
+            <ManageableField fieldKey="session.tiers">
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium"><EditableLabel labelKey="session.tiers" defaultLabel="Sélectionner le tiers" /></label>
+                <Dropdown
+                  v-model="form.tiers_id"
+                  :options="allTiersOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  :placeholder="ph('session.tiers', 'Sélectionner le tiers')"
+                  filter
+                  showClear
+                  class="w-full"
+                />
+                <small v-if="selectedTiersLabel" class="text-green-600">
+                  <i class="pi pi-check-circle mr-1"></i>{{ selectedTiersLabel }}
+                </small>
               </div>
             </ManageableField>
             <ManageableField fieldKey="session.payeur">

@@ -399,4 +399,9 @@ export const useNavConfigStore = defineStore('navConfig', () => {
     isFieldRequired,
     toggleFieldRequired
   };
+}, {
+  persist: {
+    key: 'certiwize-navConfig',
+    pick: ['config'],
+  }
 });

@@ -217,7 +217,7 @@ export const useNavConfigStore = defineStore('navConfig', () => {
    */
   const getHiddenFieldsBySection = (sectionPrefix) => {
     const all = config.value?.hiddenFields || [];
-    return all.filter(k => k.startsWith(sectionPrefix));
+    return all.filter(k => k && k.startsWith(sectionPrefix));
   };
 
   // ========================================

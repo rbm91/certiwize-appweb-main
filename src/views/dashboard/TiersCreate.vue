@@ -68,7 +68,7 @@ const openFieldPanel = (section) => {
 };
 
 const tiersFieldLabels = {
-  'tiers.prenom': 'Pr\u00e9nom',
+  'tiers.prenom': 'Prénom',
   'tiers.nom_famille': 'Nom de famille',
   'tiers.raison_sociale': 'Raison sociale',
   'tiers.siren': 'SIREN',
@@ -76,7 +76,7 @@ const tiersFieldLabels = {
   'tiers.naf_ape': 'NAF / APE',
   'tiers.tva_intracom': 'TVA intracommunautaire',
   'tiers.email': 'Email',
-  'tiers.telephone': 'T\u00e9l\u00e9phone',
+  'tiers.telephone': 'Téléphone',
   'tiers.address': 'Adresse',
   'tiers.zip_code': 'Code postal',
   'tiers.city': 'Ville',
@@ -87,24 +87,24 @@ const tiersFieldLabels = {
   'tiers.tags': 'Tags',
   'tiers.notes': 'Notes',
   'tiers.date_naissance': 'Date de naissance',
-  'tiers.niveau_entree': "Niveau d'entr\u00e9e",
+  'tiers.niveau_entree': "Niveau d'entrée",
   'tiers.objectif_professionnel': 'Objectif professionnel',
   'tiers.situation_handicap': 'Situation de handicap',
-  'tiers.besoin_amenagement': "Besoins d'am\u00e9nagement",
-  'tiers.nda_signe': 'NDA sign\u00e9',
+  'tiers.besoin_amenagement': "Besoins d'aménagement",
+  'tiers.nda_signe': 'NDA signé',
   'tiers.nda_date_signature': 'Date de signature NDA',
   'tiers.nda_document_url': 'Document NDA',
-  'tiers.declaration_activite': "D\u00e9claration d'activit\u00e9 (NDA)",
-  'tiers.declaration_region': 'R\u00e9gion de d\u00e9claration',
-  'tiers.qualiopi_certifie': 'Certifi\u00e9 Qualiopi',
+  'tiers.declaration_activite': "Déclaration d'activité (NDA)",
+  'tiers.declaration_region': 'Région de déclaration',
+  'tiers.qualiopi_certifie': 'Certifié Qualiopi',
   'tiers.qualiopi_certificateur': 'Certificateur',
-  'tiers.qualiopi_date_validite': 'Date de fin de validit\u00e9',
+  'tiers.qualiopi_date_validite': 'Date de fin de validité',
   'tiers.qualiopi_certificat_url': 'Certificat Qualiopi',
   'tiers.fournisseur_type': 'Type de fournisseur',
-  'tiers.accord_cadre_signe': 'Accord-cadre sign\u00e9',
+  'tiers.accord_cadre_signe': 'Accord-cadre signé',
 };
 
-// --- Pr\u00e9-s\u00e9lection via query param (avant le premier rendu) ---
+// --- Pré-sélection via query param (avant le premier rendu) ---
 const ROLES_PERSONNE = ['apprenant', 'formateur'];
 const preselectedRole = !route.params.id && route.query.role ? route.query.role : null;
 const initialNature = preselectedRole && ROLES_PERSONNE.includes(preselectedRole)
@@ -162,7 +162,7 @@ const form = ref({
   accord_cadre_url: '',
 });
 
-// --- R\u00f4le exclusif (un seul r\u00f4le \u00e0 la fois) ---
+// --- Rôle exclusif (un seul rôle à la fois) ---
 const selectedRole = ref(preselectedRole || null);
 const submitting = ref(false);
 const errorMsg = ref('');
@@ -195,7 +195,7 @@ const computedScore = computed(() =>
   computeScore(form.value, selectedRole.value ? [selectedRole.value] : [], [])
 );
 
-// --- S\u00e9lection de r\u00f4le exclusif ---
+// --- Sélection de rôle exclusif ---
 const selectRole = (roleValue) => {
   if (selectedRole.value === roleValue) {
     selectedRole.value = null;
@@ -313,20 +313,20 @@ const handleSubmit = async () => {
           await store.removeRole(route.params.id, role);
         }
 
-        showSuccess('Tiers mis \u00e0 jour', 'Les modifications ont \u00e9t\u00e9 enregistr\u00e9es.');
+        showSuccess('Tiers mis à jour', 'Les modifications ont été enregistrées.');
         router.push(`/dashboard/tiers/${route.params.id}`);
       } else {
-        errorMsg.value = result.error || 'Erreur lors de la mise \u00e0 jour.';
+        errorMsg.value = result.error || 'Erreur lors de la mise à jour.';
         showError('Erreur', errorMsg.value);
       }
     } else {
       const result = await store.createTier(form.value, rolesArray);
 
       if (result.success) {
-        showSuccess('Tiers cr\u00e9\u00e9', 'Le tiers a \u00e9t\u00e9 cr\u00e9\u00e9 avec succ\u00e8s.');
+        showSuccess('Tiers créé', 'Le tiers a été créé avec succès.');
         router.push('/dashboard/tiers');
       } else {
-        errorMsg.value = result.error || 'Erreur lors de la cr\u00e9ation.';
+        errorMsg.value = result.error || 'Erreur lors de la création.';
         showError('Erreur', errorMsg.value);
       }
     }
@@ -361,7 +361,7 @@ onMounted(async () => {
       // Populate role (exclusive : prendre le premier)
       selectedRole.value = tier.tiers_roles?.[0]?.role || null;
     } else {
-      errorMsg.value = 'Impossible de charger les donn\u00e9es du tiers.';
+      errorMsg.value = 'Impossible de charger les données du tiers.';
     }
   }
 });
@@ -380,7 +380,7 @@ onMounted(async () => {
       <div class="flex gap-2">
         <Button label="Annuler" severity="secondary" outlined @click="goBack" />
         <Button
-          :label="isEditMode ? 'Enregistrer' : 'Cr\u00e9er le tiers'"
+          :label="isEditMode ? 'Enregistrer' : 'Créer le tiers'"
           icon="pi pi-check"
           :loading="submitting"
           @click="handleSubmit"
@@ -395,7 +395,7 @@ onMounted(async () => {
       <!-- Score details -->
       <div v-if="computedScore.missing.length > 0" class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-4">
         <p class="text-sm font-medium text-amber-800 dark:text-amber-200 mb-2">
-          <i class="pi pi-info-circle mr-1"></i> Informations manquantes pour la compl\u00e9tude :
+          <i class="pi pi-info-circle mr-1"></i> Informations manquantes pour la complétude :
         </p>
         <ul class="list-disc list-inside text-sm text-amber-700 dark:text-amber-300 space-y-1">
           <li v-for="item in computedScore.missing" :key="item">{{ item }}</li>
@@ -420,7 +420,7 @@ onMounted(async () => {
             </div>
             <div class="text-left">
               <p class="font-semibold text-gray-900 dark:text-white">Personne physique</p>
-              <p class="text-sm text-gray-500">Individu, apprenant, formateur ind\u00e9pendant</p>
+              <p class="text-sm text-gray-500">Individu, apprenant, formateur indépendant</p>
             </div>
           </button>
 
@@ -452,8 +452,8 @@ onMounted(async () => {
 
       <!-- ====== ROLE SELECTOR (exclusif) ====== -->
       <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">R\u00f4le</h2>
-        <p class="text-sm text-gray-500 mb-4">S\u00e9lectionnez un r\u00f4le unique pour ce tiers.</p>
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Rôle</h2>
+        <p class="text-sm text-gray-500 mb-4">Sélectionnez un rôle unique pour ce tiers.</p>
         <div class="flex flex-wrap gap-3">
           <button
             v-for="role in TIER_ROLE_OPTIONS"
@@ -480,7 +480,7 @@ onMounted(async () => {
           <div class="flex items-center justify-between mb-5">
             <div class="flex items-center gap-2">
               <i class="pi pi-id-card text-blue-500"></i>
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Informations g\u00e9n\u00e9rales</h2>
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Informations générales</h2>
             </div>
             <div class="flex items-center gap-2">
               <RestoreFieldsButton section-prefix="tiers." />
@@ -491,7 +491,7 @@ onMounted(async () => {
                 rounded
                 size="small"
                 @click="openFieldPanel('tiers.general')"
-                title="G\u00e9rer les champs"
+                title="Gérer les champs"
               />
             </div>
           </div>
@@ -503,7 +503,7 @@ onMounted(async () => {
               <ManageableField labelKey="tiers.prenom">
                 <div class="flex flex-col gap-2">
                   <EditableLabel labelKey="tiers.prenom" :defaultLabel="tiersFieldLabels['tiers.prenom']" />
-                  <InputText v-model="form.prenom" :placeholder="ph('tiers.prenom', 'Pr\u00e9nom')" :invalid="!!errors.prenom" @input="clearError('prenom')" />
+                  <InputText v-model="form.prenom" :placeholder="ph('tiers.prenom', 'Prénom')" :invalid="!!errors.prenom" @input="clearError('prenom')" />
                 </div>
               </ManageableField>
               <ManageableField labelKey="tiers.nom_famille">
@@ -580,7 +580,7 @@ onMounted(async () => {
                   @address-selected="handleAddressSelected"
                   :placeholder="ph('tiers.address', 'Saisissez une adresse...')"
                 />
-                <span class="text-xs text-gray-400"><i class="pi pi-info-circle mr-1"></i>Auto-compl\u00e9tion via adresse.data.gouv.fr</span>
+                <span class="text-xs text-gray-400"><i class="pi pi-info-circle mr-1"></i>Auto-complétion via adresse.data.gouv.fr</span>
               </div>
             </ManageableField>
             <ManageableField labelKey="tiers.zip_code">
@@ -618,7 +618,7 @@ onMounted(async () => {
                   :options="TIER_STATUTS"
                   optionLabel="label"
                   optionValue="value"
-                  placeholder="S\u00e9lectionner un statut"
+                  placeholder="Sélectionner un statut"
                 />
               </div>
             </ManageableField>
@@ -630,7 +630,7 @@ onMounted(async () => {
                   :options="STATUT_COMMERCIAL"
                   optionLabel="label"
                   optionValue="value"
-                  placeholder="S\u00e9lectionner"
+                  placeholder="Sélectionner"
                 />
               </div>
             </ManageableField>
@@ -671,7 +671,7 @@ onMounted(async () => {
                 rounded
                 size="small"
                 @click="openFieldPanel('tiers.apprenant')"
-                title="G\u00e9rer les champs"
+                title="Gérer les champs"
               />
             </div>
           </div>
@@ -692,7 +692,7 @@ onMounted(async () => {
             <ManageableField labelKey="tiers.objectif_professionnel" class="md:col-span-2">
               <div class="flex flex-col gap-2">
                 <EditableLabel labelKey="tiers.objectif_professionnel" :defaultLabel="tiersFieldLabels['tiers.objectif_professionnel']" />
-                <Textarea v-model="form.objectif_professionnel" rows="3" autoResize :placeholder="ph('tiers.objectif_professionnel', 'D\u00e9crivez l\'objectif professionnel...')" />
+                <Textarea v-model="form.objectif_professionnel" rows="3" autoResize :placeholder="ph('tiers.objectif_professionnel', 'Décrivez l\'objectif professionnel...')" />
               </div>
             </ManageableField>
             <ManageableField labelKey="tiers.situation_handicap">
@@ -703,14 +703,14 @@ onMounted(async () => {
                   :options="HANDICAP_OPTIONS"
                   optionLabel="label"
                   optionValue="value"
-                  placeholder="S\u00e9lectionner"
+                  placeholder="Sélectionner"
                 />
               </div>
             </ManageableField>
             <ManageableField v-if="form.situation_handicap === 'oui'" labelKey="tiers.besoin_amenagement" class="md:col-span-2">
               <div class="flex flex-col gap-2">
                 <EditableLabel labelKey="tiers.besoin_amenagement" :defaultLabel="tiersFieldLabels['tiers.besoin_amenagement']" />
-                <Textarea v-model="form.besoin_amenagement" rows="3" autoResize :placeholder="ph('tiers.besoin_amenagement', 'D\u00e9crivez les besoins d\'am\u00e9nagement...')" />
+                <Textarea v-model="form.besoin_amenagement" rows="3" autoResize :placeholder="ph('tiers.besoin_amenagement', 'Décrivez les besoins d\'aménagement...')" />
               </div>
             </ManageableField>
           </div>
@@ -738,7 +738,7 @@ onMounted(async () => {
                 rounded
                 size="small"
                 @click="openFieldPanel('tiers.formateur')"
-                title="G\u00e9rer les champs"
+                title="Gérer les champs"
               />
             </div>
           </div>
@@ -782,13 +782,13 @@ onMounted(async () => {
             <ManageableField labelKey="tiers.declaration_activite">
               <div class="flex flex-col gap-2">
                 <EditableLabel labelKey="tiers.declaration_activite" :defaultLabel="tiersFieldLabels['tiers.declaration_activite']" />
-                <InputText v-model="form.declaration_activite" :placeholder="ph('tiers.declaration_activite', 'Num\u00e9ro de d\u00e9claration')" />
+                <InputText v-model="form.declaration_activite" :placeholder="ph('tiers.declaration_activite', 'Numéro de déclaration')" />
               </div>
             </ManageableField>
             <ManageableField labelKey="tiers.declaration_region">
               <div class="flex flex-col gap-2">
                 <EditableLabel labelKey="tiers.declaration_region" :defaultLabel="tiersFieldLabels['tiers.declaration_region']" />
-                <InputText v-model="form.declaration_region" :placeholder="ph('tiers.declaration_region', 'Ex : \u00cele-de-France')" />
+                <InputText v-model="form.declaration_region" :placeholder="ph('tiers.declaration_region', 'Ex : Île-de-France')" />
               </div>
             </ManageableField>
 
@@ -858,7 +858,7 @@ onMounted(async () => {
                 rounded
                 size="small"
                 @click="openFieldPanel('tiers.fournisseur')"
-                title="G\u00e9rer les champs"
+                title="Gérer les champs"
               />
             </div>
           </div>
@@ -872,7 +872,7 @@ onMounted(async () => {
                   :options="FOURNISSEUR_TYPES"
                   optionLabel="label"
                   optionValue="value"
-                  placeholder="S\u00e9lectionner un type"
+                  placeholder="Sélectionner un type"
                 />
               </div>
             </ManageableField>

@@ -188,7 +188,7 @@ onUnmounted(() => {
                     ? 'bg-primary text-white shadow-md cursor-pointer'
                     : 'text-slate-300 hover:bg-slate-800 hover:text-white cursor-pointer'
               ]"
-              @click="item.disabled ? $event.preventDefault() : null"
+              @click="(item.disabled || editingNavItem === item.name) ? $event.preventDefault() : null"
             >
               <i class="pi text-sm" :class="item.icon"></i>
 

@@ -108,7 +108,7 @@ const tiersFieldLabels = {
 };
 
 // --- Pré-sélection via query param (avant le premier rendu) ---
-const ROLES_PERSONNE = ['apprenant', 'formateur'];
+const ROLES_PERSONNE = ['apprenant'];
 const preselectedRole = !route.params.id && route.query.role ? route.query.role : null;
 const initialNature = preselectedRole && ROLES_PERSONNE.includes(preselectedRole)
   ? 'personne_physique'
@@ -174,10 +174,10 @@ const { errors, validate, clearError } = useFormValidation();
 const isEditMode = computed(() => !!route.params.id);
 
 const ROLE_LABELS = {
-  apprenant: 'Nouvel apprenant',
-  formateur: 'Nouveau formateur',
+  apprenant: 'Nouveau bénéficiaire',
+  formateur: 'Nouvel intervenant',
   client: 'Nouveau client',
-  fournisseur: 'Nouveau fournisseur',
+  fournisseur: 'Nouveau financeur',
 };
 
 const pageTitle = computed(() => {
@@ -188,7 +188,7 @@ const pageTitle = computed(() => {
 
 const isOrganisation = computed(() => form.value.nature === 'organisation');
 const isPersonne = computed(() => form.value.nature === 'personne_physique');
-const forcePersonne = computed(() => selectedRole.value === 'apprenant' || selectedRole.value === 'formateur');
+const forcePersonne = computed(() => selectedRole.value === 'apprenant');
 
 const hasRole = (role) => selectedRole.value === role;
 
@@ -217,12 +217,14 @@ watch(
   }
 );
 
-// --- Force nature personne_physique pour apprenant/formateur ---
+// --- Force nature selon le rôle : apprenant = personne_physique, autres = organisation ---
 watch(
   () => selectedRole.value,
   (role) => {
-    if (role === 'apprenant' || role === 'formateur') {
+    if (role === 'apprenant') {
       form.value.nature = 'personne_physique';
+    } else if (role) {
+      form.value.nature = 'organisation';
     }
   }
 );
@@ -403,54 +405,6 @@ onMounted(async () => {
         </ul>
       </div>
 
-      <!-- ====== NATURE SELECTOR ====== -->
-      <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Nature du tiers</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <button
-            type="button"
-            @click="form.nature = 'personne_physique'"
-            class="flex items-center gap-4 p-5 rounded-xl border-2 transition-all duration-200 cursor-pointer"
-            :class="isPersonne
-              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 shadow-md'
-              : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-gray-300'"
-          >
-            <div class="w-12 h-12 rounded-xl flex items-center justify-center"
-                 :class="isPersonne ? 'bg-blue-100 dark:bg-blue-800' : 'bg-gray-100 dark:bg-gray-700'">
-              <i class="pi pi-user text-xl" :class="isPersonne ? 'text-blue-600' : 'text-gray-500'"></i>
-            </div>
-            <div class="text-left">
-              <p class="font-semibold text-gray-900 dark:text-white">Personne physique</p>
-              <p class="text-sm text-gray-500">Individu, apprenant, formateur indépendant</p>
-            </div>
-          </button>
-
-          <button
-            type="button"
-            @click="!forcePersonne && (form.nature = 'organisation')"
-            :disabled="forcePersonne"
-            class="flex items-center gap-4 p-5 rounded-xl border-2 transition-all duration-200"
-            :class="[
-              forcePersonne
-                ? 'opacity-40 cursor-not-allowed border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800'
-                : isOrganisation
-                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 shadow-md cursor-pointer'
-                  : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-gray-300 cursor-pointer'
-            ]"
-          >
-            <div class="w-12 h-12 rounded-xl flex items-center justify-center"
-                 :class="isOrganisation && !forcePersonne ? 'bg-blue-100 dark:bg-blue-800' : 'bg-gray-100 dark:bg-gray-700'">
-              <i class="pi pi-building text-xl" :class="isOrganisation && !forcePersonne ? 'text-blue-600' : 'text-gray-500'"></i>
-            </div>
-            <div class="text-left">
-              <p class="font-semibold text-gray-900 dark:text-white">Organisation</p>
-              <p v-if="forcePersonne" class="text-xs text-orange-500">Non applicable pour apprenant / formateur</p>
-              <p v-else class="text-sm text-gray-500">Entreprise, association, organisme</p>
-            </div>
-          </button>
-        </div>
-      </div>
-
       <!-- ====== ROLE SELECTOR (exclusif) ====== -->
       <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Rôle</h2>
@@ -602,7 +556,7 @@ onMounted(async () => {
                 <InputText v-model="form.country" :placeholder="ph('tiers.country', 'France')" />
               </div>
             </ManageableField>
-            <ManageableField labelKey="tiers.site_web">
+            <ManageableField v-if="!hasRole('apprenant')" labelKey="tiers.site_web">
               <div class="flex flex-col gap-2">
                 <EditableLabel labelKey="tiers.site_web" :defaultLabel="tiersFieldLabels['tiers.site_web']" />
                 <InputText v-model="form.site_web" :placeholder="ph('tiers.site_web', 'https://www.exemple.com')" />
@@ -655,7 +609,7 @@ onMounted(async () => {
           <div class="flex items-center justify-between mb-5">
             <div class="flex items-center gap-2">
               <i class="pi pi-user text-green-500"></i>
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Informations apprenant</h2>
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Informations bénéficiaire</h2>
             </div>
             <div class="flex items-center gap-2">
               <RestoreFieldsButton section-prefix="tiers.apprenant." />
@@ -682,12 +636,6 @@ onMounted(async () => {
               <div class="flex flex-col gap-2">
                 <EditableLabel labelKey="tiers.niveau_entree" :defaultLabel="tiersFieldLabels['tiers.niveau_entree']" />
                 <InputText v-model="form.niveau_entree" :placeholder="ph('tiers.niveau_entree', 'Ex : Bac+2, CAP...')" />
-              </div>
-            </ManageableField>
-            <ManageableField labelKey="tiers.objectif_professionnel" class="md:col-span-2">
-              <div class="flex flex-col gap-2">
-                <EditableLabel labelKey="tiers.objectif_professionnel" :defaultLabel="tiersFieldLabels['tiers.objectif_professionnel']" />
-                <Textarea v-model="form.objectif_professionnel" rows="3" autoResize :placeholder="ph('tiers.objectif_professionnel', 'Décrivez l\'objectif professionnel...')" />
               </div>
             </ManageableField>
             <ManageableField labelKey="tiers.situation_handicap">
@@ -722,7 +670,7 @@ onMounted(async () => {
           <div class="flex items-center justify-between mb-5">
             <div class="flex items-center gap-2">
               <i class="pi pi-id-card text-amber-500"></i>
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Informations formateur</h2>
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Informations intervenant</h2>
             </div>
             <div class="flex items-center gap-2">
               <RestoreFieldsButton section-prefix="tiers.formateur." />
@@ -838,7 +786,7 @@ onMounted(async () => {
           <div class="flex items-center justify-between mb-5">
             <div class="flex items-center gap-2">
               <i class="pi pi-briefcase text-gray-500"></i>
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Informations fournisseur</h2>
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Informations financeur</h2>
             </div>
             <div class="flex items-center gap-2">
               <RestoreFieldsButton section-prefix="tiers.fournisseur." />

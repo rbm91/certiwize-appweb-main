@@ -36,7 +36,6 @@ import Tag from 'primevue/tag';
 import SelectButton from 'primevue/selectbutton';
 import DatePicker from 'primevue/datepicker';
 import Divider from 'primevue/divider';
-import Chips from 'primevue/chips';
 
 const route = useRoute();
 const router = useRouter();
@@ -89,7 +88,6 @@ const tiersFieldLabels = {
   'tiers.site_web': 'Site web',
   'tiers.statut': 'Statut',
   'tiers.statut_commercial': 'Statut commercial',
-  'tiers.tags': 'Tags',
   'tiers.notes': 'Notes',
   'tiers.date_naissance': 'Date de naissance',
   'tiers.niveau_entree': "Niveau d'entrée",
@@ -127,7 +125,6 @@ const form = ref({
   zip_code: '',
   country: 'France',
   notes: '',
-  tags: [],
   statut: 'actif',
   statut_commercial: '',
   site_web: '',
@@ -636,12 +633,6 @@ onMounted(async () => {
                   optionValue="value"
                   placeholder="Sélectionner"
                 />
-              </div>
-            </ManageableField>
-            <ManageableField labelKey="tiers.tags" class="md:col-span-2">
-              <div class="flex flex-col gap-2">
-                <EditableLabel labelKey="tiers.tags" :defaultLabel="tiersFieldLabels['tiers.tags']" />
-                <Chips v-model="form.tags" separator="," :placeholder="ph('tiers.tags', 'Ajouter un tag et valider')" />
               </div>
             </ManageableField>
             <ManageableField labelKey="tiers.notes" class="md:col-span-2">

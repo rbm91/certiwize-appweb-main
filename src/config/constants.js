@@ -187,7 +187,7 @@ export const RELATION_TYPES = [
 
 // Tiers — Types de fournisseur
 export const FOURNISSEUR_TYPES = [
-  { label: 'Sous-traitant pédagogique', value: 'sous_traitant_pedagogique' },
+  { label: 'OPCO', value: 'opco' },
   { label: 'Prestataire technique', value: 'prestataire_technique' },
   { label: 'Autre', value: 'autre' },
 ];

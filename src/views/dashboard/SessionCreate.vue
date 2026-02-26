@@ -756,6 +756,21 @@ onMounted(async () => {
               La génération peut prendre quelques secondes.
             </Message>
           </div>
+          <!-- Documents joints -->
+          <div class="border-t pt-6 mt-6">
+            <h3 class="text-base font-semibold text-surface-700 dark:text-surface-200 mb-4">
+              <i class="pi pi-paperclip mr-2"></i>Documents joints
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <DocumentSlot
+                :modelValue="getDocument('programme_formation')"
+                @update:modelValue="(v) => setDocument('programme_formation', v)"
+                label="Programme de formation"
+                slotKey="programme_formation"
+                :libraryDocs="libraryDocs"
+              />
+            </div>
+          </div>
           <!-- Champs personnalisés -->
           <div class="mt-6 border-t pt-6">
             <CustomFieldRenderer section="session.step2" v-model="customFieldValues.step2" />

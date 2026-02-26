@@ -620,28 +620,6 @@ onMounted(async () => {
                 />
               </div>
             </ManageableField>
-          </div>
-          <h2 class="text-lg font-semibold text-primary border-b pb-2 mb-6 mt-8">
-            <i class="pi pi-id-card mr-2"></i><EditableLabel labelKey="session.tiers" defaultLabel="Sélectionner le tiers" />
-          </h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <ManageableField fieldKey="session.tiers" class="md:col-span-2">
-              <div class="flex flex-col gap-2">
-                <Dropdown
-                  v-model="form.tiers_id"
-                  :options="allTiersOptions"
-                  optionLabel="label"
-                  optionValue="value"
-                  :placeholder="ph('session.tiers', 'Sélectionner le tiers')"
-                  filter
-                  showClear
-                  class="w-full"
-                />
-                <small v-if="selectedTiersLabel" class="text-green-600">
-                  <i class="pi pi-check-circle mr-1"></i>{{ selectedTiersLabel }}
-                </small>
-              </div>
-            </ManageableField>
             <ManageableField fieldKey="session.payeur">
               <div class="flex flex-col gap-2">
                 <label class="text-sm font-medium"><EditableLabel labelKey="session.payeur" defaultLabel="Financeur / Payeur" /></label>
@@ -710,6 +688,30 @@ onMounted(async () => {
               <div class="flex flex-col gap-2">
                 <label class="text-sm font-medium"><EditableLabel labelKey="session.montant_ht" defaultLabel="Montant HT" /></label>
                 <InputNumber v-model="form.montant_ht" :min="0" mode="currency" currency="EUR" locale="fr-FR" class="w-full" />
+              </div>
+            </ManageableField>
+          </div>
+
+          <!-- Sélectionner le tiers -->
+          <h2 class="text-lg font-semibold text-primary border-b pb-2 mb-6 mt-8">
+            <i class="pi pi-id-card mr-2"></i><EditableLabel labelKey="session.tiers" defaultLabel="Sélectionner le tiers" />
+          </h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <ManageableField fieldKey="session.tiers" class="md:col-span-2">
+              <div class="flex flex-col gap-2">
+                <Dropdown
+                  v-model="form.tiers_id"
+                  :options="allTiersOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  :placeholder="ph('session.tiers', 'Sélectionner le tiers')"
+                  filter
+                  showClear
+                  class="w-full"
+                />
+                <small v-if="selectedTiersLabel" class="text-green-600">
+                  <i class="pi pi-check-circle mr-1"></i>{{ selectedTiersLabel }}
+                </small>
               </div>
             </ManageableField>
           </div>

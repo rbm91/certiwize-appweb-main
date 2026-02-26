@@ -44,7 +44,7 @@ const save = async () => {
   // Si vide ou identique au défaut → supprimer le custom
   if (!trimmed || trimmed === props.defaultLabel) {
     if (navConfig.config?.labels?.[props.labelKey]) {
-      const newConfig = structuredClone(navConfig.config);
+      const newConfig = JSON.parse(JSON.stringify(navConfig.config));
       delete newConfig.labels[props.labelKey];
       await navConfig.saveConfig(newConfig);
     }
@@ -56,7 +56,7 @@ const save = async () => {
 
   // Sauvegarder le nouveau label
   saving.value = true;
-  const newConfig = structuredClone(navConfig.config || { version: 1, topNav: { order: [], labels: {} }, sidebar: { labels: {} }, labels: {} });
+  const newConfig = JSON.parse(JSON.stringify(navConfig.config || { version: 1, topNav: { order: [], labels: {} }, sidebar: { labels: {} }, labels: {} }));
   if (!newConfig.labels) newConfig.labels = {};
   newConfig.labels[props.labelKey] = trimmed;
   await navConfig.saveConfig(newConfig);

@@ -24,6 +24,12 @@ const updateValue = (fieldKey, value) => {
   emit('update:modelValue', newValues);
 };
 
+// Vérifier si un champ doit être affiché (condition showIf)
+const isFieldVisible = (field) => {
+  if (!field.showIf) return true;
+  return props.modelValue[field.showIf.key] === field.showIf.value;
+};
+
 const removeField = async (fieldKey) => {
   if (confirm('Supprimer ce champ personnalisé ? Cette action est irréversible.')) {
     await navConfig.removeCustomField(props.section, fieldKey);
@@ -36,7 +42,7 @@ const removeField = async (fieldKey) => {
 
 <template>
   <template v-for="field in customFields" :key="field.key">
-    <div class="custom-field-item">
+    <div v-show="isFieldVisible(field)" class="custom-field-item">
       <div class="flex flex-col gap-2">
         <EditableLabel
           :labelKey="`custom.${field.key}`"

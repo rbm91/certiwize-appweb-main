@@ -300,6 +300,25 @@ export const useNavConfigStore = defineStore('navConfig', () => {
   };
 
   /**
+   * Définir une condition d'affichage sur un champ custom
+   * showIf = { key: 'autre_champ_key', value: true } ou null pour supprimer
+   */
+  const setFieldShowIf = async (section, fieldKey, showIf) => {
+    const fields = config.value?.customFields?.[section];
+    if (!fields) return { success: true };
+    const field = fields.find(f => f.key === fieldKey);
+    if (field) {
+      if (showIf) {
+        field.showIf = showIf;
+      } else {
+        delete field.showIf;
+      }
+      return saveConfig(JSON.parse(JSON.stringify(config.value)));
+    }
+    return { success: true };
+  };
+
+  /**
    * Réordonner les champs custom d'une section
    */
   const reorderCustomFields = async (section, orderedKeys) => {
@@ -386,6 +405,7 @@ export const useNavConfigStore = defineStore('navConfig', () => {
     removeCustomField,
     updateCustomFieldLabel,
     reorderCustomFields,
+    setFieldShowIf,
     // Placeholders
     getFieldPlaceholder,
     updateFieldPlaceholder,

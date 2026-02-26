@@ -71,7 +71,6 @@ const sessionFieldLabels = {
   'session.objectifs': 'Objectifs pédagogiques',
   'session.public_vise': 'Public visé',
   'session.modalites': 'Modalités pédagogiques',
-  'session.handicap_info': 'Prise en compte du handicap',
   'session.documents': 'Génération de documents',
 };
 
@@ -112,7 +111,6 @@ const form = ref({
   objectifs: '',
   public_vise: '',
   modalites: '',
-  handicap_info: '',
 
   // Step 2+ stored as workflow_data
   workflow_data: {},
@@ -257,7 +255,6 @@ const generateDocument = async (type, loadingRef, webhookUrl) => {
       objectifs: form.value.objectifs,
       public_vise: form.value.public_vise,
       modalites: form.value.modalites,
-      handicap_info: form.value.handicap_info,
     };
 
     const response = await axios.post(webhookUrl, payload);
@@ -364,7 +361,6 @@ const handleSave = async (redirect = true) => {
           objectifs: form.value.objectifs,
           public_vise: form.value.public_vise,
           modalites: form.value.modalites,
-          handicap_info: form.value.handicap_info,
         },
       },
     };
@@ -444,6 +440,14 @@ onMounted(async () => {
       await trainingStore.fetchFormations();
     }
 
+    // Auto-configurer la dépendance PSH (Commentaire PSH visible seulement si Présence de PSH = Oui)
+    const mainCustomFields = navConfig.config?.customFields?.['session.main'] || [];
+    const presencePSH = mainCustomFields.find(f => f.type === 'toggle' && f.label.toLowerCase().includes('psh'));
+    const commentairePSH = mainCustomFields.find(f => f.type !== 'toggle' && f.label.toLowerCase().includes('psh') && f.key !== presencePSH?.key);
+    if (presencePSH && commentairePSH && !commentairePSH.showIf) {
+      await navConfig.setFieldShowIf('session.main', commentairePSH.key, { key: presencePSH.key, value: true });
+    }
+
     if (isEdit.value) {
       const data = await store.fetchPrestationById(editId.value);
       if (data) {
@@ -472,7 +476,6 @@ onMounted(async () => {
         form.value.objectifs = ab.objectifs || '';
         form.value.public_vise = ab.public_vise || '';
         form.value.modalites = ab.modalites || '';
-        form.value.handicap_info = ab.handicap_info || '';
 
         // Restore apprenants
         if (data.prestation_apprenants) {
@@ -516,7 +519,7 @@ onMounted(async () => {
         <!-- ====== STEP 1 : Identification & Analyse du besoin ====== -->
         <div v-if="currentStep === 1">
           <h2 class="text-lg font-semibold text-primary border-b pb-2 mb-6">
-            <i class="pi pi-user mr-2"></i>Identification & Analyse du besoin
+            <i class="pi pi-user mr-2"></i><EditableLabel labelKey="session.step1_title" defaultLabel="Identification & Analyse du besoin" />
           </h2>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <ManageableField fieldKey="session.intitule" class="md:col-span-2">
@@ -658,13 +661,6 @@ onMounted(async () => {
                 <Textarea v-model="form.modalites" rows="2" :placeholder="ph('session.modalites', 'Présentiel, distanciel, mixte, méthodes...')" class="w-full" />
               </div>
             </ManageableField>
-            <ManageableField fieldKey="session.handicap_info">
-              <div class="flex flex-col gap-2">
-                <label class="text-sm font-medium"><EditableLabel labelKey="session.handicap_info" defaultLabel="Prise en compte du handicap" /></label>
-                <Textarea v-model="form.handicap_info" rows="2" :placeholder="ph('session.handicap_info', 'Aménagements prévus, accessibilité, référent handicap...')" class="w-full" />
-              </div>
-            </ManageableField>
-
             <!-- Champs personnalisés + Restaurer + Ajouter -->
             <div>
               <CustomFieldRenderer section="session.main" v-model="customFieldValues.identification" />

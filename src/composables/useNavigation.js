@@ -50,8 +50,6 @@ const sidebarItemsBySection = {
     { type: 'separator', label: 'Conseil' },
     { name: 'sidebar_conseil_create', href: '/dashboard/conseil/create', icon: 'pi-plus', badge: 'green' },
     { name: 'sidebar_conseil_list', href: '/dashboard/conseil', icon: 'pi-list' },
-    { type: 'separator', label: 'Apprenant' },
-    { name: 'sidebar_apprenant_create', href: '/dashboard/tiers/create?role=apprenant', icon: 'pi-user-plus' },
   ],
 
   facturation: [

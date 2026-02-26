@@ -34,7 +34,7 @@ const saveRename = async (item) => {
   if (editingSidebarItem.value !== item.name) return;
   const label = editingLabel.value.trim();
   if (label && label !== getLabel(item.name)) {
-    await navConfigStore.updateSidebarLabel(item.name, label);
+    await navConfigStore.updateLabel(item.name, label);
   }
   editingSidebarItem.value = null;
 };

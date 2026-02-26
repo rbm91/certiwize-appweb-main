@@ -251,10 +251,8 @@ export const useNavigation = () => {
     }
   };
 
-  // Labels : utilise le label custom sidebar, puis topnav, puis i18n
+  // Labels : utilise le label custom topNav (unique source), puis i18n
   const getLabel = (name) => {
-    const sidebarLabel = navConfigStore.config?.sidebar?.labels?.[name];
-    if (sidebarLabel) return sidebarLabel;
     const customLabel = navConfigStore.config?.topNav?.labels?.[name];
     return customLabel || t(`nav.${name}`);
   };

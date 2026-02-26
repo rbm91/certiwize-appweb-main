@@ -103,7 +103,7 @@ export const useNavConfigStore = defineStore('navConfig', () => {
    * Mettre à jour un label custom pour un item de nav
    */
   const updateLabel = async (name, label) => {
-    const newConfig = structuredClone(config.value || DEFAULT_CONFIG);
+    const newConfig = JSON.parse(JSON.stringify(config.value || DEFAULT_CONFIG));
     if (!newConfig.topNav) newConfig.topNav = { order: [], labels: {} };
     if (!newConfig.topNav.labels) newConfig.topNav.labels = {};
     newConfig.topNav.labels[name] = label;
@@ -114,7 +114,7 @@ export const useNavConfigStore = defineStore('navConfig', () => {
    * Mettre à jour l'ordre des items de la topnav
    */
   const updateOrder = async (newOrder) => {
-    const newConfig = structuredClone(config.value || DEFAULT_CONFIG);
+    const newConfig = JSON.parse(JSON.stringify(config.value || DEFAULT_CONFIG));
     if (!newConfig.topNav) newConfig.topNav = { order: [], labels: {} };
     newConfig.topNav.order = newOrder;
     return saveConfig(newConfig);
@@ -148,7 +148,7 @@ export const useNavConfigStore = defineStore('navConfig', () => {
    * Mettre à jour un label custom pour un item de sidebar
    */
   const updateSidebarLabel = async (name, label) => {
-    const newConfig = structuredClone(config.value || DEFAULT_CONFIG);
+    const newConfig = JSON.parse(JSON.stringify(config.value || DEFAULT_CONFIG));
     if (!newConfig.sidebar) newConfig.sidebar = { labels: {} };
     if (!newConfig.sidebar.labels) newConfig.sidebar.labels = {};
     newConfig.sidebar.labels[name] = label;
@@ -167,7 +167,7 @@ export const useNavConfigStore = defineStore('navConfig', () => {
    * Mettre à jour un label custom (formulaires, titres, etc.)
    */
   const updateCustomLabel = async (key, label) => {
-    const newConfig = structuredClone(config.value || DEFAULT_CONFIG);
+    const newConfig = JSON.parse(JSON.stringify(config.value || DEFAULT_CONFIG));
     if (!newConfig.labels) newConfig.labels = {};
     newConfig.labels[key] = label;
     return saveConfig(newConfig);
@@ -177,7 +177,7 @@ export const useNavConfigStore = defineStore('navConfig', () => {
    * Supprimer un label custom (retour au défaut)
    */
   const removeCustomLabel = async (key) => {
-    const newConfig = structuredClone(config.value || DEFAULT_CONFIG);
+    const newConfig = JSON.parse(JSON.stringify(config.value || DEFAULT_CONFIG));
     if (newConfig.labels) {
       delete newConfig.labels[key];
       return saveConfig(newConfig);
@@ -200,7 +200,7 @@ export const useNavConfigStore = defineStore('navConfig', () => {
    * Masquer un champ
    */
   const hideField = async (fieldKey) => {
-    const newConfig = structuredClone(config.value || DEFAULT_CONFIG);
+    const newConfig = JSON.parse(JSON.stringify(config.value || DEFAULT_CONFIG));
     if (!newConfig.hiddenFields) newConfig.hiddenFields = [];
     if (!newConfig.hiddenFields.includes(fieldKey)) {
       newConfig.hiddenFields.push(fieldKey);
@@ -212,7 +212,7 @@ export const useNavConfigStore = defineStore('navConfig', () => {
    * Restaurer un champ masqué
    */
   const showField = async (fieldKey) => {
-    const newConfig = structuredClone(config.value || DEFAULT_CONFIG);
+    const newConfig = JSON.parse(JSON.stringify(config.value || DEFAULT_CONFIG));
     if (!newConfig.hiddenFields) return { success: true };
     newConfig.hiddenFields = newConfig.hiddenFields.filter(k => k !== fieldKey);
     return saveConfig(newConfig);

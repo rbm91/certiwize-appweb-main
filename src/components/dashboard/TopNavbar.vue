@@ -29,8 +29,10 @@ const startRename = (item) => {
   editingNavItem.value = item.name;
   editingLabel.value = getLabel(item.name);
   nextTick(() => {
-    renameInput.value?.focus();
-    renameInput.value?.select();
+    // ref inside draggable slot is collected as an array
+    const el = Array.isArray(renameInput.value) ? renameInput.value[0] : renameInput.value;
+    el?.focus();
+    el?.select();
   });
 };
 

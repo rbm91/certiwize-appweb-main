@@ -175,8 +175,7 @@ const ROLE_LABELS = {
   apprenant: 'Nouvel apprenant',
   formateur: 'Nouveau formateur',
   client: 'Nouveau client',
-  fournisseur: 'Nouveau fournisseur',
-  partenaire: 'Nouveau partenaire',
+  fournisseur: 'Nouveau fournisseur / partenaire',
 };
 
 const pageTitle = computed(() => {

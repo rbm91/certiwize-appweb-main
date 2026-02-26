@@ -74,8 +74,8 @@ const clientOptions = computed(() =>
 
 const financeurOptions = computed(() => {
   const clients = tiersStore.tiersByRole('client');
-  const partenaires = tiersStore.tiersByRole('partenaire');
-  return [...clients, ...partenaires].map(t => ({
+  const fournisseurs = tiersStore.tiersByRole('fournisseur');
+  return [...clients, ...fournisseurs].map(t => ({
     label: t.nom_affiche || t.raison_sociale || t.email,
     value: t.id,
   }));

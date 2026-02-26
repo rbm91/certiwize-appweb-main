@@ -140,15 +140,13 @@ export const TIER_ROLES = {
   APPRENANT: 'apprenant',
   FORMATEUR: 'formateur',
   FOURNISSEUR: 'fournisseur',
-  PARTENAIRE: 'partenaire',
 };
 
 export const TIER_ROLE_OPTIONS = [
   { label: 'Client', value: 'client', icon: 'pi-building' },
   { label: 'Apprenant', value: 'apprenant', icon: 'pi-user' },
   { label: 'Formateur', value: 'formateur', icon: 'pi-id-card' },
-  { label: 'Fournisseur', value: 'fournisseur', icon: 'pi-briefcase' },
-  { label: 'Partenaire', value: 'partenaire', icon: 'pi-handshake' },
+  { label: 'Fournisseur / Partenaire', value: 'fournisseur', icon: 'pi-briefcase' },
 ];
 
 export const TIER_ROLE_COLORS = {
@@ -156,7 +154,6 @@ export const TIER_ROLE_COLORS = {
   apprenant: 'success',
   formateur: 'warn',
   fournisseur: 'secondary',
-  partenaire: 'primary',
 };
 
 // Tiers — Nature

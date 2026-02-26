@@ -21,6 +21,7 @@ import AddFieldButton from '../../components/common/AddFieldButton.vue';
 import CustomFieldRenderer from '../../components/common/CustomFieldRenderer.vue';
 import RestoreFieldsButton from '../../components/common/RestoreFieldsButton.vue';
 import FieldManagerPanel from '../../components/common/FieldManagerPanel.vue';
+import DocumentSlot from '../../components/common/DocumentSlot.vue';
 
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
@@ -54,6 +55,19 @@ const activeFieldPanelSection = ref('session.main');
 const openFieldPanel = (section) => {
   activeFieldPanelSection.value = section;
   showFieldPanel.value = true;
+};
+
+// -- Documents de la session (bibliothèque + helpers) --
+const libraryDocs = ref([]);
+const getDocument = (key) => form.value.workflow_data?.documents?.[key] || null;
+const setDocument = (key, value) => {
+  if (!form.value.workflow_data) form.value.workflow_data = {};
+  if (!form.value.workflow_data.documents) form.value.workflow_data.documents = {};
+  if (value) {
+    form.value.workflow_data.documents[key] = value;
+  } else {
+    delete form.value.workflow_data.documents[key];
+  }
 };
 
 // Labels pour restauration et FieldManagerPanel
@@ -440,6 +454,19 @@ onMounted(async () => {
       await trainingStore.fetchFormations();
     }
 
+    // Charger les documents de la bibliothèque (boîte à outils) pour les DocumentSlots
+    try {
+      const { data: libData } = await supabase
+        .from('boite_outils_documents')
+        .select('*')
+        .eq('user_id', authStore.user.id)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false });
+      libraryDocs.value = libData || [];
+    } catch (err) {
+      console.warn('[SessionCreate] Fetch library docs:', err.message);
+    }
+
     // Auto-configurer la dépendance PSH (Commentaire PSH visible seulement si Présence de PSH = Oui)
     const mainCustomFields = navConfig.config?.customFields?.['session.main'] || [];
     const presencePSH = mainCustomFields.find(f => f.type === 'toggle' && f.label.toLowerCase().includes('psh'));
@@ -762,6 +789,35 @@ onMounted(async () => {
               Les convocations seront envoyées aux apprenants après génération.
             </Message>
           </div>
+          <!-- Documents joints -->
+          <div class="border-t pt-6 mt-6">
+            <h3 class="text-base font-semibold text-surface-700 dark:text-surface-200 mb-4">
+              <i class="pi pi-paperclip mr-2"></i>Documents joints
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <DocumentSlot
+                :modelValue="getDocument('livret_accueil')"
+                @update:modelValue="(v) => setDocument('livret_accueil', v)"
+                label="Livret d'accueil"
+                slotKey="livret_accueil"
+                :libraryDocs="libraryDocs"
+              />
+              <DocumentSlot
+                :modelValue="getDocument('reglement_interieur')"
+                @update:modelValue="(v) => setDocument('reglement_interieur', v)"
+                label="Règlement intérieur"
+                slotKey="reglement_interieur"
+                :libraryDocs="libraryDocs"
+              />
+              <DocumentSlot
+                :modelValue="getDocument('convocation_doc')"
+                @update:modelValue="(v) => setDocument('convocation_doc', v)"
+                label="Convocation"
+                slotKey="convocation_doc"
+                :libraryDocs="libraryDocs"
+              />
+            </div>
+          </div>
           <!-- Champs personnalisés -->
           <div class="mt-6 border-t pt-6">
             <CustomFieldRenderer section="session.step3" v-model="customFieldValues.step3" />
@@ -798,18 +854,34 @@ onMounted(async () => {
             </Message>
           </div>
 
-          <!-- Évaluation des acquis -->
+          <!-- Déroulement de la prestation -->
           <div class="border-t pt-6 mt-6">
             <h3 class="text-base font-semibold text-surface-700 dark:text-surface-200 mb-4">
-              <i class="pi pi-check-circle mr-2"></i>Évaluation des acquis
+              <i class="pi pi-check-circle mr-2"></i>Déroulement de la prestation
             </h3>
-            <p class="text-sm text-surface-500 mb-2">
-              Configurez et envoyez les évaluations de validation des acquis
-              aux apprenants (quiz, QCM, mise en situation).
-            </p>
-            <Message severity="info" :closable="false" class="mt-2">
-              Fonctionnalité disponible prochainement.
-            </Message>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <DocumentSlot
+                :modelValue="getDocument('positionnement')"
+                @update:modelValue="(v) => setDocument('positionnement', v)"
+                label="Positionnement"
+                slotKey="positionnement"
+                :libraryDocs="libraryDocs"
+              />
+              <DocumentSlot
+                :modelValue="getDocument('support_formation')"
+                @update:modelValue="(v) => setDocument('support_formation', v)"
+                label="Support de formation"
+                slotKey="support_formation"
+                :libraryDocs="libraryDocs"
+              />
+              <DocumentSlot
+                :modelValue="getDocument('evaluation_acquis')"
+                @update:modelValue="(v) => setDocument('evaluation_acquis', v)"
+                label="Évaluation des acquis"
+                slotKey="evaluation_acquis"
+                :libraryDocs="libraryDocs"
+              />
+            </div>
           </div>
 
           <!-- Satisfaction -->
@@ -817,13 +889,29 @@ onMounted(async () => {
             <h3 class="text-base font-semibold text-surface-700 dark:text-surface-200 mb-4">
               <i class="pi pi-star mr-2"></i>Satisfaction
             </h3>
-            <p class="text-sm text-surface-500 mb-2">
-              Envoyez les questionnaires de satisfaction aux stagiaires,
-              au formateur et au financeur.
-            </p>
-            <Message severity="info" :closable="false" class="mt-2">
-              Fonctionnalité disponible prochainement.
-            </Message>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <DocumentSlot
+                :modelValue="getDocument('enquete_satisfaction_formateur')"
+                @update:modelValue="(v) => setDocument('enquete_satisfaction_formateur', v)"
+                label="Enquête satisfaction formateur"
+                slotKey="enquete_satisfaction_formateur"
+                :libraryDocs="libraryDocs"
+              />
+              <DocumentSlot
+                :modelValue="getDocument('enquete_satisfaction_entreprise')"
+                @update:modelValue="(v) => setDocument('enquete_satisfaction_entreprise', v)"
+                label="Enquête satisfaction entreprise"
+                slotKey="enquete_satisfaction_entreprise"
+                :libraryDocs="libraryDocs"
+              />
+              <DocumentSlot
+                :modelValue="getDocument('enquete_satisfaction_opco')"
+                @update:modelValue="(v) => setDocument('enquete_satisfaction_opco', v)"
+                label="Enquête satisfaction OPCO"
+                slotKey="enquete_satisfaction_opco"
+                :libraryDocs="libraryDocs"
+              />
+            </div>
           </div>
 
           <!-- Champs personnalisés -->

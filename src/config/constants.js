@@ -146,7 +146,7 @@ export const TIER_ROLE_OPTIONS = [
   { label: 'Client', value: 'client', icon: 'pi-building' },
   { label: 'Apprenant', value: 'apprenant', icon: 'pi-user' },
   { label: 'Formateur', value: 'formateur', icon: 'pi-id-card' },
-  { label: 'Fournisseur / Partenaire', value: 'fournisseur', icon: 'pi-briefcase' },
+  { label: 'Fournisseur', value: 'fournisseur', icon: 'pi-briefcase' },
 ];
 
 export const TIER_ROLE_COLORS = {

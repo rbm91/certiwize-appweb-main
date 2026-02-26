@@ -1,6 +1,6 @@
 <script setup>
 import { ref, nextTick, onMounted, onUnmounted, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useNavigation } from '../../composables/useNavigation';
 import { useLayoutStore } from '../../stores/layout';
 import { useAuthStore } from '../../stores/auth';
@@ -14,7 +14,15 @@ const layoutStore = useLayoutStore();
 const authStore = useAuthStore();
 const navConfigStore = useNavConfigStore();
 const route = useRoute();
+const router = useRouter();
 const { t } = useI18n();
+
+// Navigation SPA (évite le rechargement complet de la page)
+const navigateTo = (href, event) => {
+  if (!href || href.startsWith('http')) return; // laisser le navigateur gérer les liens externes
+  event.preventDefault();
+  router.push(href);
+};
 
 const openDropdown = ref(null);
 const dropdownTimeout = ref(null);
@@ -190,7 +198,7 @@ onUnmounted(() => {
                     ? 'bg-primary text-white shadow-md cursor-pointer'
                     : 'text-slate-300 hover:bg-slate-800 hover:text-white cursor-pointer'
               ]"
-              @click="(item.disabled || editingNavItem === item.name) ? $event.preventDefault() : null"
+              @click="(item.disabled || editingNavItem === item.name) ? $event.preventDefault() : navigateTo(item.href, $event)"
             >
               <i class="pi text-sm" :class="item.icon"></i>
 
@@ -253,7 +261,7 @@ onUnmounted(() => {
                         ? 'text-primary bg-slate-700/50'
                         : 'text-slate-300 hover:bg-slate-700 hover:text-white cursor-pointer'
                   ]"
-                  @click="sub.disabled ? $event.preventDefault() : null"
+                  @click="sub.disabled ? $event.preventDefault() : navigateTo(sub.href, $event)"
                 >
                   <i class="pi" :class="sub.icon"></i>
                   <span class="text-sm">{{ getLabel(sub.name) }}</span>
@@ -289,7 +297,7 @@ onUnmounted(() => {
                   ? 'bg-primary text-white shadow-md cursor-pointer'
                   : 'text-slate-300 hover:bg-slate-800 hover:text-white cursor-pointer'
             ]"
-            @click="item.disabled ? $event.preventDefault() : null"
+            @click="item.disabled ? $event.preventDefault() : navigateTo(item.href, $event)"
           >
             <i class="pi text-sm" :class="item.icon"></i>
             <span class="font-medium whitespace-nowrap">{{ getLabel(item.name) }}</span>
@@ -318,7 +326,7 @@ onUnmounted(() => {
                       ? 'text-primary bg-slate-700/50'
                       : 'text-slate-300 hover:bg-slate-700 hover:text-white cursor-pointer'
                 ]"
-                @click="sub.disabled ? $event.preventDefault() : null"
+                @click="sub.disabled ? $event.preventDefault() : navigateTo(sub.href, $event)"
               >
                 <i class="pi" :class="sub.icon"></i>
                 <span class="text-sm">{{ getLabel(sub.name) }}</span>
@@ -380,7 +388,7 @@ onUnmounted(() => {
                   ? 'bg-primary text-white'
                   : 'text-slate-300 hover:bg-slate-700'
               ]"
-              @click="item.submenu ? (openDropdown = openDropdown === item.name ? null : item.name) : closeMobileMenu()"
+              @click="item.submenu ? (openDropdown = openDropdown === item.name ? null : item.name) : (closeMobileMenu(), navigateTo(item.href, $event))"
             >
               <i class="pi" :class="item.icon"></i>
               <span class="font-medium flex-1">{{ getLabel(item.name) }}</span>
@@ -403,7 +411,7 @@ onUnmounted(() => {
                       ? 'text-primary'
                       : 'text-slate-400 hover:text-white'
                 ]"
-                @click="!sub.disabled ? closeMobileMenu() : $event.preventDefault()"
+                @click="!sub.disabled ? (closeMobileMenu(), navigateTo(sub.href, $event)) : $event.preventDefault()"
               >
                 <i class="pi" :class="sub.icon"></i>
                 <span class="text-sm">{{ getLabel(sub.name) }}</span>

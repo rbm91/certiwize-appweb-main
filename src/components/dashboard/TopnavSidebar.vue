@@ -1,5 +1,6 @@
 <script setup>
 import { ref, nextTick } from 'vue';
+import { useRouter } from 'vue-router';
 import { useNavigation } from '../../composables/useNavigation';
 import { useAuthStore } from '../../stores/auth';
 import { useNavConfigStore } from '../../stores/navConfig';
@@ -8,7 +9,15 @@ import { useI18n } from 'vue-i18n';
 const { sideNavigation, isCurrent, getLabel } = useNavigation();
 const authStore = useAuthStore();
 const navConfigStore = useNavConfigStore();
+const router = useRouter();
 const { t } = useI18n();
+
+// Navigation SPA
+const navigateTo = (href, event) => {
+  if (!href || href.startsWith('http')) return;
+  event.preventDefault();
+  router.push(href);
+};
 
 const expandedMenus = ref({});
 
@@ -80,6 +89,7 @@ const cancelRename = () => {
               ? 'bg-primary/10 text-primary font-medium border-l-3 border-primary'
               : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
           ]"
+          @click="navigateTo(item.href, $event)"
         >
           <i class="pi text-xs" :class="item.icon"></i>
 
@@ -127,6 +137,7 @@ const cancelRename = () => {
               ? 'bg-primary/10 text-primary border-l-3 border-primary'
               : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
           ]"
+          @click="navigateTo(item.href, $event)"
         >
           <i class="pi" :class="item.icon"></i>
           <span>{{ getLabel(item.name) }}</span>
@@ -166,7 +177,7 @@ const cancelRename = () => {
                       ? 'text-primary font-medium bg-primary/5'
                       : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700/50'
                 ]"
-                @click="sub.disabled ? $event.preventDefault() : null"
+                @click="sub.disabled ? $event.preventDefault() : navigateTo(sub.href, $event)"
               >
                 <i class="pi text-xs" :class="sub.icon"></i>
                 <span>{{ getLabel(sub.name) }}</span>

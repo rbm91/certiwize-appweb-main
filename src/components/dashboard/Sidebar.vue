@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '../../stores/auth';
 import { useNavigation } from '../../composables/useNavigation';
@@ -8,7 +9,15 @@ import LogoBrand from './LogoBrand.vue';
 
 const { t } = useI18n();
 const authStore = useAuthStore();
+const router = useRouter();
 const { navigation, isCurrent, getLabel } = useNavigation();
+
+// Navigation SPA
+const navigateTo = (href, event) => {
+  if (!href || href.startsWith('http')) return;
+  event.preventDefault();
+  router.push(href);
+};
 
 const hoveredMenu = ref(null);
 const submenuStyle = ref({});
@@ -72,7 +81,7 @@ const logout = async () => {
                 ? 'bg-primary text-white shadow-lg shadow-primary/25 cursor-pointer'
                 : 'text-slate-400 hover:bg-slate-800 hover:text-white cursor-pointer'
           ]"
-          @click="item.disabled ? $event.preventDefault() : (item.submenu ? $event.preventDefault() : null)"
+          @click="item.disabled || item.submenu ? $event.preventDefault() : navigateTo(item.href, $event)"
         >
           <i class="pi" :class="[item.icon, item.disabled ? 'text-slate-600' : (!item.href?.startsWith('http') && isCurrent(item.href)) ? 'text-white' : 'text-slate-400 group-hover:text-white']"></i>
           <span class="font-medium flex-1">{{ getLabel(item.name) }}</span>
@@ -102,7 +111,7 @@ const logout = async () => {
                       ? 'text-primary bg-slate-700/50'
                       : 'text-slate-300 hover:bg-slate-700 hover:text-white cursor-pointer'
                 ]"
-                @click="sub.disabled ? $event.preventDefault() : null"
+                @click="sub.disabled ? $event.preventDefault() : navigateTo(sub.href, $event)"
               >
                 <i class="pi" :class="sub.icon"></i>
                 <span class="text-sm">{{ getLabel(sub.name) }}</span>

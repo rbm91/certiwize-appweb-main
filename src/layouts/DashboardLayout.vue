@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import { useLayoutStore } from '../stores/layout';
@@ -16,7 +16,20 @@ const route = useRoute();
 // Charger la config de navigation au démarrage du dashboard
 onMounted(() => {
   navConfigStore.fetchConfig();
+  // Recharger la config quand l'utilisateur revient sur l'onglet
+  // (permet de voir les modifications faites par un autre admin)
+  document.addEventListener('visibilitychange', onVisibilityChange);
 });
+
+onUnmounted(() => {
+  document.removeEventListener('visibilitychange', onVisibilityChange);
+});
+
+const onVisibilityChange = () => {
+  if (document.visibilityState === 'visible') {
+    navConfigStore.fetchConfig();
+  }
+};
 
 // Mobile sidebar state (sidebar mode only)
 const isMobileSidebarOpen = ref(false);

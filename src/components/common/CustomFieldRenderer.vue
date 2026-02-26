@@ -85,14 +85,20 @@ const removeField = async (fieldKey) => {
         />
 
         <!-- Toggle Oui/Non -->
-        <label v-else-if="field.type === 'toggle'" class="custom-field-toggle">
-          <input
-            type="checkbox"
-            :checked="modelValue[field.key] || false"
-            @change="updateValue(field.key, $event.target.checked)"
-          />
-          <span>{{ modelValue[field.key] ? 'Oui' : 'Non' }}</span>
-        </label>
+        <div v-else-if="field.type === 'toggle'" class="custom-field-toggle-buttons">
+          <button
+            type="button"
+            @click="updateValue(field.key, true)"
+            class="toggle-btn"
+            :class="modelValue[field.key] === true ? 'toggle-btn-active' : 'toggle-btn-inactive'"
+          >Oui</button>
+          <button
+            type="button"
+            @click="updateValue(field.key, false)"
+            class="toggle-btn"
+            :class="modelValue[field.key] === false || modelValue[field.key] == null ? 'toggle-btn-active-no' : 'toggle-btn-inactive'"
+          >Non</button>
+        </div>
 
         <!-- Liste déroulante -->
         <select
@@ -146,12 +152,41 @@ const removeField = async (fieldKey) => {
   box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
 }
 
-.custom-field-toggle {
+.custom-field-toggle-buttons {
   display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
+  gap: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #cbd5e1;
+}
+
+.toggle-btn {
+  padding: 6px 20px;
   font-size: 14px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.toggle-btn-active {
+  background: #3b82f6;
+  color: white;
+}
+
+.toggle-btn-active-no {
+  background: #94a3b8;
+  color: white;
+}
+
+.toggle-btn-inactive {
+  background: white;
+  color: #64748b;
+}
+
+.toggle-btn-inactive:hover {
+  background: #f1f5f9;
 }
 
 .custom-field-remove {

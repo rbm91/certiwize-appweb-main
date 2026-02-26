@@ -42,7 +42,6 @@ const sidebarItemsBySection = {
   ],
 
   catalogue: [
-    { type: 'separator', label: 'Formations' },
     { name: 'sidebar_catalogue_formations', href: '/dashboard/catalogue', icon: 'pi-book' },
     { name: 'sidebar_catalogue_create', href: '/dashboard/catalogue/create', icon: 'pi-plus' },
     { type: 'separator', label: 'Évaluations' },

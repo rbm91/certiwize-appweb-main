@@ -241,17 +241,15 @@ export const PRESTATION_STATUTS = [
   { label: 'Annulée', value: 'annulee', severity: 'danger' },
 ];
 
-// Prestations — Étapes workflow Formation (9 étapes)
+// Prestations — Étapes workflow Formation (7 étapes)
 export const FORMATION_WORKFLOW_STEPS = [
   { step: 1, label: 'Identification & Analyse', icon: 'pi-user' },
   { step: 2, label: 'Convention', icon: 'pi-file' },
   { step: 3, label: 'Convocation', icon: 'pi-envelope' },
   { step: 4, label: 'Réalisation', icon: 'pi-play' },
-  { step: 5, label: 'Évaluation', icon: 'pi-check-circle' },
-  { step: 6, label: 'Satisfaction', icon: 'pi-star' },
-  { step: 7, label: 'Facturation', icon: 'pi-wallet' },
-  { step: 8, label: 'Clôture', icon: 'pi-lock' },
-  { step: 9, label: 'Archivé', icon: 'pi-box' },
+  { step: 5, label: 'Facturation', icon: 'pi-wallet' },
+  { step: 6, label: 'Clôture', icon: 'pi-lock' },
+  { step: 7, label: 'Archivé', icon: 'pi-box' },
 ];
 
 // Prestations — Étapes workflow Coaching (6 étapes)

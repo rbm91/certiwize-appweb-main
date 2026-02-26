@@ -46,8 +46,8 @@ const ph = (key, fallback) => navConfig.getFieldPlaceholder(key, fallback);
 // -- Personnalisation des champs --
 const customFieldValues = ref({
   identification: {},
-  step2: {}, step3: {}, step4: {}, step5: {},
-  step6: {}, step7: {}, step8: {}, step9: {},
+  step2: {}, step3: {}, step4: {},
+  step5: {}, step6: {}, step7: {},
 });
 const showFieldPanel = ref(false);
 const activeFieldPanelSection = ref('session.main');
@@ -771,12 +771,14 @@ onMounted(async () => {
           </div>
         </div>
 
-        <!-- ====== STEP 4 : Realisation ====== -->
+        <!-- ====== STEP 4 : Réalisation (inclut évaluation & satisfaction) ====== -->
         <div v-else-if="currentStep === 4">
           <h2 class="text-lg font-semibold text-primary border-b pb-2 mb-6">
             <i class="pi pi-play mr-2"></i>Réalisation
           </h2>
-          <div class="flex flex-col items-center justify-center py-12 text-surface-500">
+
+          <!-- Suivi de la réalisation -->
+          <div class="flex flex-col items-center justify-center py-8 text-surface-500">
             <i class="pi pi-play text-5xl mb-4 text-primary"></i>
             <p class="text-lg font-medium mb-2">Suivi de la réalisation</p>
             <p class="text-sm text-center max-w-md mb-6">
@@ -795,6 +797,35 @@ onMounted(async () => {
               Le livret regroupe tous les documents de la formation.
             </Message>
           </div>
+
+          <!-- Évaluation des acquis -->
+          <div class="border-t pt-6 mt-6">
+            <h3 class="text-base font-semibold text-surface-700 dark:text-surface-200 mb-4">
+              <i class="pi pi-check-circle mr-2"></i>Évaluation des acquis
+            </h3>
+            <p class="text-sm text-surface-500 mb-2">
+              Configurez et envoyez les évaluations de validation des acquis
+              aux apprenants (quiz, QCM, mise en situation).
+            </p>
+            <Message severity="info" :closable="false" class="mt-2">
+              Fonctionnalité disponible prochainement.
+            </Message>
+          </div>
+
+          <!-- Satisfaction -->
+          <div class="border-t pt-6 mt-6">
+            <h3 class="text-base font-semibold text-surface-700 dark:text-surface-200 mb-4">
+              <i class="pi pi-star mr-2"></i>Satisfaction
+            </h3>
+            <p class="text-sm text-surface-500 mb-2">
+              Envoyez les questionnaires de satisfaction aux stagiaires,
+              au formateur et au financeur.
+            </p>
+            <Message severity="info" :closable="false" class="mt-2">
+              Fonctionnalité disponible prochainement.
+            </Message>
+          </div>
+
           <!-- Champs personnalisés -->
           <div class="mt-6 border-t pt-6">
             <CustomFieldRenderer section="session.step4" v-model="customFieldValues.step4" />
@@ -804,58 +835,8 @@ onMounted(async () => {
           </div>
         </div>
 
-        <!-- ====== STEP 5 : Evaluation des acquis ====== -->
+        <!-- ====== STEP 5 : Facturation ====== -->
         <div v-else-if="currentStep === 5">
-          <h2 class="text-lg font-semibold text-primary border-b pb-2 mb-6">
-            <i class="pi pi-check-circle mr-2"></i>Évaluation des acquis
-          </h2>
-          <div class="flex flex-col items-center justify-center py-12 text-surface-500">
-            <i class="pi pi-check-circle text-5xl mb-4 text-primary"></i>
-            <p class="text-lg font-medium mb-2">Évaluation des acquis</p>
-            <p class="text-sm text-center max-w-md">
-              Configurez et envoyez les évaluations de validation des acquis
-              aux apprenants (quiz, QCM, mise en situation).
-            </p>
-            <Message severity="info" :closable="false" class="mt-4">
-              Fonctionnalité disponible prochainement.
-            </Message>
-          </div>
-          <!-- Champs personnalisés -->
-          <div class="mt-6 border-t pt-6">
-            <CustomFieldRenderer section="session.step5" v-model="customFieldValues.step5" />
-            <div class="flex items-center gap-4 mt-2">
-              <AddFieldButton section="session.step5" @open-manager="openFieldPanel('session.step5')" />
-            </div>
-          </div>
-        </div>
-
-        <!-- ====== STEP 6 : Satisfaction ====== -->
-        <div v-else-if="currentStep === 6">
-          <h2 class="text-lg font-semibold text-primary border-b pb-2 mb-6">
-            <i class="pi pi-star mr-2"></i>Satisfaction
-          </h2>
-          <div class="flex flex-col items-center justify-center py-12 text-surface-500">
-            <i class="pi pi-star text-5xl mb-4 text-primary"></i>
-            <p class="text-lg font-medium mb-2">Enquêtes de satisfaction</p>
-            <p class="text-sm text-center max-w-md">
-              Envoyez les questionnaires de satisfaction aux stagiaires,
-              au formateur et au financeur.
-            </p>
-            <Message severity="info" :closable="false" class="mt-4">
-              Fonctionnalité disponible prochainement.
-            </Message>
-          </div>
-          <!-- Champs personnalisés -->
-          <div class="mt-6 border-t pt-6">
-            <CustomFieldRenderer section="session.step6" v-model="customFieldValues.step6" />
-            <div class="flex items-center gap-4 mt-2">
-              <AddFieldButton section="session.step6" @open-manager="openFieldPanel('session.step6')" />
-            </div>
-          </div>
-        </div>
-
-        <!-- ====== STEP 7 : Facturation ====== -->
-        <div v-else-if="currentStep === 7">
           <h2 class="text-lg font-semibold text-primary border-b pb-2 mb-6">
             <i class="pi pi-wallet mr-2"></i>Facturation
           </h2>
@@ -872,15 +853,15 @@ onMounted(async () => {
           </div>
           <!-- Champs personnalisés -->
           <div class="mt-6 border-t pt-6">
-            <CustomFieldRenderer section="session.step7" v-model="customFieldValues.step7" />
+            <CustomFieldRenderer section="session.step5" v-model="customFieldValues.step5" />
             <div class="flex items-center gap-4 mt-2">
-              <AddFieldButton section="session.step7" @open-manager="openFieldPanel('session.step7')" />
+              <AddFieldButton section="session.step5" @open-manager="openFieldPanel('session.step5')" />
             </div>
           </div>
         </div>
 
-        <!-- ====== STEP 8 : Clôture ====== -->
-        <div v-else-if="currentStep === 8">
+        <!-- ====== STEP 6 : Clôture ====== -->
+        <div v-else-if="currentStep === 6">
           <h2 class="text-lg font-semibold text-primary border-b pb-2 mb-6">
             <i class="pi pi-lock mr-2"></i>Clôture
           </h2>
@@ -901,15 +882,15 @@ onMounted(async () => {
           </div>
           <!-- Champs personnalisés -->
           <div class="mt-6 border-t pt-6">
-            <CustomFieldRenderer section="session.step8" v-model="customFieldValues.step8" />
+            <CustomFieldRenderer section="session.step6" v-model="customFieldValues.step6" />
             <div class="flex items-center gap-4 mt-2">
-              <AddFieldButton section="session.step8" @open-manager="openFieldPanel('session.step8')" />
+              <AddFieldButton section="session.step6" @open-manager="openFieldPanel('session.step6')" />
             </div>
           </div>
         </div>
 
-        <!-- ====== STEP 9 : Archivé ====== -->
-        <div v-else-if="currentStep === 9">
+        <!-- ====== STEP 7 : Archivé ====== -->
+        <div v-else-if="currentStep === 7">
           <h2 class="text-lg font-semibold text-primary border-b pb-2 mb-6">
             <i class="pi pi-box mr-2"></i>Archivé
           </h2>
@@ -926,9 +907,9 @@ onMounted(async () => {
           </div>
           <!-- Champs personnalisés -->
           <div class="mt-6 border-t pt-6">
-            <CustomFieldRenderer section="session.step9" v-model="customFieldValues.step9" />
+            <CustomFieldRenderer section="session.step7" v-model="customFieldValues.step7" />
             <div class="flex items-center gap-4 mt-2">
-              <AddFieldButton section="session.step9" @open-manager="openFieldPanel('session.step9')" />
+              <AddFieldButton section="session.step7" @open-manager="openFieldPanel('session.step7')" />
             </div>
           </div>
         </div>

@@ -225,17 +225,15 @@ const DEFAULT_WORKFLOW = {
 
 export { DEFAULT_WORKFLOW };
 
-// Étapes par défaut pour le stepper Formation (9 étapes)
+// Étapes par défaut pour le stepper Formation (7 étapes)
 const DEFAULT_FORMATION_STEPS = [
   { step: 1, label: 'Identification & Analyse', icon: 'pi-user' },
   { step: 2, label: 'Convention', icon: 'pi-file' },
   { step: 3, label: 'Convocation', icon: 'pi-envelope' },
   { step: 4, label: 'Réalisation', icon: 'pi-play' },
-  { step: 5, label: 'Évaluation', icon: 'pi-check-circle' },
-  { step: 6, label: 'Satisfaction', icon: 'pi-star' },
-  { step: 7, label: 'Facturation', icon: 'pi-wallet' },
-  { step: 8, label: 'Clôture', icon: 'pi-lock' },
-  { step: 9, label: 'Archivé', icon: 'pi-box' },
+  { step: 5, label: 'Facturation', icon: 'pi-wallet' },
+  { step: 6, label: 'Clôture', icon: 'pi-lock' },
+  { step: 7, label: 'Archivé', icon: 'pi-box' },
 ];
 
 const DEFAULT_COACHING_STEPS = [

@@ -444,8 +444,22 @@ onMounted(async () => {
     const mainCustomFields = navConfig.config?.customFields?.['session.main'] || [];
     const presencePSH = mainCustomFields.find(f => f.type === 'toggle' && f.label.toLowerCase().includes('psh'));
     const commentairePSH = mainCustomFields.find(f => f.type !== 'toggle' && f.label.toLowerCase().includes('psh') && f.key !== presencePSH?.key);
-    if (presencePSH && commentairePSH && !commentairePSH.showIf) {
-      await navConfig.setFieldShowIf('session.main', commentairePSH.key, { key: presencePSH.key, value: true });
+    if (presencePSH && commentairePSH) {
+      // Configurer la dépendance showIf si pas encore fait
+      if (!commentairePSH.showIf) {
+        await navConfig.setFieldShowIf('session.main', commentairePSH.key, { key: presencePSH.key, value: true });
+      }
+      // S'assurer que Présence de PSH est toujours avant Commentaire PSH
+      const idxPresence = mainCustomFields.indexOf(presencePSH);
+      const idxCommentaire = mainCustomFields.indexOf(commentairePSH);
+      if (idxPresence > idxCommentaire) {
+        const orderedKeys = mainCustomFields.map(f => f.key);
+        // Retirer les deux clés PSH et les réinsérer dans le bon ordre
+        const filtered = orderedKeys.filter(k => k !== presencePSH.key && k !== commentairePSH.key);
+        const insertAt = Math.min(idxPresence, idxCommentaire);
+        filtered.splice(insertAt, 0, presencePSH.key, commentairePSH.key);
+        await navConfig.reorderCustomFields('session.main', filtered);
+      }
     }
 
     if (isEdit.value) {

@@ -1,11 +1,32 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
+import { writeFileSync } from 'fs'
+import { resolve } from 'path'
+
+// Plugin qui génère version.json à chaque build
+const versionPlugin = () => ({
+  name: 'version-json',
+  closeBundle() {
+    const version = { buildTime: new Date().toISOString() }
+    writeFileSync(
+      resolve(__dirname, 'dist', 'version.json'),
+      JSON.stringify(version)
+    )
+  }
+})
+
+const BUILD_TIME = new Date().toISOString()
+
 export default defineConfig({
   plugins: [
     vue(),
     tailwindcss(),
+    versionPlugin(),
   ],
+  define: {
+    __APP_BUILD_TIME__: JSON.stringify(BUILD_TIME),
+  },
   server: {
     host: '127.0.0.1',
   },

@@ -62,3 +62,21 @@ authWithTimeout
     .finally(() => {
         app.mount('#app');
     });
+
+// ── Auto-reload si nouvelle version déployée ──
+// Vérifie /version.json quand l'utilisateur revient sur l'onglet
+if (typeof __APP_BUILD_TIME__ !== 'undefined') {
+    const currentBuild = __APP_BUILD_TIME__;
+    document.addEventListener('visibilitychange', async () => {
+        if (document.visibilityState !== 'visible') return;
+        try {
+            const res = await fetch('/version.json?_=' + Date.now(), { cache: 'no-store' });
+            if (!res.ok) return;
+            const { buildTime } = await res.json();
+            if (buildTime && buildTime !== currentBuild) {
+                console.info('[Update] Nouvelle version détectée, rechargement...');
+                window.location.reload();
+            }
+        } catch { /* silencieux en cas d'erreur réseau */ }
+    });
+}

@@ -16,6 +16,9 @@ import Tag from 'primevue/tag';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
 import InputText from 'primevue/inputtext';
+import { useToast } from 'primevue/usetoast';
+import { useConfirm } from 'primevue/useconfirm';
+import { supabase } from '../../supabase';
 
 const props = defineProps({
   typeFilter: { type: String, default: null },
@@ -24,6 +27,8 @@ const props = defineProps({
 const router = useRouter();
 const store = usePrestationsStore();
 const tiersStore = useTiersStore();
+const toast = useToast();
+const confirm = useConfirm();
 
 // -- State --
 const activeTab = ref(0);
@@ -144,6 +149,50 @@ const goToEdit = (prestation) => {
     router.push({ name: 'dashboard-conseil-edit', params: { id: prestation.id } });
   }
 };
+
+// -- Archiver --
+const handleArchive = (prestation) => {
+  confirm.require({
+    message: `Archiver la prestation "${prestation.intitule || prestation.reference}" ?`,
+    header: 'Confirmation',
+    icon: 'pi pi-exclamation-triangle',
+    acceptClass: 'p-button-warning',
+    acceptLabel: 'Archiver',
+    rejectLabel: 'Annuler',
+    accept: async () => {
+      const { error: err } = await supabase
+        .from('prestations')
+        .update({ statut: 'archive' })
+        .eq('id', prestation.id);
+      if (err) {
+        toast.add({ severity: 'error', summary: 'Erreur', detail: err.message, life: 5000 });
+      } else {
+        prestation.statut = 'archive';
+        toast.add({ severity: 'success', summary: 'Prestation archivée', life: 3000 });
+      }
+    },
+  });
+};
+
+// -- Supprimer (soft delete) --
+const handleDelete = (prestation) => {
+  confirm.require({
+    message: `Supprimer la prestation "${prestation.intitule || prestation.reference}" ? Cette action est irréversible.`,
+    header: 'Suppression',
+    icon: 'pi pi-trash',
+    acceptClass: 'p-button-danger',
+    acceptLabel: 'Supprimer',
+    rejectLabel: 'Annuler',
+    accept: async () => {
+      const result = await store.softDeletePrestation(prestation.id);
+      if (result.success) {
+        toast.add({ severity: 'success', summary: 'Prestation supprimée', life: 3000 });
+      } else {
+        toast.add({ severity: 'error', summary: 'Erreur', detail: result.error, life: 5000 });
+      }
+    },
+  });
+};
 </script>
 
 <template>
@@ -234,11 +283,13 @@ const goToEdit = (prestation) => {
               <span class="text-sm font-medium">{{ formatMontant(data.montant_ht) }}</span>
             </template>
           </Column>
-          <Column header="Actions" style="min-width: 8rem" :exportable="false">
+          <Column header="Actions" style="min-width: 14rem" :exportable="false">
             <template #body="{ data }">
               <div class="flex gap-1" @click.stop>
                 <Button icon="pi pi-eye" text rounded severity="info" v-tooltip.top="'Voir'" @click="goToDetail(data)" />
                 <Button icon="pi pi-pencil" text rounded severity="warn" v-tooltip.top="'Modifier'" @click="goToEdit(data)" />
+                <Button icon="pi pi-box" text rounded severity="secondary" v-tooltip.top="'Archiver'" @click="handleArchive(data)" />
+                <Button icon="pi pi-trash" text rounded severity="danger" v-tooltip.top="'Supprimer'" @click="handleDelete(data)" />
               </div>
             </template>
           </Column>
@@ -322,11 +373,13 @@ const goToEdit = (prestation) => {
               <span class="text-sm font-medium">{{ formatMontant(data.montant_ht) }}</span>
             </template>
           </Column>
-          <Column header="Actions" style="min-width: 8rem" :exportable="false">
+          <Column header="Actions" style="min-width: 14rem" :exportable="false">
             <template #body="{ data }">
               <div class="flex gap-1" @click.stop>
                 <Button icon="pi pi-eye" text rounded severity="info" v-tooltip.top="'Voir'" @click="goToDetail(data)" />
                 <Button icon="pi pi-pencil" text rounded severity="warn" v-tooltip.top="'Modifier'" @click="goToEdit(data)" />
+                <Button icon="pi pi-box" text rounded severity="secondary" v-tooltip.top="'Archiver'" @click="handleArchive(data)" />
+                <Button icon="pi pi-trash" text rounded severity="danger" v-tooltip.top="'Supprimer'" @click="handleDelete(data)" />
               </div>
             </template>
           </Column>
@@ -410,11 +463,13 @@ const goToEdit = (prestation) => {
               <span class="text-sm font-medium">{{ formatMontant(data.montant_ht) }}</span>
             </template>
           </Column>
-          <Column header="Actions" style="min-width: 8rem" :exportable="false">
+          <Column header="Actions" style="min-width: 14rem" :exportable="false">
             <template #body="{ data }">
               <div class="flex gap-1" @click.stop>
                 <Button icon="pi pi-eye" text rounded severity="info" v-tooltip.top="'Voir'" @click="goToDetail(data)" />
                 <Button icon="pi pi-pencil" text rounded severity="warn" v-tooltip.top="'Modifier'" @click="goToEdit(data)" />
+                <Button icon="pi pi-box" text rounded severity="secondary" v-tooltip.top="'Archiver'" @click="handleArchive(data)" />
+                <Button icon="pi pi-trash" text rounded severity="danger" v-tooltip.top="'Supprimer'" @click="handleDelete(data)" />
               </div>
             </template>
           </Column>

@@ -7,6 +7,7 @@ import { useAuthStore } from '../../stores/auth';
 import { useNavConfigStore } from '../../stores/navConfig';
 import { useI18n } from 'vue-i18n';
 import draggable from 'vuedraggable';
+import LogoBrand from './LogoBrand.vue';
 
 const { topNavigation, navigation, isCurrent, getLabel } = useNavigation();
 const layoutStore = useLayoutStore();
@@ -139,9 +140,7 @@ onUnmounted(() => {
     <div class="flex items-center h-14 px-4">
       <!-- Logo -->
       <div class="flex-shrink-0 mr-6">
-        <h1 class="text-lg font-bold bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
-          Certiwize
-        </h1>
+        <LogoBrand compact />
       </div>
 
       <!-- Flèche gauche -->

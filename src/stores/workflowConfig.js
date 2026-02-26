@@ -225,18 +225,17 @@ const DEFAULT_WORKFLOW = {
 
 export { DEFAULT_WORKFLOW };
 
-// Étapes par défaut pour le stepper Formation (10 étapes)
+// Étapes par défaut pour le stepper Formation (9 étapes)
 const DEFAULT_FORMATION_STEPS = [
-  { step: 1, label: 'Identification', icon: 'pi-user' },
-  { step: 2, label: 'Analyse du besoin', icon: 'pi-search' },
-  { step: 3, label: 'Convention', icon: 'pi-file' },
-  { step: 4, label: 'Convocation', icon: 'pi-envelope' },
-  { step: 5, label: 'Réalisation', icon: 'pi-play' },
-  { step: 6, label: 'Évaluation', icon: 'pi-check-circle' },
-  { step: 7, label: 'Satisfaction', icon: 'pi-star' },
-  { step: 8, label: 'Facturation', icon: 'pi-wallet' },
-  { step: 9, label: 'Clôture', icon: 'pi-lock' },
-  { step: 10, label: 'Archivé', icon: 'pi-box' },
+  { step: 1, label: 'Identification & Analyse', icon: 'pi-user' },
+  { step: 2, label: 'Convention', icon: 'pi-file' },
+  { step: 3, label: 'Convocation', icon: 'pi-envelope' },
+  { step: 4, label: 'Réalisation', icon: 'pi-play' },
+  { step: 5, label: 'Évaluation', icon: 'pi-check-circle' },
+  { step: 6, label: 'Satisfaction', icon: 'pi-star' },
+  { step: 7, label: 'Facturation', icon: 'pi-wallet' },
+  { step: 8, label: 'Clôture', icon: 'pi-lock' },
+  { step: 9, label: 'Archivé', icon: 'pi-box' },
 ];
 
 const DEFAULT_COACHING_STEPS = [
@@ -290,20 +289,47 @@ export const useWorkflowConfigStore = defineStore('workflowConfig', () => {
   };
 
   /**
-   * Sauvegarder la config (INSERT nouvelle version)
+   * Sauvegarder la config (UPDATE si existant, INSERT sinon)
    */
   const saveConfig = async (newConfig) => {
     loading.value = true;
     try {
-      const { error } = await supabase
+      const orgId = auth.currentOrganization?.id;
+      if (!orgId) throw new Error('Organization ID manquant');
+
+      // Chercher une config existante (non-default) pour cette organisation
+      const { data: existing } = await supabase
         .from('workflow_config')
-        .insert({
-          config: newConfig,
-          is_default: false,
-          updated_at: new Date().toISOString(),
-          updated_by: auth.user?.id || null,
-          organization_id: auth.currentOrganization?.id
-        });
+        .select('id')
+        .eq('organization_id', orgId)
+        .eq('is_default', false)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      let error;
+      if (existing?.id) {
+        // Mettre à jour la ligne existante
+        ({ error } = await supabase
+          .from('workflow_config')
+          .update({
+            config: newConfig,
+            updated_at: new Date().toISOString(),
+            updated_by: auth.user?.id || null
+          })
+          .eq('id', existing.id));
+      } else {
+        // Première sauvegarde custom : insérer une nouvelle ligne
+        ({ error } = await supabase
+          .from('workflow_config')
+          .insert({
+            config: newConfig,
+            is_default: false,
+            updated_at: new Date().toISOString(),
+            updated_by: auth.user?.id || null,
+            organization_id: orgId
+          }));
+      }
 
       if (error) throw error;
 

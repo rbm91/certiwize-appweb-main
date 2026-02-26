@@ -189,7 +189,7 @@
       "email": "Email",
       "email_ph": "john.doe{'@'}email.com",
       "phone": "Phone",
-      "phone_ph": "+1 234 567 890",
+      "phone_ph": "+33 6 12 34 56 78",
       "status": "Status",
       "project": "Linked Project",
       "project_ph": "Select a project",
@@ -1099,7 +1099,7 @@
       "email_placeholder": "john.doe{'@'}company.com",
       "email_helper": "You will receive your login credentials at this address",
       "phone": "Phone number",
-      "phone_placeholder": "+1 234 567 890",
+      "phone_placeholder": "+33 6 12 34 56 78",
       "payment_title": "Payment information"
     },
     "payment_methods": {
@@ -1147,7 +1147,7 @@
       "email": "Professional email",
       "email_placeholder": "john.doe{'@'}company.com",
       "phone": "Phone",
-      "phone_placeholder": "+1 234 567 890",
+      "phone_placeholder": "+33 6 12 34 56 78",
       "company": "Your organization name",
       "company_placeholder": "Pro Training",
       "message": "Tell us about your project",

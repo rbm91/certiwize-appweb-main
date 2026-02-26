@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 160" width="520" height="160">
+  <defs>
+    <linearGradient id="textGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#059669"/>
+      <stop offset="50%" stop-color="#0891B2"/>
+      <stop offset="100%" stop-color="#2563EB"/>
+    </linearGradient>
+    <linearGradient id="subtitleGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#059669" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#2563EB" stop-opacity="0.7"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background blanc -->
+  <rect width="520" height="160" rx="12" fill="#FFFFFF"/>
+  
+  <!-- Main text: Certigestion -->
+  <text x="260" y="88" text-anchor="middle" font-family="'Inter', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="52" font-weight="700" fill="url(#textGradient)" letter-spacing="-0.5">
+    Certigestion
+  </text>
+  
+  <!-- Subtitle -->
+  <text x="260" y="118" text-anchor="middle" font-family="'Inter', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="14" font-weight="400" fill="url(#subtitleGradient)" letter-spacing="3">
+    une marque de Certiwize
+  </text>
+</svg>

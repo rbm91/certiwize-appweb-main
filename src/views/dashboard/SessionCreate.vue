@@ -12,6 +12,15 @@ import WorkflowTimeline from '../../components/dashboard/WorkflowTimeline.vue';
 import StepManagerPanel from '../../components/common/StepManagerPanel.vue';
 import { FORMATION_WORKFLOW_STEPS } from '../../config/constants';
 import { useWorkflowConfigStore } from '../../stores/workflowConfig';
+import { useNavConfigStore } from '../../stores/navConfig';
+
+// Composants de personnalisation
+import EditableLabel from '../../components/common/EditableLabel.vue';
+import ManageableField from '../../components/common/ManageableField.vue';
+import AddFieldButton from '../../components/common/AddFieldButton.vue';
+import CustomFieldRenderer from '../../components/common/CustomFieldRenderer.vue';
+import RestoreFieldsButton from '../../components/common/RestoreFieldsButton.vue';
+import FieldManagerPanel from '../../components/common/FieldManagerPanel.vue';
 
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
@@ -31,6 +40,40 @@ const tiersStore = useTiersStore();
 const trainingStore = useTrainingStore();
 const authStore = useAuthStore();
 const workflowConfigStore = useWorkflowConfigStore();
+const navConfig = useNavConfigStore();
+const ph = (key, fallback) => navConfig.getFieldPlaceholder(key, fallback);
+
+// -- Personnalisation des champs --
+const customFieldValues = ref({
+  identification: {},
+  step2: {}, step3: {}, step4: {}, step5: {},
+  step6: {}, step7: {}, step8: {}, step9: {},
+});
+const showFieldPanel = ref(false);
+const activeFieldPanelSection = ref('session.main');
+const openFieldPanel = (section) => {
+  activeFieldPanelSection.value = section;
+  showFieldPanel.value = true;
+};
+
+// Labels pour restauration et FieldManagerPanel
+const sessionFieldLabels = {
+  'session.intitule': 'Intitulé de la formation',
+  'session.client': 'Client',
+  'session.payeur': 'Financeur / Payeur',
+  'session.formateur': 'Formateur',
+  'session.apprenants': 'Apprenants',
+  'session.date_debut': 'Date de début',
+  'session.date_fin': 'Date de fin',
+  'session.duree_heures': 'Durée (heures)',
+  'session.montant_ht': 'Montant HT',
+  'session.contexte': 'Contexte de la demande',
+  'session.objectifs': 'Objectifs pédagogiques',
+  'session.public_vise': 'Public visé',
+  'session.modalites': 'Modalités pédagogiques',
+  'session.handicap_info': 'Prise en compte du handicap',
+  'session.documents': 'Génération de documents',
+};
 
 // -- Edit mode --
 const editId = computed(() => route.params.id || null);
@@ -54,7 +97,7 @@ const isSuperAdmin = computed(() => authStore.isSuperAdmin);
 
 // -- Form data --
 const form = ref({
-  // Step 1 - Identification
+  // Step 1 - Identification & Analyse du besoin
   intitule: '',
   formation_id: null,
   client_id: null,
@@ -65,15 +108,13 @@ const form = ref({
   date_fin: null,
   duree_heures: null,
   montant_ht: null,
-
-  // Step 2 - Analyse du besoin
   contexte: '',
   objectifs: '',
   public_vise: '',
   modalites: '',
   handicap_info: '',
 
-  // Step 3-8 stored as workflow_data
+  // Step 2+ stored as workflow_data
   workflow_data: {},
 });
 
@@ -146,7 +187,7 @@ const prevStep = () => {
 };
 
 const nextStep = async () => {
-  if (currentStep.value < totalSteps) {
+  if (currentStep.value < totalSteps.value) {
     // Auto-save avant de passer à l'étape suivante
     await handleSave(false); // false = ne pas rediriger
     currentStep.value++;
@@ -363,11 +404,10 @@ const handleSave = async (redirect = true) => {
 
         router.push({ name: 'dashboard-session-view', params: { id: prestationId } });
       } else {
-        // Auto-save silencieux — petit toast discret
         toast.add({
-          severity: 'info',
-          summary: 'Sauvegarde automatique',
-          detail: 'Les données de l\'étape ont été enregistrées.',
+          severity: 'success',
+          summary: 'Enregistré',
+          detail: 'Les données ont été sauvegardées avec succès.',
           life: 2000,
         });
       }
@@ -393,8 +433,9 @@ const handleStepRenamed = async ({ stepNumber, label }) => {
 onMounted(async () => {
   loading.value = true;
   try {
-    // Charger la config workflow pour les steps dynamiques
+    // Charger la config workflow et navConfig pour les steps dynamiques + personnalisation
     await workflowConfigStore.fetchConfig();
+    await navConfig.fetchConfig();
 
     if (tiersStore.activeTiers.length === 0) {
       await tiersStore.fetchTiers();
@@ -467,172 +508,195 @@ onMounted(async () => {
       <!-- Workflow Timeline -->
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 mb-6 flex items-center">
         <WorkflowTimeline :steps="formationSteps" :currentStep="currentStep - 1" :editable="true" @step-renamed="handleStepRenamed" class="flex-1" />
-        <button
-          v-if="isSuperAdmin"
-          @click="showStepManager = true"
-          class="mr-4 p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
-          title="Configurer les étapes"
-        >
-          <i class="pi pi-cog text-lg"></i>
-        </button>
       </div>
-
-      <!-- Panneau de gestion des étapes (style Pipedrive) -->
-      <StepManagerPanel
-        v-model:visible="showStepManager"
-        type="formation"
-        title="Configuration des étapes"
-      />
 
       <!-- Step Content Card -->
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
 
-        <!-- ====== STEP 1 : Identification ====== -->
+        <!-- ====== STEP 1 : Identification & Analyse du besoin ====== -->
         <div v-if="currentStep === 1">
           <h2 class="text-lg font-semibold text-primary border-b pb-2 mb-6">
-            <i class="pi pi-user mr-2"></i>Identification
+            <i class="pi pi-user mr-2"></i>Identification & Analyse du besoin
           </h2>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="flex flex-col gap-2 md:col-span-2">
-              <label class="text-sm font-medium">Intitulé de la formation *</label>
-              <Dropdown
-                v-model="selectedFormation"
-                :options="formationOptions"
-                optionLabel="label"
-                optionValue="value"
-                placeholder="Sélectionner une formation du catalogue"
-                filter
-                class="w-full"
-                @change="onFormationSelect"
-              />
-              <InputText
-                v-if="customIntitule"
-                v-model="form.intitule"
-                placeholder="Saisissez l'intitulé de la formation sur mesure"
-                class="w-full mt-2"
-              />
-              <small v-if="!customIntitule && form.intitule" class="text-green-600">
-                <i class="pi pi-check-circle mr-1"></i>{{ form.intitule }}
-              </small>
-            </div>
-            <div class="flex flex-col gap-2">
-              <label class="text-sm font-medium">Client *</label>
-              <Dropdown
-                v-model="form.client_id"
-                :options="clientOptions"
-                optionLabel="label"
-                optionValue="value"
-                placeholder="Sélectionner un client"
-                filter
-                class="w-full"
-              />
-            </div>
-            <div class="flex flex-col gap-2">
-              <label class="text-sm font-medium">Financeur / Payeur</label>
-              <Dropdown
-                v-model="form.payeur_id"
-                :options="financeurOptions"
-                optionLabel="label"
-                optionValue="value"
-                placeholder="Sélectionner un financeur"
-                filter
-                showClear
-                class="w-full"
-              />
-            </div>
-            <div class="flex flex-col gap-2">
-              <label class="text-sm font-medium">Formateur</label>
-              <Dropdown
-                v-model="form.formateur_id"
-                :options="formateurOptions"
-                optionLabel="label"
-                optionValue="value"
-                placeholder="Sélectionner un formateur"
-                filter
-                showClear
-                class="w-full"
-              />
-            </div>
-            <div class="flex flex-col gap-2">
-              <label class="text-sm font-medium">Apprenants</label>
-              <MultiSelect
-                v-model="form.apprenants"
-                :options="apprenantOptions"
-                optionLabel="label"
-                optionValue="value"
-                placeholder="Sélectionner les apprenants"
-                filter
-                :maxSelectedLabels="3"
-                selectedItemsLabel="{0} apprenants"
-                class="w-full"
-              />
-            </div>
-            <div class="flex flex-col gap-2">
-              <label class="text-sm font-medium">Date de début</label>
-              <Calendar v-model="form.date_debut" dateFormat="dd/mm/yy" showIcon class="w-full" />
-            </div>
-            <div class="flex flex-col gap-2">
-              <label class="text-sm font-medium">Date de fin</label>
-              <Calendar v-model="form.date_fin" dateFormat="dd/mm/yy" showIcon class="w-full" />
-            </div>
-            <div class="flex flex-col gap-2">
-              <label class="text-sm font-medium">Durée (heures)</label>
-              <InputNumber v-model="form.duree_heures" :min="0" suffix=" h" class="w-full" />
-            </div>
-            <div class="flex flex-col gap-2">
-              <label class="text-sm font-medium">Montant HT</label>
-              <InputNumber v-model="form.montant_ht" :min="0" mode="currency" currency="EUR" locale="fr-FR" class="w-full" />
-            </div>
+            <ManageableField fieldKey="session.intitule" class="md:col-span-2">
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium"><EditableLabel labelKey="session.intitule" defaultLabel="Intitulé de la formation" /></label>
+                <Dropdown
+                  v-model="selectedFormation"
+                  :options="formationOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  :placeholder="ph('session.intitule', 'Sélectionner une formation du catalogue')"
+                  filter
+                  class="w-full"
+                  @change="onFormationSelect"
+                />
+                <InputText
+                  v-if="customIntitule"
+                  v-model="form.intitule"
+                  :placeholder="ph('session.intitule_custom', 'Saisissez l\'intitulé de la formation sur mesure')"
+                  class="w-full mt-2"
+                />
+                <small v-if="!customIntitule && form.intitule" class="text-green-600">
+                  <i class="pi pi-check-circle mr-1"></i>{{ form.intitule }}
+                </small>
+              </div>
+            </ManageableField>
+            <ManageableField fieldKey="session.client">
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium"><EditableLabel labelKey="session.client" defaultLabel="Client" /></label>
+                <Dropdown
+                  v-model="form.client_id"
+                  :options="clientOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  :placeholder="ph('session.client', 'Sélectionner un client')"
+                  filter
+                  class="w-full"
+                />
+              </div>
+            </ManageableField>
+            <ManageableField fieldKey="session.payeur">
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium"><EditableLabel labelKey="session.payeur" defaultLabel="Financeur / Payeur" /></label>
+                <Dropdown
+                  v-model="form.payeur_id"
+                  :options="financeurOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  :placeholder="ph('session.payeur', 'Sélectionner un financeur')"
+                  filter
+                  showClear
+                  class="w-full"
+                />
+              </div>
+            </ManageableField>
+            <ManageableField fieldKey="session.formateur">
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium"><EditableLabel labelKey="session.formateur" defaultLabel="Formateur" /></label>
+                <Dropdown
+                  v-model="form.formateur_id"
+                  :options="formateurOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  :placeholder="ph('session.formateur', 'Sélectionner un formateur')"
+                  filter
+                  showClear
+                  class="w-full"
+                />
+              </div>
+            </ManageableField>
+            <ManageableField fieldKey="session.apprenants">
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium"><EditableLabel labelKey="session.apprenants" defaultLabel="Apprenants" /></label>
+                <MultiSelect
+                  v-model="form.apprenants"
+                  :options="apprenantOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  :placeholder="ph('session.apprenants', 'Sélectionner les apprenants')"
+                  filter
+                  :maxSelectedLabels="3"
+                  selectedItemsLabel="{0} apprenants"
+                  class="w-full"
+                />
+              </div>
+            </ManageableField>
+            <ManageableField fieldKey="session.date_debut">
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium"><EditableLabel labelKey="session.date_debut" defaultLabel="Date de début" /></label>
+                <Calendar v-model="form.date_debut" dateFormat="dd/mm/yy" showIcon class="w-full" />
+              </div>
+            </ManageableField>
+            <ManageableField fieldKey="session.date_fin">
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium"><EditableLabel labelKey="session.date_fin" defaultLabel="Date de fin" /></label>
+                <Calendar v-model="form.date_fin" dateFormat="dd/mm/yy" showIcon class="w-full" />
+              </div>
+            </ManageableField>
+            <ManageableField fieldKey="session.duree_heures">
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium"><EditableLabel labelKey="session.duree_heures" defaultLabel="Durée (heures)" /></label>
+                <InputNumber v-model="form.duree_heures" :min="0" suffix=" h" class="w-full" />
+              </div>
+            </ManageableField>
+            <ManageableField fieldKey="session.montant_ht">
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium"><EditableLabel labelKey="session.montant_ht" defaultLabel="Montant HT" /></label>
+                <InputNumber v-model="form.montant_ht" :min="0" mode="currency" currency="EUR" locale="fr-FR" class="w-full" />
+              </div>
+            </ManageableField>
           </div>
-        </div>
 
-        <!-- ====== STEP 2 : Analyse du besoin ====== -->
-        <div v-else-if="currentStep === 2">
-          <h2 class="text-lg font-semibold text-primary border-b pb-2 mb-6">
+          <!-- Analyse du besoin -->
+          <h2 class="text-lg font-semibold text-primary border-b pb-2 mb-6 mt-8">
             <i class="pi pi-search mr-2"></i>Analyse du besoin
           </h2>
           <div class="grid grid-cols-1 gap-6">
-            <div class="flex flex-col gap-2">
-              <label class="text-sm font-medium">Contexte de la demande</label>
-              <Textarea v-model="form.contexte" rows="3" placeholder="Décrivez le contexte de la demande de formation..." class="w-full" />
-            </div>
-            <div class="flex flex-col gap-2">
-              <label class="text-sm font-medium">Objectifs pédagogiques</label>
-              <Textarea v-model="form.objectifs" rows="3" placeholder="Listez les objectifs visés par la formation..." class="w-full" />
-            </div>
-            <div class="flex flex-col gap-2">
-              <label class="text-sm font-medium">Public visé</label>
-              <Textarea v-model="form.public_vise" rows="2" placeholder="Décrivez le public cible et les prérequis..." class="w-full" />
-            </div>
-            <div class="flex flex-col gap-2">
-              <label class="text-sm font-medium">Modalités pédagogiques</label>
-              <Textarea v-model="form.modalites" rows="2" placeholder="Présentiel, distanciel, mixte, méthodes..." class="w-full" />
-            </div>
-            <div class="flex flex-col gap-2">
-              <label class="text-sm font-medium">Prise en compte du handicap</label>
-              <Textarea v-model="form.handicap_info" rows="2" placeholder="Aménagements prévus, accessibilité, référent handicap..." class="w-full" />
+            <ManageableField fieldKey="session.contexte">
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium"><EditableLabel labelKey="session.contexte" defaultLabel="Contexte de la demande" /></label>
+                <Textarea v-model="form.contexte" rows="3" :placeholder="ph('session.contexte', 'Décrivez le contexte de la demande de formation...')" class="w-full" />
+              </div>
+            </ManageableField>
+            <ManageableField fieldKey="session.objectifs">
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium"><EditableLabel labelKey="session.objectifs" defaultLabel="Objectifs pédagogiques" /></label>
+                <Textarea v-model="form.objectifs" rows="3" :placeholder="ph('session.objectifs', 'Listez les objectifs visés par la formation...')" class="w-full" />
+              </div>
+            </ManageableField>
+            <ManageableField fieldKey="session.public_vise">
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium"><EditableLabel labelKey="session.public_vise" defaultLabel="Public visé" /></label>
+                <Textarea v-model="form.public_vise" rows="2" :placeholder="ph('session.public_vise', 'Décrivez le public cible et les prérequis...')" class="w-full" />
+              </div>
+            </ManageableField>
+            <ManageableField fieldKey="session.modalites">
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium"><EditableLabel labelKey="session.modalites" defaultLabel="Modalités pédagogiques" /></label>
+                <Textarea v-model="form.modalites" rows="2" :placeholder="ph('session.modalites', 'Présentiel, distanciel, mixte, méthodes...')" class="w-full" />
+              </div>
+            </ManageableField>
+            <ManageableField fieldKey="session.handicap_info">
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium"><EditableLabel labelKey="session.handicap_info" defaultLabel="Prise en compte du handicap" /></label>
+                <Textarea v-model="form.handicap_info" rows="2" :placeholder="ph('session.handicap_info', 'Aménagements prévus, accessibilité, référent handicap...')" class="w-full" />
+              </div>
+            </ManageableField>
+
+            <!-- Champs personnalisés + Restaurer + Ajouter -->
+            <div>
+              <CustomFieldRenderer section="session.main" v-model="customFieldValues.identification" />
+              <div class="flex items-center gap-4 mt-2">
+                <AddFieldButton section="session.main" @open-manager="openFieldPanel('session.main')" />
+                <RestoreFieldsButton section="session" :fieldLabels="sessionFieldLabels" />
+              </div>
             </div>
 
             <!-- Document generation section -->
-            <div class="border-t pt-6 mt-4">
-              <h3 class="text-md font-semibold text-surface-700 dark:text-surface-300 mb-4">
-                <i class="pi pi-file-pdf mr-2"></i>Génération de documents
-              </h3>
-              <div class="flex gap-3">
-                <Button
-                  label="Générer le projet d'étude"
-                  icon="pi pi-file-word"
-                  severity="info"
-                  :loading="generatingEtude"
-                  @click="generateEtude"
-                />
+            <ManageableField fieldKey="session.documents">
+              <div class="border-t pt-6 mt-4">
+                <h3 class="text-md font-semibold text-surface-700 dark:text-surface-300 mb-4">
+                  <i class="pi pi-file-pdf mr-2"></i><EditableLabel labelKey="session.documents" defaultLabel="Génération de documents" />
+                </h3>
+                <div class="flex gap-3">
+                  <Button
+                    label="Générer le projet d'étude"
+                    icon="pi pi-file-word"
+                    severity="info"
+                    :loading="generatingEtude"
+                    @click="generateEtude"
+                  />
+                </div>
               </div>
-            </div>
+            </ManageableField>
           </div>
+
         </div>
 
-        <!-- ====== STEP 3 : Convention ====== -->
-        <div v-else-if="currentStep === 3">
+        <!-- ====== STEP 2 : Convention ====== -->
+        <div v-else-if="currentStep === 2">
           <h2 class="text-lg font-semibold text-primary border-b pb-2 mb-6">
             <i class="pi pi-file mr-2"></i>Convention
           </h2>
@@ -655,10 +719,17 @@ onMounted(async () => {
               La génération peut prendre quelques secondes.
             </Message>
           </div>
+          <!-- Champs personnalisés -->
+          <div class="mt-6 border-t pt-6">
+            <CustomFieldRenderer section="session.step2" v-model="customFieldValues.step2" />
+            <div class="flex items-center gap-4 mt-2">
+              <AddFieldButton section="session.step2" @open-manager="openFieldPanel('session.step2')" />
+            </div>
+          </div>
         </div>
 
-        <!-- ====== STEP 4 : Convocation ====== -->
-        <div v-else-if="currentStep === 4">
+        <!-- ====== STEP 3 : Convocation ====== -->
+        <div v-else-if="currentStep === 3">
           <h2 class="text-lg font-semibold text-primary border-b pb-2 mb-6">
             <i class="pi pi-envelope mr-2"></i>Convocation
           </h2>
@@ -681,10 +752,17 @@ onMounted(async () => {
               Les convocations seront envoyées aux apprenants après génération.
             </Message>
           </div>
+          <!-- Champs personnalisés -->
+          <div class="mt-6 border-t pt-6">
+            <CustomFieldRenderer section="session.step3" v-model="customFieldValues.step3" />
+            <div class="flex items-center gap-4 mt-2">
+              <AddFieldButton section="session.step3" @open-manager="openFieldPanel('session.step3')" />
+            </div>
+          </div>
         </div>
 
-        <!-- ====== STEP 5 : Realisation ====== -->
-        <div v-else-if="currentStep === 5">
+        <!-- ====== STEP 4 : Realisation ====== -->
+        <div v-else-if="currentStep === 4">
           <h2 class="text-lg font-semibold text-primary border-b pb-2 mb-6">
             <i class="pi pi-play mr-2"></i>Réalisation
           </h2>
@@ -707,10 +785,17 @@ onMounted(async () => {
               Le livret regroupe tous les documents de la formation.
             </Message>
           </div>
+          <!-- Champs personnalisés -->
+          <div class="mt-6 border-t pt-6">
+            <CustomFieldRenderer section="session.step4" v-model="customFieldValues.step4" />
+            <div class="flex items-center gap-4 mt-2">
+              <AddFieldButton section="session.step4" @open-manager="openFieldPanel('session.step4')" />
+            </div>
+          </div>
         </div>
 
-        <!-- ====== STEP 6 : Evaluation des acquis ====== -->
-        <div v-else-if="currentStep === 6">
+        <!-- ====== STEP 5 : Evaluation des acquis ====== -->
+        <div v-else-if="currentStep === 5">
           <h2 class="text-lg font-semibold text-primary border-b pb-2 mb-6">
             <i class="pi pi-check-circle mr-2"></i>Évaluation des acquis
           </h2>
@@ -725,10 +810,17 @@ onMounted(async () => {
               Fonctionnalité disponible prochainement.
             </Message>
           </div>
+          <!-- Champs personnalisés -->
+          <div class="mt-6 border-t pt-6">
+            <CustomFieldRenderer section="session.step5" v-model="customFieldValues.step5" />
+            <div class="flex items-center gap-4 mt-2">
+              <AddFieldButton section="session.step5" @open-manager="openFieldPanel('session.step5')" />
+            </div>
+          </div>
         </div>
 
-        <!-- ====== STEP 7 : Satisfaction ====== -->
-        <div v-else-if="currentStep === 7">
+        <!-- ====== STEP 6 : Satisfaction ====== -->
+        <div v-else-if="currentStep === 6">
           <h2 class="text-lg font-semibold text-primary border-b pb-2 mb-6">
             <i class="pi pi-star mr-2"></i>Satisfaction
           </h2>
@@ -743,10 +835,17 @@ onMounted(async () => {
               Fonctionnalité disponible prochainement.
             </Message>
           </div>
+          <!-- Champs personnalisés -->
+          <div class="mt-6 border-t pt-6">
+            <CustomFieldRenderer section="session.step6" v-model="customFieldValues.step6" />
+            <div class="flex items-center gap-4 mt-2">
+              <AddFieldButton section="session.step6" @open-manager="openFieldPanel('session.step6')" />
+            </div>
+          </div>
         </div>
 
-        <!-- ====== STEP 8 : Facturation ====== -->
-        <div v-else-if="currentStep === 8">
+        <!-- ====== STEP 7 : Facturation ====== -->
+        <div v-else-if="currentStep === 7">
           <h2 class="text-lg font-semibold text-primary border-b pb-2 mb-6">
             <i class="pi pi-wallet mr-2"></i>Facturation
           </h2>
@@ -761,10 +860,17 @@ onMounted(async () => {
               Fonctionnalité disponible prochainement.
             </Message>
           </div>
+          <!-- Champs personnalisés -->
+          <div class="mt-6 border-t pt-6">
+            <CustomFieldRenderer section="session.step7" v-model="customFieldValues.step7" />
+            <div class="flex items-center gap-4 mt-2">
+              <AddFieldButton section="session.step7" @open-manager="openFieldPanel('session.step7')" />
+            </div>
+          </div>
         </div>
 
-        <!-- ====== STEP 9 : Clôture ====== -->
-        <div v-else-if="currentStep === 9">
+        <!-- ====== STEP 8 : Clôture ====== -->
+        <div v-else-if="currentStep === 8">
           <h2 class="text-lg font-semibold text-primary border-b pb-2 mb-6">
             <i class="pi pi-lock mr-2"></i>Clôture
           </h2>
@@ -783,10 +889,17 @@ onMounted(async () => {
               Fonctionnalité disponible prochainement.
             </Message>
           </div>
+          <!-- Champs personnalisés -->
+          <div class="mt-6 border-t pt-6">
+            <CustomFieldRenderer section="session.step8" v-model="customFieldValues.step8" />
+            <div class="flex items-center gap-4 mt-2">
+              <AddFieldButton section="session.step8" @open-manager="openFieldPanel('session.step8')" />
+            </div>
+          </div>
         </div>
 
-        <!-- ====== STEP 10 : Archivé ====== -->
-        <div v-else-if="currentStep === 10">
+        <!-- ====== STEP 9 : Archivé ====== -->
+        <div v-else-if="currentStep === 9">
           <h2 class="text-lg font-semibold text-primary border-b pb-2 mb-6">
             <i class="pi pi-box mr-2"></i>Archivé
           </h2>
@@ -801,8 +914,23 @@ onMounted(async () => {
               Session archivée avec succès.
             </Message>
           </div>
+          <!-- Champs personnalisés -->
+          <div class="mt-6 border-t pt-6">
+            <CustomFieldRenderer section="session.step9" v-model="customFieldValues.step9" />
+            <div class="flex items-center gap-4 mt-2">
+              <AddFieldButton section="session.step9" @open-manager="openFieldPanel('session.step9')" />
+            </div>
+          </div>
         </div>
       </div>
+
+      <!-- Panneau de gestion des champs (partagé pour toutes les étapes) -->
+      <FieldManagerPanel
+        v-model:visible="showFieldPanel"
+        :section="activeFieldPanelSection"
+        :title="'Gérer les champs — ' + (activeFieldPanelSection === 'session.main' ? 'Identification' : 'Étape ' + activeFieldPanelSection.replace('session.step', ''))"
+        :fieldLabels="activeFieldPanelSection === 'session.main' ? sessionFieldLabels : {}"
+      />
 
       <!-- Navigation Buttons -->
       <div class="flex justify-between items-center mt-6">
@@ -821,7 +949,7 @@ onMounted(async () => {
             icon="pi pi-save"
             severity="info"
             :loading="saving"
-            @click="handleSave"
+            @click="handleSave(false)"
           />
           <Button
             v-if="currentStep < totalSteps"

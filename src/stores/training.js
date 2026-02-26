@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { supabase } from '../supabase';
 import { useAuthStore } from './auth';
 import { fetchWithTimeout } from '../utils/fetchWithTimeout';
@@ -7,9 +7,21 @@ import { fetchWithTimeout } from '../utils/fetchWithTimeout';
 export const useTrainingStore = defineStore('training', () => {
     const loading = ref(false);
     const formations = ref([]);
+    const archivedFormations = ref([]);
     const auth = useAuthStore();
 
-    // Récupérer les formations (filtrées par user_id sauf si admin)
+    // ── Computed getters ──
+
+    const catalogueFormations = computed(() =>
+        formations.value.filter(f => !f.type || f.type === 'catalogue')
+    );
+
+    const surMesureFormations = computed(() =>
+        formations.value.filter(f => f.type === 'sur_mesure')
+    );
+
+    // ── Fetch ──
+
     const fetchFormations = async () => {
         if (!auth.currentOrganization?.id && !auth.isSuperAdmin) {
             loading.value = false;
@@ -23,6 +35,7 @@ export const useTrainingStore = defineStore('training', () => {
             let query = supabase
                 .from('formations')
                 .select('*, profiles(email)')
+                .is('deleted_at', null)
                 .order('updated_at', { ascending: false });
 
             if (!auth.isSuperAdmin) {
@@ -42,7 +55,33 @@ export const useTrainingStore = defineStore('training', () => {
         }
     };
 
-    // Créer ou mettre à jour une formation (Brouillon)
+    const fetchArchivedFormations = async () => {
+        if (!auth.currentOrganization?.id && !auth.isSuperAdmin) return;
+
+        try {
+            const orgId = auth.currentOrganization?.id;
+
+            let query = supabase
+                .from('formations')
+                .select('*, profiles(email)')
+                .not('deleted_at', 'is', null)
+                .order('deleted_at', { ascending: false });
+
+            if (!auth.isSuperAdmin) {
+                query = query.eq('organization_id', orgId);
+            }
+
+            const { data, error: err } = await query;
+            if (err) throw err;
+            archivedFormations.value = data || [];
+        } catch (err) {
+            console.error('[TrainingStore] Error fetching archived formations:', err);
+            archivedFormations.value = [];
+        }
+    };
+
+    // ── CRUD ──
+
     const saveTraining = async (trainingData, id = null, pdfUrl = null) => {
         loading.value = true;
         try {
@@ -50,11 +89,10 @@ export const useTrainingStore = defineStore('training', () => {
                 organization_id: auth.currentOrganization?.id,
                 user_id: auth.user.id,
                 title: trainingData.titre || 'Nouvelle Formation',
-                content: trainingData, // Tout le formulaire
+                content: trainingData,
                 updated_at: new Date()
             };
 
-            // Ajouter l'URL du PDF si fournie
             if (pdfUrl) {
                 payload.pdf_url = pdfUrl;
             }
@@ -63,7 +101,6 @@ export const useTrainingStore = defineStore('training', () => {
             let result;
 
             if (id) {
-                // Filtre par organization_id pour éviter les modifications cross-tenant
                 const orgId = auth.currentOrganization?.id;
                 result = await query.update(payload).eq('id', id).eq('organization_id', orgId).select().single();
             } else {
@@ -72,7 +109,6 @@ export const useTrainingStore = defineStore('training', () => {
 
             if (result.error) throw result.error;
 
-            // Rafraîchir la liste
             await fetchFormations();
 
             return { success: true, data: result.data };
@@ -83,7 +119,61 @@ export const useTrainingStore = defineStore('training', () => {
         }
     };
 
-    // Supprimer une formation — filtré par organisation
+    // ── Archive (soft-delete) ──
+
+    const softDeleteFormation = async (id) => {
+        try {
+            const orgId = auth.currentOrganization?.id;
+            if (!orgId && !auth.isSuperAdmin) throw new Error('Aucune organisation sélectionnée');
+
+            let query = supabase
+                .from('formations')
+                .update({ deleted_at: new Date().toISOString() })
+                .eq('id', id);
+
+            if (!auth.isSuperAdmin) {
+                query = query.eq('organization_id', orgId);
+            }
+
+            const { error: err } = await query;
+            if (err) throw err;
+
+            formations.value = formations.value.filter(f => f.id !== id);
+            return { success: true };
+        } catch (err) {
+            console.error('[TrainingStore] softDeleteFormation:', err.message);
+            return { success: false, error: err.message };
+        }
+    };
+
+    const restoreFormation = async (id) => {
+        try {
+            const orgId = auth.currentOrganization?.id;
+            if (!orgId && !auth.isSuperAdmin) throw new Error('Aucune organisation sélectionnée');
+
+            let query = supabase
+                .from('formations')
+                .update({ deleted_at: null })
+                .eq('id', id);
+
+            if (!auth.isSuperAdmin) {
+                query = query.eq('organization_id', orgId);
+            }
+
+            const { error: err } = await query;
+            if (err) throw err;
+
+            archivedFormations.value = archivedFormations.value.filter(f => f.id !== id);
+            await fetchFormations();
+            return { success: true };
+        } catch (err) {
+            console.error('[TrainingStore] restoreFormation:', err.message);
+            return { success: false, error: err.message };
+        }
+    };
+
+    // ── Hard delete (conservé pour rétrocompatibilité) ──
+
     const deleteFormation = async (id) => {
         try {
             const orgId = auth.currentOrganization?.id;
@@ -103,14 +193,13 @@ export const useTrainingStore = defineStore('training', () => {
         }
     };
 
-    // Appel au webhook n8n via Cloudflare pour générer le PDF
+    // ── PDF ──
+
     const generatePdf = async (trainingId, formData) => {
         loading.value = true;
         try {
-            // Refresh session before API call to ensure token is valid
             await auth.refreshSession();
 
-            // Utiliser fetchWithTimeout pour éviter les requêtes infinies (timeout 60s pour génération PDF)
             const response = await fetchWithTimeout('/api/generate-training-pdf', {
                 method: 'POST',
                 headers: {
@@ -118,13 +207,12 @@ export const useTrainingStore = defineStore('training', () => {
                     'Authorization': `Bearer ${auth.session?.access_token}`
                 },
                 body: JSON.stringify({ trainingId, data: formData })
-            }, 60000); // 60 secondes
+            }, 60000);
 
             const result = await response.json();
 
             if (!response.ok) throw new Error(result.error || "Erreur génération");
 
-            // On met à jour l'URL locale si n8n a réussi
             return { success: true, pdfUrl: result.pdfUrl };
         } catch (err) {
             return { success: false, error: err.message };
@@ -133,5 +221,23 @@ export const useTrainingStore = defineStore('training', () => {
         }
     };
 
-    return { loading, formations, fetchFormations, saveTraining, deleteFormation, generatePdf };
+    return {
+        // State
+        loading,
+        formations,
+        archivedFormations,
+        // Computed
+        catalogueFormations,
+        surMesureFormations,
+        // Fetch
+        fetchFormations,
+        fetchArchivedFormations,
+        // CRUD
+        saveTraining,
+        deleteFormation,
+        softDeleteFormation,
+        restoreFormation,
+        // PDF
+        generatePdf,
+    };
 });

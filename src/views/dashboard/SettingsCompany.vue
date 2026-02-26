@@ -29,10 +29,16 @@ import ManageableField from '../../components/common/ManageableField.vue';
 import AddFieldButton from '../../components/common/AddFieldButton.vue';
 import CustomFieldRenderer from '../../components/common/CustomFieldRenderer.vue';
 import RestoreFieldsButton from '../../components/common/RestoreFieldsButton.vue';
+import FieldManagerPanel from '../../components/common/FieldManagerPanel.vue';
+import PhoneInput from '../../components/common/PhoneInput.vue';
+
+import { useNavConfigStore } from '../../stores/navConfig';
 
 const store = useCompanyStore();
 const authStore = useAuthStore();
+const navConfig = useNavConfigStore();
 const { t } = useI18n();
+const ph = (key, fallback) => navConfig.getFieldPlaceholder(key, fallback);
 const saving = ref(false);
 const message = ref(null);
 const activeTab = ref(0);
@@ -47,6 +53,35 @@ const customFieldValues = ref({
   rgpd: {},
   financier: {}
 });
+
+// Panneau de gestion des champs
+const fieldPanelSection = ref('');
+const fieldPanelLabels = ref({});
+const showFieldPanel = ref(false);
+
+// Mapping section custom → préfixes des champs existants
+const sectionPrefixes = {
+  'settings.identite': ['settings.identity.'],
+  'settings.juridique': ['settings.legal.', 'settings.nda.', 'settings.qualiopi.', 'settings.handicap.'],
+  'settings.documents': ['settings.docs.'],
+  'settings.email': ['settings.email.'],
+  'settings.rgpd': ['settings.rgpd.'],
+  'settings.financier': ['settings.financier.']
+};
+
+const openFieldPanel = (section) => {
+  fieldPanelSection.value = section;
+  // Filtrer les labels pertinents pour cette section
+  const prefixes = sectionPrefixes[section] || [];
+  const filtered = {};
+  for (const [key, label] of Object.entries(fieldLabelsMap)) {
+    if (prefixes.some(p => key.startsWith(p))) {
+      filtered[key] = label;
+    }
+  }
+  fieldPanelLabels.value = filtered;
+  showFieldPanel.value = true;
+};
 
 // Labels lisibles pour les champs masqués (pour le dialog de restauration)
 const fieldLabelsMap = {
@@ -298,20 +333,20 @@ const uploadQualiopi = async (event) => {
             <ManageableField fieldKey="settings.identity.raison_sociale">
               <div class="flex flex-col gap-2">
                 <label class="font-semibold"><EditableLabel labelKey="settings.identity.raison_sociale" defaultLabel="Raison sociale" /> <span class="text-red-500">*</span></label>
-                <InputText v-model="form.name" placeholder="Nom de l'entreprise" :invalid="!!errors.name" @input="clearError('name')" />
+                <InputText v-model="form.name" :placeholder="ph('settings.identity.raison_sociale', 'Nom de l\'entreprise')" :invalid="!!errors.name" @input="clearError('name')" />
               </div>
             </ManageableField>
             <ManageableField fieldKey="settings.identity.forme_juridique">
               <div class="flex flex-col gap-2">
                 <label class="font-semibold"><EditableLabel labelKey="settings.identity.forme_juridique" defaultLabel="Forme juridique" /></label>
-                <Dropdown v-model="form.forme_juridique" :options="FORMES_JURIDIQUES" optionLabel="label" optionValue="value" placeholder="Sélectionner" />
+                <Dropdown v-model="form.forme_juridique" :options="FORMES_JURIDIQUES" optionLabel="label" optionValue="value" :placeholder="ph('settings.identity.forme_juridique', 'Sélectionner')" />
               </div>
             </ManageableField>
 
             <ManageableField fieldKey="settings.identity.representant_legal">
               <div class="flex flex-col gap-2">
                 <label class="font-semibold"><EditableLabel labelKey="settings.identity.representant_legal" defaultLabel="Représentant légal" /></label>
-                <InputText v-model="form.representant_legal" placeholder="Prénom Nom" />
+                <InputText v-model="form.representant_legal" :placeholder="ph('settings.identity.representant_legal', 'Prénom Nom')" />
               </div>
             </ManageableField>
             <ManageableField fieldKey="settings.identity.devise">
@@ -327,7 +362,7 @@ const uploadQualiopi = async (event) => {
                 <AddressAutocomplete
                   v-model="form.address"
                   @address-selected="handleAddressSelected"
-                  placeholder="Saisissez une adresse..."
+                  :placeholder="ph('settings.identity.adresse', 'Saisissez une adresse...')"
                 />
                 <span class="text-xs text-gray-400"><i class="pi pi-info-circle mr-1"></i>Auto-complétion via adresse.data.gouv.fr</span>
               </div>
@@ -336,7 +371,7 @@ const uploadQualiopi = async (event) => {
             <ManageableField fieldKey="settings.identity.code_postal">
               <div class="flex flex-col gap-2">
                 <label class="font-semibold"><EditableLabel labelKey="settings.identity.code_postal" defaultLabel="Code postal" /></label>
-                <InputMask v-model="form.zip_code" mask="99999" placeholder="75001" slotChar="" />
+                <InputMask v-model="form.zip_code" mask="99999" :placeholder="ph('settings.identity.code_postal', '75001')" slotChar="" />
               </div>
             </ManageableField>
             <ManageableField fieldKey="settings.identity.ville">
@@ -355,19 +390,19 @@ const uploadQualiopi = async (event) => {
             <ManageableField fieldKey="settings.identity.telephone">
               <div class="flex flex-col gap-2">
                 <label class="font-semibold"><EditableLabel labelKey="settings.identity.telephone" defaultLabel="Téléphone" /></label>
-                <InputMask v-model="form.phone" mask="99 99 99 99 99" placeholder="01 23 45 67 89" />
+                <PhoneInput v-model="form.phone" />
               </div>
             </ManageableField>
             <ManageableField fieldKey="settings.identity.email">
               <div class="flex flex-col gap-2">
                 <label class="font-semibold"><EditableLabel labelKey="settings.identity.email" defaultLabel="Email général" /></label>
-                <InputText v-model="form.email" type="email" placeholder="contact@entreprise.fr" />
+                <InputText v-model="form.email" type="email" :placeholder="ph('settings.identity.email', 'contact@entreprise.fr')" />
               </div>
             </ManageableField>
             <ManageableField fieldKey="settings.identity.site_web">
               <div class="flex flex-col gap-2">
                 <label class="font-semibold"><EditableLabel labelKey="settings.identity.site_web" defaultLabel="Site web" /></label>
-                <InputText v-model="form.website" type="url" placeholder="https://www.entreprise.fr" />
+                <InputText v-model="form.website" type="url" :placeholder="ph('settings.identity.site_web', 'https://www.entreprise.fr')" />
               </div>
             </ManageableField>
 
@@ -383,7 +418,7 @@ const uploadQualiopi = async (event) => {
             <div class="md:col-span-2">
               <CustomFieldRenderer section="settings.identite" v-model="customFieldValues.identite" />
               <div class="flex items-center gap-4 mt-4">
-                <AddFieldButton section="settings.identite" />
+                <AddFieldButton section="settings.identite" @open-manager="openFieldPanel('settings.identite')" />
                 <RestoreFieldsButton section="settings.identity" :fieldLabels="fieldLabelsMap" />
               </div>
             </div>
@@ -405,25 +440,25 @@ const uploadQualiopi = async (event) => {
                 <ManageableField fieldKey="settings.legal.siren">
                   <div class="flex flex-col gap-2">
                     <label><EditableLabel labelKey="settings.legal.siren" defaultLabel="SIREN" /></label>
-                    <InputMask v-model="form.siren" mask="999 999 999" placeholder="123 456 789" slotChar="" />
+                    <InputMask v-model="form.siren" mask="999 999 999" :placeholder="ph('settings.legal.siren', '123 456 789')" slotChar="" />
                   </div>
                 </ManageableField>
                 <ManageableField fieldKey="settings.legal.siret">
                   <div class="flex flex-col gap-2">
                     <label><EditableLabel labelKey="settings.legal.siret" defaultLabel="SIRET" /></label>
-                    <InputMask v-model="form.siret" mask="999 999 999 99999" placeholder="123 456 789 00012" slotChar="" />
+                    <InputMask v-model="form.siret" mask="999 999 999 99999" :placeholder="ph('settings.legal.siret', '123 456 789 00012')" slotChar="" />
                   </div>
                 </ManageableField>
                 <ManageableField fieldKey="settings.legal.naf_ape">
                   <div class="flex flex-col gap-2">
                     <label><EditableLabel labelKey="settings.legal.naf_ape" defaultLabel="Code NAF/APE" /></label>
-                    <InputMask v-model="form.naf_ape" mask="9999a" placeholder="8559A" slotChar="" />
+                    <InputMask v-model="form.naf_ape" mask="9999a" :placeholder="ph('settings.legal.naf_ape', '8559A')" slotChar="" />
                   </div>
                 </ManageableField>
                 <ManageableField fieldKey="settings.legal.tva_intracom">
                   <div class="flex flex-col gap-2">
                     <label><EditableLabel labelKey="settings.legal.tva_intracom" defaultLabel="N° TVA intracommunautaire" /></label>
-                    <InputText v-model="form.vat_number" placeholder="FR12345678901" />
+                    <InputText v-model="form.vat_number" :placeholder="ph('settings.legal.tva_intracom', 'FR12345678901')" />
                   </div>
                 </ManageableField>
                 <ManageableField fieldKey="settings.legal.capital">
@@ -435,7 +470,7 @@ const uploadQualiopi = async (event) => {
                 <ManageableField fieldKey="settings.legal.rcs_rm">
                   <div class="flex flex-col gap-2">
                     <label><EditableLabel labelKey="settings.legal.rcs_rm" defaultLabel="RCS / RM" /></label>
-                    <InputText v-model="form.rcs_rm" placeholder="Paris B 123 456 789" />
+                    <InputText v-model="form.rcs_rm" :placeholder="ph('settings.legal.rcs_rm', 'Paris B 123 456 789')" />
                   </div>
                 </ManageableField>
               </div>
@@ -452,7 +487,7 @@ const uploadQualiopi = async (event) => {
                 <ManageableField fieldKey="settings.nda.numero">
                   <div class="flex flex-col gap-2">
                     <label><EditableLabel labelKey="settings.nda.numero" defaultLabel="Numéro NDA" /></label>
-                    <InputText v-model="form.nda_numero" placeholder="11 75 12345 67" />
+                    <InputText v-model="form.nda_numero" :placeholder="ph('settings.nda.numero', '11 75 12345 67')" />
                   </div>
                 </ManageableField>
                 <ManageableField fieldKey="settings.nda.date_enregistrement">
@@ -464,7 +499,7 @@ const uploadQualiopi = async (event) => {
                 <ManageableField fieldKey="settings.nda.region">
                   <div class="flex flex-col gap-2">
                     <label><EditableLabel labelKey="settings.nda.region" defaultLabel="Région d'enregistrement" /></label>
-                    <Dropdown v-model="form.nda_region" :options="regions" placeholder="Sélectionner" editable />
+                    <Dropdown v-model="form.nda_region" :options="regions" :placeholder="ph('settings.nda.region', 'Sélectionner')" editable />
                   </div>
                 </ManageableField>
               </div>
@@ -507,7 +542,7 @@ const uploadQualiopi = async (event) => {
                 <ManageableField fieldKey="settings.qualiopi.certificateur">
                   <div class="flex flex-col gap-2">
                     <label><EditableLabel labelKey="settings.qualiopi.certificateur" defaultLabel="Certificateur" /></label>
-                    <InputText v-model="form.qualiopi_certificateur" placeholder="AFNOR, Bureau Veritas..." />
+                    <InputText v-model="form.qualiopi_certificateur" :placeholder="ph('settings.qualiopi.certificateur', 'AFNOR, Bureau Veritas...')" />
                   </div>
                 </ManageableField>
                 <ManageableField fieldKey="settings.qualiopi.date_certif">
@@ -557,7 +592,7 @@ const uploadQualiopi = async (event) => {
                 <ManageableField fieldKey="settings.handicap.telephone">
                   <div class="flex flex-col gap-2">
                     <label><EditableLabel labelKey="settings.handicap.telephone" defaultLabel="Téléphone" /></label>
-                    <InputMask v-model="form.handicap_telephone" mask="99 99 99 99 99" />
+                    <PhoneInput v-model="form.handicap_telephone" />
                   </div>
                 </ManageableField>
               </div>
@@ -573,7 +608,7 @@ const uploadQualiopi = async (event) => {
             <div>
               <CustomFieldRenderer section="settings.juridique" v-model="customFieldValues.juridique" />
               <div class="flex items-center gap-4 mt-4">
-                <AddFieldButton section="settings.juridique" />
+                <AddFieldButton section="settings.juridique" @open-manager="openFieldPanel('settings.juridique')" />
                 <RestoreFieldsButton section="settings.legal" :fieldLabels="fieldLabelsMap" />
                 <RestoreFieldsButton section="settings.nda" :fieldLabels="fieldLabelsMap" />
                 <RestoreFieldsButton section="settings.qualiopi" :fieldLabels="fieldLabelsMap" />
@@ -637,7 +672,7 @@ const uploadQualiopi = async (event) => {
             <!-- Champs custom + Restaurer + Ajouter -->
             <CustomFieldRenderer section="settings.documents" v-model="customFieldValues.documents" />
             <div class="flex items-center gap-4 mt-2">
-              <AddFieldButton section="settings.documents" />
+              <AddFieldButton section="settings.documents" @open-manager="openFieldPanel('settings.documents')" />
               <RestoreFieldsButton section="settings.docs" :fieldLabels="fieldLabelsMap" />
             </div>
 
@@ -669,14 +704,14 @@ const uploadQualiopi = async (event) => {
               <ManageableField fieldKey="settings.email.nom_expediteur">
                 <div class="flex flex-col gap-2">
                   <label class="font-semibold"><EditableLabel labelKey="settings.email.nom_expediteur" defaultLabel="Nom de l'expéditeur" /></label>
-                  <InputText v-model="form.email_nom_expediteur" placeholder="Mon Organisme de Formation" />
+                  <InputText v-model="form.email_nom_expediteur" :placeholder="ph('settings.email.nom_expediteur', 'Mon Organisme de Formation')" />
                   <small class="text-gray-500">Nom affiché dans les emails envoyés</small>
                 </div>
               </ManageableField>
               <ManageableField fieldKey="settings.email.email_envoi">
                 <div class="flex flex-col gap-2">
                   <label class="font-semibold"><EditableLabel labelKey="settings.email.email_envoi" defaultLabel="Email d'envoi" /></label>
-                  <InputText v-model="form.email" type="email" placeholder="envoi@organisme.fr" />
+                  <InputText v-model="form.email" type="email" :placeholder="ph('settings.email.email_envoi', 'envoi@organisme.fr')" />
                   <small class="text-gray-500">Adresse utilisée pour l'envoi des documents</small>
                 </div>
               </ManageableField>
@@ -685,7 +720,7 @@ const uploadQualiopi = async (event) => {
             <ManageableField fieldKey="settings.email.signature">
               <div class="flex flex-col gap-2">
                 <label class="font-semibold"><EditableLabel labelKey="settings.email.signature" defaultLabel="Signature email" /></label>
-                <Textarea v-model="form.email_signature" rows="4" placeholder="Cordialement,\nL'équipe Mon Organisme..." />
+                <Textarea v-model="form.email_signature" rows="4" :placeholder="ph('settings.email.signature', 'Cordialement,\nL\'équipe Mon Organisme...')" />
                 <small class="text-gray-500">Signature ajoutée automatiquement à chaque email envoyé</small>
               </div>
             </ManageableField>
@@ -717,7 +752,7 @@ const uploadQualiopi = async (event) => {
             <!-- Champs custom + Restaurer + Ajouter -->
             <CustomFieldRenderer section="settings.email" v-model="customFieldValues.email" />
             <div class="flex items-center gap-4 mt-2">
-              <AddFieldButton section="settings.email" />
+              <AddFieldButton section="settings.email" @open-manager="openFieldPanel('settings.email')" />
               <RestoreFieldsButton section="settings.email" :fieldLabels="fieldLabelsMap" />
             </div>
           </div>
@@ -736,13 +771,13 @@ const uploadQualiopi = async (event) => {
               <ManageableField fieldKey="settings.rgpd.dpo_nom">
                 <div class="flex flex-col gap-2">
                   <label class="font-semibold"><EditableLabel labelKey="settings.rgpd.dpo_nom" defaultLabel="Nom du DPO" /></label>
-                  <InputText v-model="form.dpo_nom" placeholder="Prénom Nom" />
+                  <InputText v-model="form.dpo_nom" :placeholder="ph('settings.rgpd.dpo_nom', 'Prénom Nom')" />
                 </div>
               </ManageableField>
               <ManageableField fieldKey="settings.rgpd.dpo_email">
                 <div class="flex flex-col gap-2">
                   <label class="font-semibold"><EditableLabel labelKey="settings.rgpd.dpo_email" defaultLabel="Email du DPO" /></label>
-                  <InputText v-model="form.dpo_email" type="email" placeholder="dpo@organisme.fr" />
+                  <InputText v-model="form.dpo_email" type="email" :placeholder="ph('settings.rgpd.dpo_email', 'dpo@organisme.fr')" />
                 </div>
               </ManageableField>
             </div>
@@ -757,7 +792,7 @@ const uploadQualiopi = async (event) => {
               <div class="flex flex-col gap-2">
                 <label class="font-semibold"><EditableLabel labelKey="settings.rgpd.politique" defaultLabel="Politique de confidentialité" /></label>
                 <Textarea v-model="form.politique_confidentialite" rows="6"
-                  placeholder="Décrivez votre politique de traitement des données personnelles..." />
+                  :placeholder="ph('settings.rgpd.politique', 'Décrivez votre politique de traitement des données personnelles...')" />
                 <small class="text-gray-500">Ce texte pourra être intégré dans les documents à destination des apprenants</small>
               </div>
             </ManageableField>
@@ -773,7 +808,7 @@ const uploadQualiopi = async (event) => {
             <!-- Champs custom + Restaurer + Ajouter -->
             <CustomFieldRenderer section="settings.rgpd" v-model="customFieldValues.rgpd" />
             <div class="flex items-center gap-4 mt-2">
-              <AddFieldButton section="settings.rgpd" />
+              <AddFieldButton section="settings.rgpd" @open-manager="openFieldPanel('settings.rgpd')" />
               <RestoreFieldsButton section="settings.rgpd" :fieldLabels="fieldLabelsMap" />
             </div>
           </div>
@@ -806,13 +841,13 @@ const uploadQualiopi = async (event) => {
                 <ManageableField fieldKey="settings.financier.iban">
                   <div class="flex flex-col gap-2">
                     <label><EditableLabel labelKey="settings.financier.iban" defaultLabel="IBAN" /></label>
-                    <InputText v-model="form.iban" placeholder="FR76 XXXX XXXX XXXX XXXX XXXX XXX" />
+                    <InputText v-model="form.iban" :placeholder="ph('settings.financier.iban', 'FR76 XXXX XXXX XXXX XXXX XXXX XXX')" />
                   </div>
                 </ManageableField>
                 <ManageableField fieldKey="settings.financier.bic">
                   <div class="flex flex-col gap-2">
                     <label><EditableLabel labelKey="settings.financier.bic" defaultLabel="BIC" /></label>
-                    <InputText v-model="form.bic" placeholder="BNPAFRPP" />
+                    <InputText v-model="form.bic" :placeholder="ph('settings.financier.bic', 'BNPAFRPP')" />
                   </div>
                 </ManageableField>
               </div>
@@ -913,7 +948,7 @@ const uploadQualiopi = async (event) => {
             <!-- Champs custom + Restaurer + Ajouter -->
             <CustomFieldRenderer section="settings.financier" v-model="customFieldValues.financier" />
             <div class="flex items-center gap-4 mt-2">
-              <AddFieldButton section="settings.financier" />
+              <AddFieldButton section="settings.financier" @open-manager="openFieldPanel('settings.financier')" />
               <RestoreFieldsButton section="settings.financier" :fieldLabels="fieldLabelsMap" />
             </div>
           </div>
@@ -922,4 +957,10 @@ const uploadQualiopi = async (event) => {
       </TabView>
     </div>
   </div>
+  <FieldManagerPanel
+    v-model:visible="showFieldPanel"
+    :section="fieldPanelSection"
+    :fieldLabels="fieldPanelLabels"
+    title="Gérer les champs"
+  />
 </template>

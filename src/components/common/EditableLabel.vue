@@ -25,6 +25,7 @@ const displayLabel = computed(() => {
 });
 
 const isSuperAdmin = computed(() => auth.isSuperAdmin);
+const isRequired = computed(() => navConfig.isFieldRequired(props.labelKey));
 
 const enterEditMode = () => {
   editedLabel.value = displayLabel.value;
@@ -72,6 +73,7 @@ const cancel = () => {
     <!-- Mode lecture -->
     <template v-if="!editing">
       <span class="editable-label-text">{{ displayLabel }}</span>
+      <span v-if="isRequired" class="editable-label-required">*</span>
       <button
         v-if="isSuperAdmin"
         @click.stop.prevent="enterEditMode"
@@ -147,6 +149,13 @@ const cancel = () => {
   padding: 0;
   min-width: 60px;
   max-width: 300px;
+}
+
+.editable-label-required {
+  color: #ef4444;
+  font-weight: 700;
+  font-size: 1em;
+  margin-left: 2px;
 }
 
 .editable-label-spinner {

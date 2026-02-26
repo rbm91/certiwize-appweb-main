@@ -35,15 +35,6 @@
       <i v-if="i < steps.length - 1" class="pi pi-chevron-right text-surface-300 mx-1"></i>
     </div>
 
-    <!-- Lien vers gestion des étapes pour super_admin -->
-    <router-link
-      v-if="editable && isSuperAdmin"
-      to="/dashboard/workflow"
-      class="ml-2 text-xs text-blue-500 hover:text-blue-700 flex items-center gap-1"
-      title="Gérer les étapes du workflow"
-    >
-      <i class="pi pi-cog"></i>
-    </router-link>
   </div>
 </template>
 

@@ -7,6 +7,7 @@ import Button from 'primevue/button';
 import Message from 'primevue/message';
 import Card from 'primevue/card';
 import { useFormValidation } from '../../composables/useFormValidation';
+import PhoneInput from '../../components/common/PhoneInput.vue';
 
 const { t } = useI18n();
 const router = useRouter();
@@ -219,10 +220,8 @@ onMounted(() => {
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     {{ t('checkout.form.phone') }}
                   </label>
-                  <InputText
+                  <PhoneInput
                     v-model="form.phone"
-                    type="tel"
-                    class="w-full"
                     :placeholder="t('checkout.form.phone_placeholder')"
                   />
                 </div>

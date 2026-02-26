@@ -2,7 +2,6 @@
 import { computed } from 'vue';
 import { useNavConfigStore } from '../../stores/navConfig';
 import { useAuthStore } from '../../stores/auth';
-import ManageableField from './ManageableField.vue';
 import EditableLabel from './EditableLabel.vue';
 
 const props = defineProps({
@@ -16,7 +15,9 @@ const navConfig = useNavConfigStore();
 const auth = useAuthStore();
 
 const isSuperAdmin = computed(() => auth.isSuperAdmin);
-const customFields = computed(() => navConfig.getCustomFields(props.section));
+const customFields = computed(() => {
+  return navConfig.config?.customFields?.[props.section] || [];
+});
 
 const updateValue = (fieldKey, value) => {
   const newValues = { ...props.modelValue, [fieldKey]: value };
@@ -26,7 +27,6 @@ const updateValue = (fieldKey, value) => {
 const removeField = async (fieldKey) => {
   if (confirm('Supprimer ce champ personnalisé ? Cette action est irréversible.')) {
     await navConfig.removeCustomField(props.section, fieldKey);
-    // Aussi supprimer la valeur
     const newValues = { ...props.modelValue };
     delete newValues[fieldKey];
     emit('update:modelValue', newValues);
@@ -43,6 +43,7 @@ const removeField = async (fieldKey) => {
           :defaultLabel="field.label"
           tag="label"
         />
+        <span v-if="navConfig.isFieldRequired(field.key)" class="custom-field-required">* Obligatoire</span>
 
         <!-- Texte -->
         <input
@@ -51,7 +52,7 @@ const removeField = async (fieldKey) => {
           :value="modelValue[field.key] || ''"
           @input="updateValue(field.key, $event.target.value)"
           class="custom-field-input"
-          :placeholder="field.label"
+          :placeholder="navConfig.getFieldPlaceholder(field.key, field.placeholder || field.label)"
         />
 
         <!-- Zone de texte -->
@@ -60,7 +61,7 @@ const removeField = async (fieldKey) => {
           :value="modelValue[field.key] || ''"
           @input="updateValue(field.key, $event.target.value)"
           class="custom-field-textarea"
-          :placeholder="field.label"
+          :placeholder="navConfig.getFieldPlaceholder(field.key, field.placeholder || field.label)"
           rows="3"
         />
 
@@ -71,7 +72,7 @@ const removeField = async (fieldKey) => {
           :value="modelValue[field.key] || ''"
           @input="updateValue(field.key, $event.target.value)"
           class="custom-field-input"
-          :placeholder="field.label"
+          :placeholder="navConfig.getFieldPlaceholder(field.key, field.placeholder || field.label)"
         />
 
         <!-- Date -->
@@ -92,6 +93,17 @@ const removeField = async (fieldKey) => {
           />
           <span>{{ modelValue[field.key] ? 'Oui' : 'Non' }}</span>
         </label>
+
+        <!-- Liste déroulante -->
+        <select
+          v-else-if="field.type === 'select'"
+          :value="modelValue[field.key] || ''"
+          @change="updateValue(field.key, $event.target.value)"
+          class="custom-field-input"
+        >
+          <option value="" disabled>{{ navConfig.getFieldPlaceholder(field.key, field.placeholder || 'Choisir...') }}</option>
+          <option v-for="opt in (field.options || [])" :key="opt" :value="opt">{{ opt }}</option>
+        </select>
       </div>
 
       <!-- Bouton supprimer pour super_admin -->
@@ -158,5 +170,11 @@ const removeField = async (fieldKey) => {
 
 .custom-field-remove:hover {
   opacity: 1;
+}
+
+.custom-field-required {
+  color: #ef4444;
+  font-size: 11px;
+  font-weight: 500;
 }
 </style>

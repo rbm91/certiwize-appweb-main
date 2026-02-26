@@ -4,6 +4,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 
 import { useTiersStore } from '../../stores/tiers';
+import { parsePhoneNumber } from 'libphonenumber-js';
 import {
   TIER_ROLE_OPTIONS,
   TIER_NATURES,
@@ -23,12 +24,14 @@ import MultiSelect from 'primevue/multiselect';
 import Dropdown from 'primevue/dropdown';
 import ConfirmDialog from 'primevue/confirmdialog';
 import { useConfirm } from 'primevue/useconfirm';
+import { useToast } from 'primevue/usetoast';
 
 const router = useRouter();
 const route = useRoute();
 const { t } = useI18n();
 const store = useTiersStore();
 const confirm = useConfirm();
+const toast = useToast();
 
 // ── Filtres ──
 
@@ -55,6 +58,34 @@ const handleArchive = async (tier) => {
   confirmDelete(async () => {
     await store.softDeleteTier(tier.id);
   }, `Archiver ${tier.nom_affiche || tier.name} ?`);
+};
+
+const formatPhone = (phone) => {
+  if (!phone) return null;
+  try {
+    const parsed = parsePhoneNumber(phone);
+    if (parsed) return parsed.formatInternational();
+  } catch {}
+  return phone;
+};
+
+const handleDelete = (tier) => {
+  confirm.require({
+    message: `Supprimer définitivement "${tier.nom_affiche || tier.name}" ? Cette action est irréversible.`,
+    header: 'Suppression',
+    icon: 'pi pi-trash',
+    acceptClass: 'p-button-danger',
+    acceptLabel: 'Supprimer',
+    rejectLabel: 'Annuler',
+    accept: async () => {
+      const result = await store.deleteTier(tier.id);
+      if (result.success) {
+        toast.add({ severity: 'success', summary: 'Supprimé', detail: 'Tiers supprimé définitivement.', life: 3000 });
+      } else {
+        toast.add({ severity: 'error', summary: 'Erreur', detail: result.error || 'Impossible de supprimer.', life: 5000 });
+      }
+    }
+  });
 };
 
 // ── Computed : filtrage ──
@@ -283,7 +314,7 @@ onMounted(() => {
       <Column field="telephone" header="Téléphone" sortable style="min-width: 10rem">
         <template #body="{ data }">
           <span class="text-sm text-surface-600 dark:text-surface-300">
-            {{ data.telephone || '-' }}
+            {{ formatPhone(data.telephone) || '-' }}
           </span>
         </template>
       </Column>
@@ -309,10 +340,18 @@ onMounted(() => {
               @click="goToEdit(data)"
             />
             <Button
-              icon="pi pi-box"
+              icon="pi pi-trash"
               text
               rounded
               severity="danger"
+              v-tooltip.top="'Supprimer'"
+              @click="handleDelete(data)"
+            />
+            <Button
+              icon="pi pi-box"
+              text
+              rounded
+              severity="warn"
               v-tooltip.top="'Archiver'"
               @click="handleArchive(data)"
             />

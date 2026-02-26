@@ -47,19 +47,45 @@ export const useNavConfigStore = defineStore('navConfig', () => {
   };
 
   /**
-   * Sauvegarder la config (INSERT nouvelle version)
+   * Sauvegarder la config (UPDATE si existant, INSERT sinon)
    */
   const saveConfig = async (newConfig) => {
     loading.value = true;
     try {
-      const { error } = await supabase
+      const orgId = auth.currentOrganization?.id;
+      if (!orgId) throw new Error('Organization ID manquant');
+
+      // Chercher une config existante pour cette organisation
+      const { data: existing } = await supabase
         .from('nav_config')
-        .insert({
-          config: newConfig,
-          updated_at: new Date().toISOString(),
-          updated_by: auth.user?.id || null,
-          organization_id: auth.currentOrganization?.id
-        });
+        .select('id')
+        .eq('organization_id', orgId)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      let error;
+      if (existing?.id) {
+        // Mettre à jour la ligne existante
+        ({ error } = await supabase
+          .from('nav_config')
+          .update({
+            config: newConfig,
+            updated_at: new Date().toISOString(),
+            updated_by: auth.user?.id || null
+          })
+          .eq('id', existing.id));
+      } else {
+        // Première sauvegarde : insérer une nouvelle ligne
+        ({ error } = await supabase
+          .from('nav_config')
+          .insert({
+            config: newConfig,
+            updated_at: new Date().toISOString(),
+            updated_by: auth.user?.id || null,
+            organization_id: orgId
+          }));
+      }
 
       if (error) throw error;
 
@@ -214,50 +240,133 @@ export const useNavConfigStore = defineStore('navConfig', () => {
   /**
    * Ajouter un champ custom à une section
    */
-  const addCustomField = async (section, { label, type }) => {
-    const newConfig = structuredClone(config.value || DEFAULT_CONFIG);
-    if (!newConfig.customFields) newConfig.customFields = {};
-    if (!newConfig.customFields[section]) newConfig.customFields[section] = [];
+  const addCustomField = async (section, { label, type, placeholder, options }) => {
+    // Initialiser config si null
+    if (!config.value) {
+      config.value = structuredClone(DEFAULT_CONFIG);
+    }
+
+    // Muter en place pour la réactivité Vue
+    if (!config.value.customFields) {
+      config.value.customFields = {};
+    }
+    if (!config.value.customFields[section]) {
+      config.value.customFields[section] = [];
+    }
 
     // Générer une clé unique
-    const timestamp = Date.now();
-    const key = `custom_${section.replace(/\./g, '_')}_${timestamp}`;
-
-    newConfig.customFields[section].push({
+    const key = `custom_${section.replace(/\./g, '_')}_${Date.now()}`;
+    const field = {
       key,
       label,
-      type, // 'text' | 'textarea' | 'number' | 'date' | 'toggle'
+      type, // 'text' | 'textarea' | 'number' | 'date' | 'toggle' | 'select'
       createdAt: new Date().toISOString()
-    });
+    };
+    if (placeholder) field.placeholder = placeholder;
+    if (options && options.length > 0) field.options = options;
 
-    return saveConfig(newConfig);
+    config.value.customFields[section].push(field);
+
+    // Sauvegarder (clone pour Supabase)
+    await saveConfig(JSON.parse(JSON.stringify(config.value)));
+
+    return field;
   };
 
   /**
    * Supprimer un champ custom
    */
   const removeCustomField = async (section, fieldKey) => {
-    const newConfig = structuredClone(config.value || DEFAULT_CONFIG);
-    if (!newConfig.customFields?.[section]) return { success: true };
-    newConfig.customFields[section] = newConfig.customFields[section].filter(f => f.key !== fieldKey);
-    // Nettoyer la section si vide
-    if (newConfig.customFields[section].length === 0) {
-      delete newConfig.customFields[section];
+    if (!config.value?.customFields?.[section]) return { success: true };
+
+    // Muter en place pour la réactivité Vue
+    const idx = config.value.customFields[section].findIndex(f => f.key === fieldKey);
+    if (idx !== -1) {
+      config.value.customFields[section].splice(idx, 1);
     }
-    return saveConfig(newConfig);
+    // Nettoyer la section si vide
+    if (config.value.customFields[section].length === 0) {
+      delete config.value.customFields[section];
+    }
+
+    // Sauvegarder en arrière-plan
+    return saveConfig(JSON.parse(JSON.stringify(config.value)));
   };
 
   /**
    * Mettre à jour le label d'un champ custom
    */
   const updateCustomFieldLabel = async (section, fieldKey, newLabel) => {
-    const newConfig = structuredClone(config.value || DEFAULT_CONFIG);
-    const field = newConfig.customFields?.[section]?.find(f => f.key === fieldKey);
+    const field = config.value?.customFields?.[section]?.find(f => f.key === fieldKey);
     if (field) {
       field.label = newLabel;
-      return saveConfig(newConfig);
+      return saveConfig(JSON.parse(JSON.stringify(config.value)));
     }
     return { success: true };
+  };
+
+  /**
+   * Réordonner les champs custom d'une section
+   */
+  const reorderCustomFields = async (section, orderedKeys) => {
+    if (!config.value?.customFields?.[section]) return { success: true };
+    const fields = config.value.customFields[section];
+    const reordered = orderedKeys
+      .map(key => fields.find(f => f.key === key))
+      .filter(Boolean);
+    config.value.customFields[section] = reordered;
+    return saveConfig(JSON.parse(JSON.stringify(config.value)));
+  };
+
+  // ========================================
+  // Gestion des placeholders (textes suggérés)
+  // ========================================
+
+  /**
+   * Récupérer le placeholder custom d'un champ
+   */
+  const getFieldPlaceholder = (fieldKey, fallback) => {
+    return config.value?.placeholders?.[fieldKey] || fallback || '';
+  };
+
+  /**
+   * Mettre à jour le placeholder d'un champ
+   */
+  const updateFieldPlaceholder = async (fieldKey, placeholder) => {
+    if (!config.value) config.value = structuredClone(DEFAULT_CONFIG);
+    if (!config.value.placeholders) config.value.placeholders = {};
+    if (placeholder && placeholder.trim()) {
+      config.value.placeholders[fieldKey] = placeholder.trim();
+    } else {
+      delete config.value.placeholders[fieldKey];
+    }
+    return saveConfig(JSON.parse(JSON.stringify(config.value)));
+  };
+
+  // ========================================
+  // Gestion des champs obligatoires (requiredFields)
+  // ========================================
+
+  /**
+   * Vérifier si un champ est obligatoire
+   */
+  const isFieldRequired = (fieldKey) => {
+    return (config.value?.requiredFields || []).includes(fieldKey);
+  };
+
+  /**
+   * Basculer l'état obligatoire d'un champ
+   */
+  const toggleFieldRequired = async (fieldKey) => {
+    if (!config.value) config.value = structuredClone(DEFAULT_CONFIG);
+    if (!config.value.requiredFields) config.value.requiredFields = [];
+    const idx = config.value.requiredFields.indexOf(fieldKey);
+    if (idx !== -1) {
+      config.value.requiredFields.splice(idx, 1);
+    } else {
+      config.value.requiredFields.push(fieldKey);
+    }
+    return saveConfig(JSON.parse(JSON.stringify(config.value)));
   };
 
   return {
@@ -281,6 +390,13 @@ export const useNavConfigStore = defineStore('navConfig', () => {
     getCustomFields,
     addCustomField,
     removeCustomField,
-    updateCustomFieldLabel
+    updateCustomFieldLabel,
+    reorderCustomFields,
+    // Placeholders
+    getFieldPlaceholder,
+    updateFieldPlaceholder,
+    // Champs obligatoires
+    isFieldRequired,
+    toggleFieldRequired
   };
 });

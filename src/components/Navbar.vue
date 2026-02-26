@@ -80,7 +80,7 @@ const toggleMobileMenu = () => {
       <div class="flex justify-between h-16">
         <!-- Logo -->
         <div class="flex items-center cursor-pointer" @click="router.push('/')">
-          <img src="/certiwize-logo.png" alt="Certiwize Logo" class="h-10 w-auto" />
+          <img src="/certigestion-logo-blanc.svg" alt="Certigestion Logo" class="h-10 w-auto" />
         </div>
 
         <!-- Desktop Navigation -->

@@ -20,6 +20,7 @@ import AddressAutocomplete from '../../components/common/AddressAutocomplete.vue
 import { useFileUpload } from '../../composables/useFileUpload';
 import { useFormValidation } from '../../composables/useFormValidation';
 import { PROFILE_OPTIONS } from '../../config/constants';
+import PhoneInput from '../../components/common/PhoneInput.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -283,7 +284,7 @@ onMounted(async () => {
           </div>
           <div class="flex flex-col gap-2">
             <label class="font-semibold text-sm">{{ t('learner.fields.phone') }}</label>
-            <InputText v-model="form.phone" :placeholder="t('learner.fields.phone_ph')" />
+            <PhoneInput v-model="form.phone" :placeholder="t('learner.fields.phone_ph')" />
           </div>
         </div>
       </div>

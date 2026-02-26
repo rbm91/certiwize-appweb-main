@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '../../stores/auth';
 import { useNavigation } from '../../composables/useNavigation';
 import LayoutToggleButton from './LayoutToggleButton.vue';
+import LogoBrand from './LogoBrand.vue';
 
 const { t } = useI18n();
 const authStore = useAuthStore();
@@ -33,8 +34,8 @@ const logout = async () => {
 
 <template>
   <div class="flex flex-col h-full bg-slate-900 w-64 text-white">
-    <div class="p-6 flex flex-col items-center justify-center border-b border-slate-800 gap-2">
-      <h1 class="text-xl font-bold bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">Certiwize</h1>
+    <div class="p-4 flex flex-col items-center justify-center border-b border-slate-800 gap-2">
+      <LogoBrand />
       <!-- Nom de l'organisation courante -->
       <div v-if="authStore.currentOrganization" class="w-full">
         <select

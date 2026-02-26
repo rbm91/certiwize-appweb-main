@@ -99,7 +99,7 @@ export const SEQUENCE = {
 export const VALIDATION = {
   MIN_PASSWORD_LENGTH: 8,
   EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-  PHONE_REGEX: /^(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4}$/,
+  PHONE_REGEX: /^\+[1-9]\d{1,14}$/,
   SIRET_LENGTH: 14,
 };
 
@@ -244,18 +244,17 @@ export const PRESTATION_STATUTS = [
   { label: 'Annulée', value: 'annulee', severity: 'danger' },
 ];
 
-// Prestations — Étapes workflow Formation (10 étapes)
+// Prestations — Étapes workflow Formation (9 étapes)
 export const FORMATION_WORKFLOW_STEPS = [
-  { step: 1, label: 'Identification', icon: 'pi-user' },
-  { step: 2, label: 'Analyse du besoin', icon: 'pi-search' },
-  { step: 3, label: 'Convention', icon: 'pi-file' },
-  { step: 4, label: 'Convocation', icon: 'pi-envelope' },
-  { step: 5, label: 'Réalisation', icon: 'pi-play' },
-  { step: 6, label: 'Évaluation', icon: 'pi-check-circle' },
-  { step: 7, label: 'Satisfaction', icon: 'pi-star' },
-  { step: 8, label: 'Facturation', icon: 'pi-wallet' },
-  { step: 9, label: 'Clôture', icon: 'pi-lock' },
-  { step: 10, label: 'Archivé', icon: 'pi-box' },
+  { step: 1, label: 'Identification & Analyse', icon: 'pi-user' },
+  { step: 2, label: 'Convention', icon: 'pi-file' },
+  { step: 3, label: 'Convocation', icon: 'pi-envelope' },
+  { step: 4, label: 'Réalisation', icon: 'pi-play' },
+  { step: 5, label: 'Évaluation', icon: 'pi-check-circle' },
+  { step: 6, label: 'Satisfaction', icon: 'pi-star' },
+  { step: 7, label: 'Facturation', icon: 'pi-wallet' },
+  { step: 8, label: 'Clôture', icon: 'pi-lock' },
+  { step: 9, label: 'Archivé', icon: 'pi-box' },
 ];
 
 // Prestations — Étapes workflow Coaching (6 étapes)
@@ -578,4 +577,11 @@ export default {
   FORMES_JURIDIQUES,
   INDICATEURS_RNQ,
   BOITE_OUTILS_CATEGORIES,
+  FORMATION_TYPES,
 };
+
+// Formations — Types (catalogue vs sur mesure)
+export const FORMATION_TYPES = [
+  { label: 'Catalogue', value: 'catalogue', severity: 'info' },
+  { label: 'Sur mesure', value: 'sur_mesure', severity: 'warn' },
+];

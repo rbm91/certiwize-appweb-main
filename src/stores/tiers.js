@@ -217,6 +217,22 @@ export const useTiersStore = defineStore('tiers', () => {
     }
   };
 
+  const deleteTier = async (id) => {
+    try {
+      const { error: err } = await supabase
+        .from('tiers')
+        .delete()
+        .eq('id', id);
+
+      if (err) throw err;
+
+      tiers.value = tiers.value.filter(t => t.id !== id);
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  };
+
   const getTierById = async (id) => {
     const local = tiers.value.find(t => t.id === id);
     if (local) return local;
@@ -422,6 +438,7 @@ export const useTiersStore = defineStore('tiers', () => {
     createTier,
     updateTier,
     softDeleteTier,
+    deleteTier,
     getTierById,
     // Rôles
     addRole,

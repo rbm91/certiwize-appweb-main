@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
+import PhoneInput from '../../components/common/PhoneInput.vue';
 import Button from 'primevue/button';
 import Message from 'primevue/message';
 import Card from 'primevue/card';
@@ -185,11 +186,8 @@ const goToHome = () => {
                   <label for="phone" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     {{ t('schedule.form.phone') }}
                   </label>
-                  <InputText
-                    id="phone"
+                  <PhoneInput
                     v-model="formData.phone"
-                    type="tel"
-                    class="w-full"
                     :placeholder="t('schedule.form.phone_placeholder')"
                   />
                 </div>

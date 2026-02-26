@@ -112,14 +112,14 @@ export const validateEmail = (email) => {
 };
 
 /**
- * Valide un numéro de téléphone français
+ * Valide un numéro de téléphone au format international E.164
  * @param {string} phone - Numéro à valider
  * @returns {boolean} - True si valide
  *
  * @example
- * validatePhone('06 12 34 56 78'); // true
  * validatePhone('+33612345678'); // true
- * validatePhone('invalid'); // false
+ * validatePhone('+14155552671'); // true
+ * validatePhone('0612345678'); // false (format local)
  */
 export const validatePhone = (phone) => {
   if (!phone) return false;

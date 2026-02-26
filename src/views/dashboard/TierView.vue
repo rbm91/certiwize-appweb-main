@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useTiersStore } from '../../stores/tiers';
 import { useAuditTrail } from '../../composables/useAuditTrail';
 import { useConformityScore } from '../../composables/useConformityScore';
+import { parsePhoneNumber } from 'libphonenumber-js';
 import ScoreBadge from '../../components/dashboard/ScoreBadge.vue';
 
 import TabView from 'primevue/tabview';
@@ -31,6 +32,16 @@ const router = useRouter();
 const store = useTiersStore();
 const auditTrail = useAuditTrail();
 const { computeScore } = useConformityScore();
+
+// -- Phone formatting --
+const formatPhone = (phone) => {
+  if (!phone) return null;
+  try {
+    const parsed = parsePhoneNumber(phone);
+    if (parsed) return parsed.formatInternational();
+  } catch {}
+  return phone;
+};
 
 // -- State --
 const loading = ref(true);
@@ -418,7 +429,7 @@ onMounted(async () => {
                 <div>
                   <span class="text-sm text-gray-500 block">Téléphone</span>
                   <span :class="tier.telephone ? 'font-medium' : 'text-gray-300 italic'">
-                    {{ tier.telephone || 'Non renseigné' }}
+                    {{ formatPhone(tier.telephone) || 'Non renseigné' }}
                   </span>
                 </div>
                 <div>

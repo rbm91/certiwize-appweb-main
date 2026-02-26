@@ -85,12 +85,12 @@ const startEdit = (index) => {
 };
 
 // Sauvegarder l'édition
-const saveEdit = () => {
+const saveEdit = async () => {
   if (editingIndex.value === -1) return;
   const trimmed = editValue.value.trim();
   if (trimmed) {
     steps.value[editingIndex.value].label = trimmed;
-    saveSteps();
+    await saveSteps();
   }
   editingIndex.value = -1;
 };

@@ -11,7 +11,7 @@ const currentYear = new Date().getFullYear();
       <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
         <!-- Logo et description -->
         <div class="col-span-1 md:col-span-2">
-          <img src="/certiwize-logo.png" alt="Certiwize Logo" class="h-10 w-auto mb-4" />
+          <img src="/certigestion-logo-blanc.svg" alt="Certigestion Logo" class="h-10 w-auto mb-4" />
           <p class="text-gray-400 max-w-md">
             {{ t('footer.description') }}
           </p>

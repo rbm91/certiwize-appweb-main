@@ -54,8 +54,8 @@ const sourceIcon = computed(() => {
 const sourceLabel = computed(() => {
   if (!props.modelValue) return '';
   switch (props.modelValue.type) {
-    case 'upload': return 'Fichier charg\u00e9';
-    case 'library': return 'Biblioth\u00e8que';
+    case 'upload': return 'Fichier chargé';
+    case 'library': return 'Bibliothèque';
     case 'url': return 'Lien web';
     default: return '';
   }
@@ -92,8 +92,8 @@ const handleUpload = async (event) => {
 
     toast.add({
       severity: 'success',
-      summary: 'Document charg\u00e9',
-      detail: `"${file.name}" a \u00e9t\u00e9 charg\u00e9 avec succ\u00e8s.`,
+      summary: 'Document chargé',
+      detail: `"${file.name}" a été chargé avec succès.`,
       life: 3000,
     });
   } catch (err) {
@@ -212,7 +212,7 @@ const openDocument = () => {
         />
         <!-- Bibliothèque -->
         <Button
-          label="Biblioth\u00e8que"
+          label="Bibliothèque"
           icon="pi pi-folder-open"
           size="small"
           outlined
@@ -247,7 +247,7 @@ const openDocument = () => {
       </div>
       <div v-if="filteredLibraryDocs.length === 0" class="text-center py-8 text-gray-400">
         <i class="pi pi-inbox text-3xl mb-2"></i>
-        <p class="text-sm">Aucun document dans la biblioth\u00e8que.</p>
+        <p class="text-sm">Aucun document dans la bibliothèque.</p>
       </div>
       <div v-else class="space-y-2 max-h-80 overflow-y-auto">
         <div
@@ -259,7 +259,7 @@ const openDocument = () => {
           <i class="pi pi-file text-blue-500"></i>
           <div class="flex-1 min-w-0">
             <p class="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{{ doc.titre || doc.nom_fichier }}</p>
-            <p class="text-xs text-gray-400">{{ doc.categorie || 'Sans cat\u00e9gorie' }}</p>
+            <p class="text-xs text-gray-400">{{ doc.categorie || 'Sans catégorie' }}</p>
           </div>
           <Button icon="pi pi-check" text rounded size="small" severity="success" />
         </div>

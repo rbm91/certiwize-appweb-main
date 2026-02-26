@@ -46,7 +46,7 @@ const sidebarItemsBySection = {
     { name: 'sidebar_catalogue_formations', href: '/dashboard/catalogue', icon: 'pi-book' },
     { name: 'sidebar_catalogue_create', href: '/dashboard/catalogue/create', icon: 'pi-plus' },
     { type: 'separator', label: 'Évaluations' },
-    { name: 'sidebar_qualite_evaluations', href: '/dashboard/qualite/evaluations', icon: 'pi-question-circle' },
+    { name: 'sidebar_catalogue_evaluations', href: '/dashboard/catalogue/evaluations', icon: 'pi-question-circle' },
     { type: 'separator', label: 'Outils' },
     { name: 'sidebar_qualite_boite_outils', href: '/dashboard/catalogue/boite-outils', icon: 'pi-box' },
   ],

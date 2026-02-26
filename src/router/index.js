@@ -116,6 +116,11 @@ const routes = [
         name: 'dashboard-catalogue-boite-outils',
         component: () => import('../views/dashboard/BoiteOutils.vue')
       },
+      {
+        path: 'catalogue/evaluations',
+        name: 'dashboard-catalogue-evaluations',
+        component: () => import('../views/dashboard/BibliothequeEvaluations.vue')
+      },
 
       // ══════════════════════════════════
       // MODULE PRESTATIONS — Formations (bleu)

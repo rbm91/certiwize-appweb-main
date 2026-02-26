@@ -320,7 +320,7 @@ onMounted(() => {
       </Column>
 
       <!-- Actions -->
-      <Column header="Actions" style="min-width: 10rem" :exportable="false">
+      <Column header="Actions" style="min-width: 14rem" :exportable="false">
         <template #body="{ data }">
           <div class="flex gap-1" @click.stop>
             <Button

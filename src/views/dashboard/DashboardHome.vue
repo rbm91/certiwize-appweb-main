@@ -7,6 +7,7 @@ import { useFacturationStore } from '../../stores/facturation';
 import { useQualiteStore } from '../../stores/qualite';
 import { useEvaluationsStore } from '../../stores/evaluations';
 import Button from 'primevue/button';
+import AgendaWidget from '../../components/dashboard/AgendaWidget.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -307,5 +308,8 @@ onMounted(async () => {
       </div>
 
     </div>
+
+    <!-- ═══ Agenda ═══ -->
+    <AgendaWidget v-if="!loading" />
   </div>
 </template>

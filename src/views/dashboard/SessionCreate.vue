@@ -203,6 +203,8 @@ const onFormationSelect = (event) => {
     if (formation) {
       form.value.intitule = formation.title;
       form.value.formation_id = formation.id;
+      if (formation.duree) form.value.duree_heures = formation.duree;
+      if (formation.tarif) form.value.montant_ht = formation.tarif;
     }
   }
 };

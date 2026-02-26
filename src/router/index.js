@@ -121,6 +121,21 @@ const routes = [
         name: 'dashboard-catalogue-evaluations',
         component: () => import('../views/dashboard/BibliothequeEvaluations.vue')
       },
+      {
+        path: 'catalogue/positionnement',
+        name: 'dashboard-catalogue-positionnement',
+        component: () => import('../views/dashboard/BibliothequePositionnement.vue')
+      },
+      {
+        path: 'catalogue/evaluation-acquis',
+        name: 'dashboard-catalogue-evaluation-acquis',
+        component: () => import('../views/dashboard/BibliothequeEvaluationAcquis.vue')
+      },
+      {
+        path: 'catalogue/enquetes',
+        name: 'dashboard-catalogue-enquetes',
+        component: () => import('../views/dashboard/BibliothequeEnquete.vue')
+      },
 
       // ══════════════════════════════════
       // MODULE PRESTATIONS — Formations (bleu)

@@ -253,7 +253,17 @@ export const useNavigation = () => {
 
   // Labels : utilise le label custom topNav (unique source), puis i18n
   const getLabel = (name) => {
+    const configExists = !!navConfigStore.config;
+    const topNavExists = !!navConfigStore.config?.topNav;
+    const labelsExists = !!navConfigStore.config?.topNav?.labels;
     const customLabel = navConfigStore.config?.topNav?.labels?.[name];
+    if (name === 'catalogue') {
+      console.log('[getLabel] catalogue → config existe:', configExists,
+        '| topNav existe:', topNavExists,
+        '| labels existe:', labelsExists,
+        '| customLabel:', customLabel,
+        '| fallback:', t(`nav.${name}`));
+    }
     return customLabel || t(`nav.${name}`);
   };
 

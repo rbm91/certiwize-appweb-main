@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { supabase } from '../supabase';
-import { useRouter } from 'vue-router';
 
 // BroadcastChannel pour synchroniser l'auth entre onglets
 const AUTH_CHANNEL_NAME = 'certiwize-auth-sync';
@@ -17,7 +16,6 @@ export const useAuthStore = defineStore('auth', () => {
   const session = ref(null);
   const initialized = ref(false);
   const userRole = ref('user'); // 'user' ou 'super_admin' (niveau plateforme)
-  const router = useRouter();
 
   // ── Multi-tenant : organisation courante ──
   const currentOrganization = ref(null);  // { id, name, slug }
@@ -130,17 +128,7 @@ export const useAuthStore = defineStore('auth', () => {
         organizationRole.value = null;
         organizations.value = [];
 
-        // Vérifier que le router est disponible et que l'app est montée
-        if (router && initialized.value) {
-          try {
-            await router.push('/login');
-          } catch (err) {
-            console.warn('[AuthStore] Navigation to /login failed during cross-tab sync:', err);
-            window.location.href = '/login';
-          }
-        } else {
-          window.location.href = '/login';
-        }
+        window.location.href = '/login';
         break;
 
       case 'SIGNED_IN':
@@ -238,7 +226,7 @@ export const useAuthStore = defineStore('auth', () => {
             // Si l'utilisateur arrive via un lien d'invitation, rediriger vers la création de mot de passe
             const hash = window.location.hash;
             if (hash && hash.includes('type=invite')) {
-              router.push('/update-password');
+              window.location.href = '/update-password';
             }
             break;
           }
@@ -252,7 +240,7 @@ export const useAuthStore = defineStore('auth', () => {
             broadcastAuthEvent('USER_UPDATED', { user: _session?.user });
             break;
           case 'PASSWORD_RECOVERY':
-            router.push('/update-password');
+            window.location.href = '/update-password';
             break;
         }
       });
@@ -428,7 +416,7 @@ export const useAuthStore = defineStore('auth', () => {
     currentOrganization.value = null;
     organizationRole.value = null;
     organizations.value = [];
-    router.push('/login');
+    window.location.href = '/login';
   };
 
   const resetPasswordEmail = async (email) => {
@@ -495,7 +483,7 @@ export const useAuthStore = defineStore('auth', () => {
         currentOrganization.value = null;
         organizationRole.value = null;
         organizations.value = [];
-        router.push('/login');
+        window.location.href = '/login';
       }
     } catch (err) {
       console.error('[AuthStore] Exception refreshing session:', err);

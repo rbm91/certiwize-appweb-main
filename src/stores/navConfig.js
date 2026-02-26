@@ -25,6 +25,7 @@ export const useNavConfigStore = defineStore('navConfig', () => {
    */
   const fetchConfig = async () => {
     const orgId = auth.currentOrganization?.id;
+    console.log('[NavConfig] fetchConfig appelé, orgId =', orgId);
     if (!orgId) {
       console.warn('[NavConfig] Pas d\'organisation, fetch ignoré');
       return;
@@ -39,9 +40,13 @@ export const useNavConfigStore = defineStore('navConfig', () => {
         .limit(1)
         .maybeSingle();
 
+      console.log('[NavConfig] Supabase réponse:', { data, error });
+      console.log('[NavConfig] Labels topNav reçus:', data?.config?.topNav?.labels);
+
       if (error) throw error;
 
       config.value = data?.config || JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+      console.log('[NavConfig] config.value mis à jour, catalogue =', config.value?.topNav?.labels?.catalogue);
     } catch (err) {
       console.error('[NavConfig] Error fetching config:', err);
       config.value = JSON.parse(JSON.stringify(DEFAULT_CONFIG));

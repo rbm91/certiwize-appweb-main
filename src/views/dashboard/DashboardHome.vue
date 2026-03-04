@@ -67,7 +67,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="space-y-8">
+  <div class="p-6 space-y-8">
     <!-- En-tête -->
     <div>
       <h1 class="text-2xl font-bold text-gray-900 dark:text-white">

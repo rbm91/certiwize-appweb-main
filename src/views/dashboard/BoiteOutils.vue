@@ -27,6 +27,8 @@ const showPreviewDialog = ref(false);
 const previewUrl = ref('');
 const previewTitle = ref('');
 const uploadForm = ref({ titre: '', categorie: 'Autre' });
+const selectedFile = ref(null);
+const uploading = ref(false);
 
 // Modèles de documents types pour organismes de formation
 const templates = ref([
@@ -178,10 +180,15 @@ const handlePreview = (doc) => {
 };
 
 // -- Upload de document --
-const handleUpload = async (event) => {
-  const file = event.files?.[0];
+const handleFileSelect = (event) => {
+  selectedFile.value = event.files?.[0] || null;
+};
+
+const handleUpload = async () => {
+  const file = selectedFile.value;
   if (!file || !auth.user?.id) return;
 
+  uploading.value = true;
   try {
     const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
     const fileName = `${auth.user.id}/boite-outils/${Date.now()}-${cleanName}`;
@@ -219,6 +226,7 @@ const handleUpload = async (event) => {
 
     showUploadDialog.value = false;
     uploadForm.value = { titre: '', categorie: 'Autre' };
+    selectedFile.value = null;
     await fetchUserDocuments();
   } catch (err) {
     toast.add({
@@ -227,6 +235,8 @@ const handleUpload = async (event) => {
       detail: err.message || 'Impossible d\'uploader le document.',
       life: 5000,
     });
+  } finally {
+    uploading.value = false;
   }
 };
 
@@ -496,11 +506,23 @@ onMounted(() => {
             :maxFileSize="10485760"
             chooseLabel="Choisir un fichier"
             :auto="false"
-            customUpload
-            @uploader="handleUpload"
+            @select="handleFileSelect"
           />
+          <span v-if="selectedFile" class="text-xs text-green-600">
+            <i class="pi pi-check-circle mr-1" />{{ selectedFile.name }}
+          </span>
         </div>
       </div>
+      <template #footer>
+        <Button label="Annuler" severity="secondary" text @click="showUploadDialog = false; selectedFile = null" />
+        <Button
+          label="Ajouter"
+          icon="pi pi-upload"
+          :loading="uploading"
+          :disabled="!selectedFile"
+          @click="handleUpload"
+        />
+      </template>
     </Dialog>
 
     <!-- Dialog : Charger un fichier sur un document (superadmin) -->

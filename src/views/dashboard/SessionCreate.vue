@@ -7,6 +7,7 @@ import { usePrestationsStore } from '../../stores/prestations';
 import { useTiersStore } from '../../stores/tiers';
 import { useTrainingStore } from '../../stores/training';
 import { useAuthStore } from '../../stores/auth';
+import { useCompanyStore } from '../../stores/company';
 import { supabase } from '../../supabase';
 import WorkflowTimeline from '../../components/dashboard/WorkflowTimeline.vue';
 import StepManagerPanel from '../../components/common/StepManagerPanel.vue';
@@ -40,6 +41,7 @@ const store = usePrestationsStore();
 const tiersStore = useTiersStore();
 const trainingStore = useTrainingStore();
 const authStore = useAuthStore();
+const companyStore = useCompanyStore();
 const workflowConfigStore = useWorkflowConfigStore();
 const navConfig = useNavConfigStore();
 const ph = (key, fallback) => navConfig.getFieldPlaceholder(key, fallback);
@@ -271,6 +273,17 @@ const generateDocument = async (type, loadingRef, webhookUrl) => {
 
   loadingRef.value = true;
   try {
+    const piedPageKeys = {
+      'Convention': 'convention',
+      'Convocation': 'convocation',
+      "Projet d'étude": 'etude',
+      'Livret': 'livret',
+    };
+    const piedPageKey = piedPageKeys[type];
+    const pied_page = piedPageKey
+      ? (companyStore.company?.doc_pieds_page?.[piedPageKey] || '')
+      : '';
+
     const payload = {
       session_id: editId.value,
       user_id: authStore.user?.id,
@@ -288,6 +301,8 @@ const generateDocument = async (type, loadingRef, webhookUrl) => {
       objectifs: form.value.objectifs,
       public_vise: form.value.public_vise,
       modalites: form.value.modalites,
+      logo_url: companyStore.company?.logo_url || null,
+      pied_page,
     };
 
     const response = await axios.post(webhookUrl, payload);
@@ -466,6 +481,7 @@ onMounted(async () => {
     // Charger la config workflow et navConfig pour les steps dynamiques + personnalisation
     await workflowConfigStore.fetchConfig();
     await navConfig.fetchConfig();
+    if (!companyStore.company) await companyStore.fetchCompany();
 
     if (tiersStore.activeTiers.length === 0) {
       await tiersStore.fetchTiers();

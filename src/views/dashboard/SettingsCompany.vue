@@ -194,6 +194,14 @@ const form = ref({
   doc_signature_representant: false,
   doc_mention_rgpd: false,
   doc_mention_nda: false,
+  doc_pieds_page: {
+    convention: '',
+    convocation: '',
+    etude: '',
+    livret: '',
+    attestation: '',
+    facture: '',
+  },
 
   // ── Onglet 4 : Email & envoi ──
   email_nom_expediteur: '',
@@ -258,6 +266,7 @@ onMounted(async () => {
     form.value.socials = store.company.socials || {};
     form.value.opening_hours = store.company.opening_hours || {};
     form.value.accountant_info = store.company.accountant_info || {};
+    form.value.doc_pieds_page = { ...form.value.doc_pieds_page, ...(store.company.doc_pieds_page || {}) };
   }
 });
 
@@ -667,6 +676,57 @@ const uploadQualiopi = async (event) => {
                   </div>
                 </div>
               </ManageableField>
+            </div>
+
+            <Divider />
+
+            <!-- Pieds de page par type de document -->
+            <div>
+              <h3 class="text-lg font-semibold mb-1 flex items-center gap-2">
+                <i class="pi pi-align-bottom text-orange-500"></i> Pieds de page par document
+              </h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                Personnalisez le pied de page pour chaque type de document généré.
+                Utilisez la balise <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded text-orange-600">&#123;&#123;pied_page&#125;&#125;</code> dans vos modèles n8n.
+              </p>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="flex flex-col gap-2">
+                  <label for="pied-convention" class="font-semibold text-sm flex items-center gap-2">
+                    <i class="pi pi-file text-blue-500"></i> Convention de formation
+                  </label>
+                  <Textarea id="pied-convention" v-model="form.doc_pieds_page.convention" rows="3" placeholder="Ex : Organisme certifié Qualiopi — NDA : 11 75 12345 67" autoResize />
+                </div>
+                <div class="flex flex-col gap-2">
+                  <label for="pied-convocation" class="font-semibold text-sm flex items-center gap-2">
+                    <i class="pi pi-envelope text-purple-500"></i> Convocation
+                  </label>
+                  <Textarea id="pied-convocation" v-model="form.doc_pieds_page.convocation" rows="3" placeholder="Ex : Pensez à apporter une pièce d'identité…" autoResize />
+                </div>
+                <div class="flex flex-col gap-2">
+                  <label for="pied-etude" class="font-semibold text-sm flex items-center gap-2">
+                    <i class="pi pi-book text-green-500"></i> Projet d'étude
+                  </label>
+                  <Textarea id="pied-etude" v-model="form.doc_pieds_page.etude" rows="3" placeholder="Ex : Document confidentiel réservé à…" autoResize />
+                </div>
+                <div class="flex flex-col gap-2">
+                  <label for="pied-livret" class="font-semibold text-sm flex items-center gap-2">
+                    <i class="pi pi-book text-teal-500"></i> Livret
+                  </label>
+                  <Textarea id="pied-livret" v-model="form.doc_pieds_page.livret" rows="3" placeholder="Ex : Ce livret est la propriété de…" autoResize />
+                </div>
+                <div class="flex flex-col gap-2">
+                  <label for="pied-attestation" class="font-semibold text-sm flex items-center gap-2">
+                    <i class="pi pi-check-circle text-emerald-500"></i> Attestation de fin de formation
+                  </label>
+                  <Textarea id="pied-attestation" v-model="form.doc_pieds_page.attestation" rows="3" placeholder="Ex : Attestation conforme à l'article L6353-1…" autoResize />
+                </div>
+                <div class="flex flex-col gap-2">
+                  <label for="pied-facture" class="font-semibold text-sm flex items-center gap-2">
+                    <i class="pi pi-wallet text-orange-500"></i> Facture
+                  </label>
+                  <Textarea id="pied-facture" v-model="form.doc_pieds_page.facture" rows="3" placeholder="Ex : TVA non applicable — art. 293B du CGI…" autoResize />
+                </div>
+              </div>
             </div>
 
             <!-- Champs custom + Restaurer + Ajouter -->

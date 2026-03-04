@@ -13,7 +13,7 @@ const companyStore = useCompanyStore();
 const fileInput = ref(null);
 const uploading = ref(false);
 
-const isSuperAdmin = computed(() => authStore.isSuperAdmin);
+const canChangeLogo = computed(() => authStore.isSuperAdmin || authStore.isOrgAdmin);
 const logoUrl = computed(() => companyStore.company?.logo_url || '');
 
 // Charger les données company si pas encore fait
@@ -30,6 +30,12 @@ const triggerUpload = () => {
 const handleUpload = async (event) => {
   const file = event.target.files[0];
   if (!file) return;
+
+  if (!['image/png', 'image/jpeg'].includes(file.type)) {
+    alert('Format non supporté. Veuillez utiliser un fichier PNG ou JPEG.');
+    if (fileInput.value) fileInput.value.value = '';
+    return;
+  }
 
   uploading.value = true;
   try {
@@ -70,9 +76,9 @@ const handleUpload = async (event) => {
         class="logo-brand-img"
       />
 
-      <!-- Bouton upload (super_admin only) -->
+      <!-- Bouton upload (super_admin ou org admin/owner) -->
       <button
-        v-if="isSuperAdmin"
+        v-if="canChangeLogo"
         @click.stop.prevent="triggerUpload"
         class="logo-brand-upload"
         :class="{ 'logo-brand-uploading': uploading }"
@@ -87,7 +93,7 @@ const handleUpload = async (event) => {
     <input
       ref="fileInput"
       type="file"
-      accept="image/*"
+      accept="image/png,image/jpeg"
       class="hidden"
       @change="handleUpload"
     />

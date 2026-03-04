@@ -514,6 +514,12 @@ export const PROFILE_OPTIONS = {
   ],
 };
 
+// Formations — Types (catalogue vs sur mesure)
+export const FORMATION_TYPES = [
+  { label: 'Catalogue', value: 'catalogue', severity: 'info' },
+  { label: 'Sur mesure', value: 'sur_mesure', severity: 'warn' },
+];
+
 export default {
   TIMEOUTS,
   STORAGE,
@@ -574,9 +580,3 @@ export default {
   BOITE_OUTILS_CATEGORIES,
   FORMATION_TYPES,
 };
-
-// Formations — Types (catalogue vs sur mesure)
-export const FORMATION_TYPES = [
-  { label: 'Catalogue', value: 'catalogue', severity: 'info' },
-  { label: 'Sur mesure', value: 'sur_mesure', severity: 'warn' },
-];

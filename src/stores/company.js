@@ -78,6 +78,16 @@ const DEFAULT_COMPANY = {
   penalite_pourcentage: 0,
   conditions_paiement_defaut: '30_jours',
 
+  // Pieds de page par type de document (balise {{pied_page}})
+  doc_pieds_page: {
+    convention: '',
+    convocation: '',
+    etude: '',
+    livret: '',
+    attestation: '',
+    facture: '',
+  },
+
   // Champs existants conservés
   taxes_config: { vat_subject: true, tax_2: false, tax_3: false, fiscal_stamp: false },
   socials: {},

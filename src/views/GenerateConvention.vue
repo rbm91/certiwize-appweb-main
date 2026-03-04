@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
@@ -10,10 +10,13 @@ import Message from 'primevue/message';
 import Textarea from 'primevue/textarea';
 import ProgressBar from 'primevue/progressbar';
 import { useAuthStore } from '../stores/auth';
+import { useCompanyStore } from '../stores/company';
 import { fetchWithTimeout } from '../utils/fetchWithTimeout';
 
 const { t } = useI18n();
 const authStore = useAuthStore();
+const companyStore = useCompanyStore();
+onMounted(() => companyStore.fetchCompany());
 
 const form = ref({
   nom_formation: '',
@@ -106,28 +109,26 @@ const generateDocument = async () => {
       tarif: form.value.tarif,
       frais: form.value.frais,
       total_tarif: total_tarif.value,
+      url: companyStore.company?.logo_url || null,
+      pied_page: companyStore.company?.doc_pieds_page?.convention || '',
       userEmail: authStore.user?.email,
       timestamp: new Date().toISOString()
     };
 
-    const response = await fetchWithTimeout('/api/generate-convention', {
+    const webhookUrl = import.meta.env.VITE_N8N_HOOK_PROJ_CONVENTION;
+    const response = await fetchWithTimeout(webhookUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authStore.session?.access_token}`
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     }, 60000); // 60 secondes de timeout
 
-    const result = await response.json();
-
-    if (response.ok && result.pdfData) {
+    if (response.ok) {
       // Progression complète
       clearInterval(progressInterval);
       progressValue.value = 100;
 
-      // Convertir le base64 en Blob
-      const pdfBlob = base64ToBlob(result.pdfData, 'application/pdf');
+      // n8n retourne directement le PDF binaire
+      const pdfBlob = await response.blob();
       const blobUrl = URL.createObjectURL(pdfBlob);
 
       pdfUrl.value = blobUrl;
@@ -149,6 +150,7 @@ const generateDocument = async () => {
       clearInterval(progressInterval);
       progressValue.value = 0;
       progressTime.value = 0;
+      const result = await response.json().catch(() => ({}));
       msg.value = {
         type: 'error',
         content: result.error || 'Erreur lors de la génération du document'
@@ -165,17 +167,6 @@ const generateDocument = async () => {
   } finally {
     loading.value = false;
   }
-};
-
-// Convertir base64 en Blob
-const base64ToBlob = (base64, mimeType) => {
-  const byteCharacters = atob(base64);
-  const byteNumbers = new Array(byteCharacters.length);
-  for (let i = 0; i < byteCharacters.length; i++) {
-    byteNumbers[i] = byteCharacters.charCodeAt(i);
-  }
-  const byteArray = new Uint8Array(byteNumbers);
-  return new Blob([byteArray], { type: mimeType });
 };
 
 const downloadPdf = (url) => {

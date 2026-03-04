@@ -2,7 +2,6 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import {
   completeRedirectFlow,
-  getCustomer,
   createSubscription,
 } from '../_shared/gocardless.ts';
 
@@ -23,25 +22,7 @@ interface RequestBody {
   phone?: string;
 }
 
-const PLAN_DETAILS = {
-  monthly: {
-    amount: 14400, // 144.00 EUR in cents
-    currency: 'EUR',
-    interval: 1,
-    intervalUnit: 'monthly' as const,
-    name: 'Certigestion - Mensuel',
-  },
-  yearly: {
-    amount: 144000, // 1440.00 EUR in cents
-    currency: 'EUR',
-    interval: 1,
-    intervalUnit: 'yearly' as const,
-    name: 'Certigestion - Annuel',
-  },
-};
-
 Deno.serve(async (req: Request) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -49,39 +30,45 @@ Deno.serve(async (req: Request) => {
   try {
     const body: RequestBody = await req.json();
 
-    // Validate required fields
     if (!body.redirect_flow_id || !body.session_token || !body.plan || !body.email) {
       return new Response(
         JSON.stringify({ error: 'Missing required fields' }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Initialize Supabase client (admin)
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // 1. Complete the GoCardless redirect flow
+    // 1. Complete GoCardless redirect flow → get mandate + customer
     console.log('Completing GoCardless redirect flow...');
-    const completedFlow = await completeRedirectFlow(
-      body.redirect_flow_id,
-      body.session_token
-    );
-
-    const customerId = completedFlow.links.customer;
+    const completedFlow = await completeRedirectFlow(body.redirect_flow_id, body.session_token);
     const mandateId = completedFlow.links.mandate;
+    const customerId = completedFlow.links.customer;
 
-    // 2. Get customer details from GoCardless
-    console.log('Fetching GoCardless customer...');
-    const gcCustomer = await getCustomer(customerId);
+    // 2. Fetch plan_id from subscription_plans table
+    const { data: planRow, error: planError } = await supabase
+      .from('subscription_plans')
+      .select('id')
+      .eq('name', body.plan)
+      .single();
 
-    // 3. Create subscription in GoCardless
+    if (planError || !planRow) {
+      throw new Error(`Plan '${body.plan}' not found in subscription_plans`);
+    }
+
+    // 3. Create GoCardless subscription against the mandate
+    const PLAN_AMOUNTS: Record<string, {
+      amount: number; currency: string; interval: number;
+      intervalUnit: 'monthly' | 'yearly'; name: string;
+    }> = {
+      monthly: { amount: 14400,  currency: 'EUR', interval: 1, intervalUnit: 'monthly', name: 'Certigestion - Mensuel' },
+      yearly:  { amount: 144000, currency: 'EUR', interval: 1, intervalUnit: 'yearly',  name: 'Certigestion - Annuel'  },
+    };
+    const planDetails = PLAN_AMOUNTS[body.plan];
+
     console.log('Creating GoCardless subscription...');
-    const planDetails = PLAN_DETAILS[body.plan];
     const subscription = await createSubscription(
       mandateId,
       planDetails.amount,
@@ -89,25 +76,18 @@ Deno.serve(async (req: Request) => {
       planDetails.interval,
       planDetails.intervalUnit,
       planDetails.name,
-      {
-        email: body.email,
-        plan: body.plan,
-      }
+      { email: body.email, plan: body.plan }
     );
 
-    // 4. Create or update user in Supabase Auth
-    console.log('Creating Supabase user...');
+    // 4. Create or retrieve Supabase Auth user
     let userId: string;
-
-    // Check if user already exists
-    const { data: existingUsers } = await supabase.auth.admin.listUsers();
-    const existingUser = existingUsers?.users?.find((u) => u.email === body.email);
+    const { data: { users } } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+    const existingUser = users?.find((u) => u.email === body.email);
 
     if (existingUser) {
       userId = existingUser.id;
       console.log('User already exists:', userId);
     } else {
-      // Create new user
       const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
         email: body.email,
         email_confirm: true,
@@ -119,55 +99,50 @@ Deno.serve(async (req: Request) => {
           phone: body.phone,
         },
       });
-
-      if (createError) {
-        console.error('Error creating user:', createError);
-        throw new Error(`Failed to create user: ${createError.message}`);
-      }
-
+      if (createError) throw new Error(`Failed to create user: ${createError.message}`);
       userId = newUser.user.id;
       console.log('New user created:', userId);
     }
 
-    // 5. Store subscription info in your database
-    // Check if subscriptions table exists, if not skip this step
-    const { error: subscriptionError } = await supabase
-      .from('subscriptions')
-      .upsert({
-        user_id: userId,
-        gocardless_subscription_id: subscription.id,
-        gocardless_customer_id: customerId,
-        gocardless_mandate_id: mandateId,
-        plan: body.plan,
-        status: subscription.status,
-        amount: planDetails.amount,
-        currency: planDetails.currency,
-        interval: planDetails.intervalUnit,
-        start_date: subscription.start_date,
-        next_payment_date: subscription.start_date,
-      }, {
-        onConflict: 'user_id',
-      });
+    // 5. Insert subscription into our database with the correct schema
+    const now = new Date().toISOString();
+    const endsAt = body.plan === 'yearly'
+      ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+      : new Date(Date.now() + 31  * 24 * 60 * 60 * 1000).toISOString();
 
-    if (subscriptionError) {
-      console.warn('Could not insert subscription (table may not exist):', subscriptionError);
-      // Continue anyway - the subscription is created in GoCardless
+    const { error: subError } = await supabase.from('subscriptions').insert({
+      user_id:                  userId,
+      plan_id:                  planRow.id,
+      status:                   'active',
+      payment_provider:         'gocardless',
+      external_subscription_id: subscription.id,
+      external_customer_id:     customerId,
+      external_mandate_id:      mandateId,
+      starts_at:                now,
+      ends_at:                  endsAt,
+      billing_first_name:       body.firstName,
+      billing_last_name:        body.lastName,
+      billing_company:          body.company  || null,
+      billing_tax_id:           body.taxId    || null,
+      billing_email:            body.email,
+      billing_phone:            body.phone    || null,
+      metadata: { plan: body.plan, gocardless_status: subscription.status },
+    });
+
+    if (subError) {
+      console.warn('Could not insert subscription record:', subError.message);
+      // Non-fatal — GoCardless subscription is already created
     }
 
     // 6. Generate magic link for auto-login
-    console.log('Generating magic link...');
     const APP_URL = Deno.env.get('APP_URL') || 'http://localhost:5173';
     const { data: magicLinkData, error: magicLinkError } = await supabase.auth.admin.generateLink({
       type: 'magiclink',
       email: body.email,
-      options: {
-        redirectTo: `${APP_URL}/dashboard`,
-      },
+      options: { redirectTo: `${APP_URL}/dashboard` },
     });
-
     if (magicLinkError) {
-      console.error('Error generating magic link:', magicLinkError);
-      // Don't fail - user can still login manually
+      console.error('Magic link generation failed:', magicLinkError.message);
     }
 
     return new Response(
@@ -178,21 +153,14 @@ Deno.serve(async (req: Request) => {
         auto_login: !!magicLinkData,
         magic_link_url: magicLinkData?.properties?.action_link || null,
       }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
+
   } catch (error) {
     console.error('Error completing GoCardless checkout:', error);
     return new Response(
-      JSON.stringify({
-        error: error.message || 'Internal server error',
-      }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
+      JSON.stringify({ error: error.message || 'Internal server error' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

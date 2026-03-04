@@ -198,15 +198,15 @@ export const useTrainingStore = defineStore('training', () => {
     const generatePdf = async (trainingId, formData) => {
         loading.value = true;
         try {
-            await auth.refreshSession();
+            const webhookUrl = import.meta.env.VITE_N8N_HOOK_GENERATE_TRAINING;
+            if (!webhookUrl) {
+                throw new Error('Webhook URL non configurée (VITE_N8N_HOOK_GENERATE_TRAINING manquant dans .env)');
+            }
 
-            const response = await fetchWithTimeout('/api/generate-training-pdf', {
+            const response = await fetchWithTimeout(webhookUrl, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${auth.session?.access_token}`
-                },
-                body: JSON.stringify({ trainingId, data: formData })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: trainingId, ...formData })
             }, 60000);
 
             const result = await response.json();

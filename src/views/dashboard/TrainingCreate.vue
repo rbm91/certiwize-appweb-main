@@ -3,6 +3,7 @@ import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useTrainingStore } from '../../stores/training';
 import { useAuthStore } from '../../stores/auth';
+import { useCompanyStore } from '../../stores/company';
 import { supabase } from '../../supabase';
 import { useI18n } from 'vue-i18n';
 
@@ -36,6 +37,7 @@ const confirm = useConfirm();
 const route = useRoute();
 const trainingStore = useTrainingStore();
 const authStore = useAuthStore();
+const companyStore = useCompanyStore();
 const { errors, validate, clearError } = useFormValidation();
 const { t } = useI18n();
 const navConfig = useNavConfigStore();
@@ -229,7 +231,10 @@ const handleGenerate = async () => {
         trainingId.value = saveResult.data.id; // On récupère l'ID créé
 
         // 2. Lancement de la génération (n8n) avec timeout de 30s
-        const generationPromise = trainingStore.generatePdf(trainingId.value, form.value);
+        const generationPromise = trainingStore.generatePdf(trainingId.value, {
+            ...form.value,
+            logo_url: companyStore.company?.logo_url || null,
+        });
 
         // Polling : vérifier toutes les 4 secondes si le PDF est disponible
         let documentReady = false;

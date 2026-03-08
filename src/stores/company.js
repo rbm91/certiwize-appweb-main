@@ -50,6 +50,10 @@ const DEFAULT_COMPANY = {
   email_signature: '',
   email_envoi_auto: false,
   email_signature_electronique: false,
+  smtp_host: '',
+  smtp_port: 587,
+  smtp_user: '',
+  smtp_password: '',
 
   // Onglet 5 : RGPD & DPO
   dpo_nom: '',

@@ -20,8 +20,10 @@ import ToggleSwitch from 'primevue/toggleswitch';
 import Message from 'primevue/message';
 import Divider from 'primevue/divider';
 import DatePicker from 'primevue/datepicker';
+import Password from 'primevue/password';
 
 import { useI18n } from 'vue-i18n';
+import { fetchWithTimeout } from '../../utils/fetchWithTimeout';
 import { useFormValidation } from '../../composables/useFormValidation';
 import AddressAutocomplete from '../../components/common/AddressAutocomplete.vue';
 import EditableLabel from '../../components/common/EditableLabel.vue';
@@ -43,6 +45,76 @@ const saving = ref(false);
 const message = ref(null);
 const activeTab = ref(0);
 const { errors, validate, clearError } = useFormValidation();
+
+// SMTP test state
+const smtpTesting = ref(false);
+const smtpTestMessage = ref(null);
+
+const smtpPresets = {
+  gmail: { host: 'smtp.gmail.com', port: 587 },
+  outlook: { host: 'smtp.office365.com', port: 587 },
+  ovh: { host: 'ssl0.ovh.net', port: 465 },
+};
+
+const applySmtpPreset = (preset) => {
+  const config = smtpPresets[preset];
+  if (config) {
+    form.value.smtp_host = config.host;
+    form.value.smtp_port = config.port;
+  }
+};
+
+const resetSmtp = () => {
+  form.value.smtp_host = '';
+  form.value.smtp_port = 587;
+  form.value.smtp_user = '';
+  form.value.smtp_password = '';
+  smtpTestMessage.value = null;
+};
+
+const testSmtp = async () => {
+  if (!form.value.smtp_host || !form.value.smtp_user || !form.value.smtp_password) {
+    smtpTestMessage.value = { severity: 'warn', text: t('settings.email.smtp_fill_all') };
+    return;
+  }
+
+  smtpTesting.value = true;
+  smtpTestMessage.value = null;
+
+  try {
+    const webhookUrl = import.meta.env.VITE_N8N_WEBHOOK_URL || '';
+    if (!webhookUrl) {
+      smtpTestMessage.value = { severity: 'error', text: 'Webhook URL non configurée' };
+      return;
+    }
+
+    const response = await fetchWithTimeout(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        test: true,
+        smtp: {
+          host: form.value.smtp_host,
+          port: form.value.smtp_port,
+          user: form.value.smtp_user,
+          password: form.value.smtp_password
+        },
+        to_email: authStore.user?.email,
+        from_email: form.value.smtp_user
+      })
+    }, 30000);
+
+    if (response.ok) {
+      smtpTestMessage.value = { severity: 'success', text: t('settings.email.smtp_test_success') };
+    } else {
+      smtpTestMessage.value = { severity: 'error', text: t('settings.email.smtp_test_error') };
+    }
+  } catch (err) {
+    smtpTestMessage.value = { severity: 'error', text: t('settings.email.smtp_test_error') + ': ' + err.message };
+  } finally {
+    smtpTesting.value = false;
+  }
+};
 
 // Valeurs des champs custom par section
 const customFieldValues = ref({
@@ -208,6 +280,10 @@ const form = ref({
   email_signature: '',
   email_envoi_auto: false,
   email_signature_electronique: false,
+  smtp_host: '',
+  smtp_port: 587,
+  smtp_user: '',
+  smtp_password: '',
 
   // ── Onglet 5 : RGPD & DPO ──
   dpo_nom: '',
@@ -808,6 +884,71 @@ const uploadQualiopi = async (event) => {
                 </div>
               </ManageableField>
             </div>
+
+            <Divider />
+
+            <!-- ── Configuration SMTP ── -->
+            <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+              <i class="pi pi-server text-orange-500"></i> {{ t('settings.email.smtp_section') }}
+            </h3>
+
+            <div class="mb-4">
+              <label class="text-sm font-medium text-gray-600 dark:text-gray-400 block mb-2">{{ t('settings.email.smtp_presets') }}</label>
+              <div class="flex gap-2">
+                <Button label="Gmail" icon="pi pi-google" size="small" severity="secondary" outlined @click="applySmtpPreset('gmail')" />
+                <Button label="Outlook" icon="pi pi-microsoft" size="small" severity="secondary" outlined @click="applySmtpPreset('outlook')" />
+                <Button label="OVH" size="small" severity="secondary" outlined @click="applySmtpPreset('ovh')" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="flex flex-col gap-2">
+                <label class="font-semibold">{{ t('settings.email.smtp_host') }}</label>
+                <InputText v-model="form.smtp_host" placeholder="smtp.gmail.com" />
+                <small class="text-gray-500">{{ t('settings.email.smtp_host_help') }}</small>
+              </div>
+              <div class="flex flex-col gap-2">
+                <label class="font-semibold">{{ t('settings.email.smtp_port') }}</label>
+                <InputNumber v-model="form.smtp_port" :min="1" :max="65535" placeholder="587" />
+                <small class="text-gray-500">587 (TLS) ou 465 (SSL)</small>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+              <div class="flex flex-col gap-2">
+                <label class="font-semibold">{{ t('settings.email.smtp_user') }}</label>
+                <InputText v-model="form.smtp_user" type="email" placeholder="contact@monorganisme.fr" />
+              </div>
+              <div class="flex flex-col gap-2">
+                <label class="font-semibold">{{ t('settings.email.smtp_password') }}</label>
+                <Password v-model="form.smtp_password" :feedback="false" toggleMask :placeholder="t('settings.email.smtp_password_placeholder')" inputClass="w-full" class="w-full" />
+              </div>
+            </div>
+
+            <!-- Aide Gmail / Outlook -->
+            <div class="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg border border-amber-200 dark:border-amber-800 mt-4">
+              <div class="flex items-start gap-2">
+                <i class="pi pi-info-circle text-amber-500 mt-0.5"></i>
+                <div class="text-sm text-amber-700 dark:text-amber-300">
+                  <p class="font-semibold mb-1">{{ t('settings.email.smtp_help_title') }}</p>
+                  <p>{{ t('settings.email.smtp_help_gmail') }}</p>
+                  <p class="mt-1">{{ t('settings.email.smtp_help_outlook') }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- SMTP Test Message -->
+            <Message v-if="smtpTestMessage" :severity="smtpTestMessage.severity" :closable="true" @close="smtpTestMessage = null" class="mt-4">
+              {{ smtpTestMessage.text }}
+            </Message>
+
+            <!-- Boutons Test + Reset -->
+            <div class="flex gap-3 mt-4">
+              <Button :label="t('settings.email.smtp_test')" icon="pi pi-play" severity="info" :loading="smtpTesting" @click="testSmtp" />
+              <Button :label="t('settings.email.smtp_reset')" icon="pi pi-refresh" severity="warning" outlined @click="resetSmtp" />
+            </div>
+
+            <Divider />
 
             <!-- Champs custom + Restaurer + Ajouter -->
             <CustomFieldRenderer section="settings.email" v-model="customFieldValues.email" />

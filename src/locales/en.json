@@ -485,7 +485,25 @@
     "danger_desc": "Deleting your account is irreversible. All your data will be permanently deleted.",
     "delete_account": "Delete my account",
     "delete_confirm": "Are you sure you want to delete your account? This action is irreversible.",
-    "delete_coming": "Account deletion feature coming soon"
+    "delete_coming": "Account deletion feature coming soon",
+    "email": {
+      "smtp_section": "SMTP Configuration",
+      "smtp_presets": "Quick presets",
+      "smtp_host": "SMTP Server Address (Host)",
+      "smtp_host_help": "SMTP server address from your email provider",
+      "smtp_port": "SMTP Port",
+      "smtp_user": "Email",
+      "smtp_password": "Email password",
+      "smtp_password_placeholder": "Password or app password",
+      "smtp_test": "Test",
+      "smtp_reset": "Reset to default",
+      "smtp_test_success": "Test email sent successfully!",
+      "smtp_test_error": "SMTP test error",
+      "smtp_fill_all": "Please fill all SMTP fields before testing",
+      "smtp_help_title": "Important",
+      "smtp_help_gmail": "For Gmail: use an app password (Google Account > Security > App passwords). 2FA must be enabled.",
+      "smtp_help_outlook": "For Outlook/Office 365: use an app password if two-step verification is enabled."
+    }
   },
   "dashboard": {
     "title": "Automation Dashboard",

@@ -498,7 +498,25 @@
     "danger_desc": "La suppression de votre compte est irréversible. Toutes vos données seront définitivement supprimées.",
     "delete_account": "Supprimer mon compte",
     "delete_confirm": "Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.",
-    "delete_coming": "Fonctionnalité de suppression de compte à venir"
+    "delete_coming": "Fonctionnalité de suppression de compte à venir",
+    "email": {
+      "smtp_section": "Configuration SMTP",
+      "smtp_presets": "Presets rapides",
+      "smtp_host": "Adresse SMTP SERVER (Host)",
+      "smtp_host_help": "Adresse du serveur SMTP de votre fournisseur email",
+      "smtp_port": "Port SMTP",
+      "smtp_user": "Email",
+      "smtp_password": "Mot de passe de l'email",
+      "smtp_password_placeholder": "Mot de passe ou mot de passe d'application",
+      "smtp_test": "Tester",
+      "smtp_reset": "Réinitialisation par défaut",
+      "smtp_test_success": "Email de test envoyé avec succès !",
+      "smtp_test_error": "Erreur lors du test SMTP",
+      "smtp_fill_all": "Veuillez remplir tous les champs SMTP avant de tester",
+      "smtp_help_title": "Important",
+      "smtp_help_gmail": "Pour Gmail : utilisez un mot de passe d'application (Compte Google > Sécurité > Mots de passe des applications). La 2FA doit être activée.",
+      "smtp_help_outlook": "Pour Outlook/Office 365 : utilisez un mot de passe d'application si la vérification en deux étapes est activée."
+    }
   },
   "dashboard": {
     "title": "Tableau de bord automation",

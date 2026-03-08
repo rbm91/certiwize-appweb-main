@@ -17,9 +17,11 @@ import Message from 'primevue/message';
 import ProgressBar from 'primevue/progressbar';
 import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
+import { useCompanyStore } from '../../stores/company';
 
 const { t } = useI18n();
 const authStore = useAuthStore();
+const companyStore = useCompanyStore();
 const confirmDialog = useConfirm();
 const toast = useToast();
 const router = useRouter();
@@ -34,7 +36,7 @@ const sendSuccess = ref('');
 const quizSettings = ref([]);
 const selectedDocTypes = ref([]);
 const quizLinks = ref({});
-const senderEmail = ref('noreply@certiwize.com');
+const senderEmail = ref(companyStore.company?.smtp_user || 'noreply@certiwize.com');
 
 // Attestation dialog state
 const showAttestationDialog = ref(false);
@@ -137,7 +139,7 @@ const openSendDialog = (learner) => {
       quizLinks.value[docType] = getDefaultQuizLink(docType);
     }
   }
-  senderEmail.value = 'noreply@certiwize.com';
+  senderEmail.value = companyStore.company?.smtp_user || 'noreply@certiwize.com';
   sendError.value = '';
   sendSuccess.value = '';
   showSendDialog.value = true;
@@ -261,6 +263,13 @@ const sendSelectedDocuments = async () => {
     if (!webhookUrl) {
       sendSuccess.value = t('learner.webhook_pending');
     } else {
+      const smtp = companyStore.company?.smtp_host ? {
+        host: companyStore.company.smtp_host,
+        port: companyStore.company.smtp_port,
+        user: companyStore.company.smtp_user,
+        password: companyStore.company.smtp_password
+      } : null;
+
       const payload = {
         learner: {
           id: selectedLearner.value.id,
@@ -270,6 +279,7 @@ const sendSelectedDocuments = async () => {
           phone: selectedLearner.value.phone
         },
         from_email: senderEmail.value,
+        smtp,
         doc_types: docsToSend,
         send_all: docsToSend.length > 1,
         project: selectedLearner.value.projects,
@@ -457,6 +467,7 @@ const generateAttestation = async () => {
 onMounted(() => {
   fetchLearners();
   fetchQuizSettings();
+  companyStore.fetchCompany();
 });
 </script>
 
